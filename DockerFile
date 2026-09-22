@@ -1,0 +1,38 @@
+# STAGE 1: BUILDER (Biên dịch TypeScript sang JavaScript)                                                                                                                                                  
+FROM node:20-alpine AS builder                                                                                                                                                                             
+                                                                                                                                                                                                            
+WORKDIR /app                                                                                                                                                                                               
+                                                                                                                                                                                                            
+# Copy package files để tận dụng Docker Layer Caching                                                                                                                                                      
+COPY package*.json ./                                                                                                                                                                                      
+                                                                                                                                                                                                            
+# Cài đặt toàn bộ dependencies (bao gồm cả devDependencies để build)                                                                                                                                       
+RUN npm ci                                                                                                                                                                                                 
+                                                                                                                                                                                                            
+# Copy toàn bộ source code vào container                                                                                                                                                                   
+COPY . .                                                                                                                                                                                                   
+                                                                                                                                                                                                            
+# Biên dịch TypeScript sang JavaScript (ra thư mục /app/dist)                                                                                                                                              
+RUN npm run build                                                                                                                                                                                          
+                                                                                                                                                                                                            
+# STAGE 2: RUNNER (Môi trường chạy Production siêu nhẹ)                                                                                                                                                    
+FROM node:20-alpine AS runner                                                                                                                                                                              
+                                                                                                                                                                                                            
+WORKDIR /app                                                                                                                                                                                               
+                                                                                                                                                                                                            
+ENV NODE_ENV=production                                                                                                                                                                                    
+                                                                                                                                                                                                            
+# Copy package files                                                                                                                                                                                       
+COPY package*.json ./                                                                                                                                                                                      
+                                                                                                                                                                                                            
+# Chỉ cài đặt dependencies dành cho Production (bỏ devDependencies)                                                                                                                                        
+RUN npm ci --only=production                                                                                                                                                                               
+                                                                                                                                                                                                            
+# Copy kết quả đã build từ STAGE 1                                                                                                                                                                         
+COPY --from=builder /app/dist ./dist                                                                                                                                                                       
+                                                                                                                                                                                                            
+# Mở cổng 5000                                                                                                                                                                                             
+EXPOSE 5000                                                                                                                                                                                                
+                                                                                                                                                                                                            
+# Chạy ứng dụng từ file JS đã build                                                                                                                                                                        
+CMD ["node", "dist/server.js"]

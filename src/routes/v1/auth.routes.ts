@@ -1,0 +1,16 @@
+import { Router } from 'express';                                                                                                                                                                          
+import { AuthController } from '../../controllers/auth.controller';                                                                                                                                        
+import { authenticateJWT } from '../../middlewares/auth.middleware';                                                                                                                                       
+import { rateLimiter } from '../../middlewares/rate-limiter.middleware';                                                                                                                                   
+                                                                                                                                                                                                            
+const router = Router();                                                                                                                                                                                   
+                                                                                                                                                                                                            
+// Public Routes (Giới hạn Rate Limit chống dò mật khẩu)                                                                                                                                                   
+router.post('/auth/register', rateLimiter(10, 60), AuthController.register);                                                                                                                               
+router.post('/auth/login', rateLimiter(5, 60), AuthController.login);                                                                                                                                      
+                                                                                                                                                                                                            
+// Protected Routes (Yêu cầu JWT Token)                                                                                                                                                                    
+router.get('/profile', authenticateJWT, AuthController.getProfile);                                                                                                                                        
+router.post('/profile/private-pin', authenticateJWT, rateLimiter(5, 60), AuthController.setPrivatePin);                                                                                                    
+                                                                                                                                                                                                            
+export default router;

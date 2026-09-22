@@ -1,0 +1,30 @@
+name: Enterprise CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 1. Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 2. Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: 3. Install Dependencies
+        run: npm ci
+
+      - name: 4. Check TypeScript Compilation
+        run: npx tsc --noEmit
+
+      - name: 5. Build Docker Image Test
+        run: docker build -t note-vault-backend:test .
