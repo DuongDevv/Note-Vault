@@ -34,7 +34,7 @@ services:
   # Service Backend Application (Express/TS)
   backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: note_vault_backend
     restart: always

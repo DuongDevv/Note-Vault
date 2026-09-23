@@ -1,14 +1,17 @@
 # Dependencies
-node_modules/
+**/node_modules/
 
 # Build Output
-dist/
-build/
+**/dist/
+**/build/
 
 # Environment Variables
-.env
-.env.local
+**/.env
+**/.env.local
 .env.production
+
+# Data storage local
+**/data/*.json
 
 # logs
 logs/
