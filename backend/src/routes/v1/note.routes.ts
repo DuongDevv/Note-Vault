@@ -1,0 +1,14 @@
+import { Router } from 'express';                                                                                                                                                                          
+import { NoteController } from '../../controllers/note.controller';                                                                                                                                        
+import { authenticateJWT } from '../../middlewares/auth.middleware';                                                                                                                                       
+                                                                                                                                                                                                            
+const router = Router();                                                                                                                                                                                   
+                                                                                                                                                                                                            
+router.use(authenticateJWT); // Bắt buộc đăng nhập cho mọi API Note                                                                                                                                        
+                                                                                                                                                                                                            
+router.get('/notes', NoteController.getNotes);                                                                                                                                                             
+router.post('/notes', NoteController.createNote);                                                                                                                                                          
+router.put('/notes/:id', NoteController.updateNote);                                                                                                                                                       
+router.delete('/notes/:id', NoteController.deleteNote);                                                                                                                                                    
+                                                                                                                                                                                                            
+export default router;             

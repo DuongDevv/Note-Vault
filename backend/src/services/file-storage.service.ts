@@ -1,0 +1,27 @@
+import fs from 'fs/promises';                                                                                                                                                                              
+import path from 'path';                                                                                                                                                                                   
+                                                                                                                                                                                                            
+const DATA_DIR = path.resolve(process.cwd(), 'data');                                                                                                                                                      
+                                                                                                                                                                                                            
+export class FileStorageService {                                                                                                                                                                          
+    private static getFilePath(fileName: string): string {                                                                                                                                                   
+        return path.join(DATA_DIR, fileName);                                                                                                                                                                  
+    }                                                                                                                                                                                                        
+                                                                                                                                                                                                            
+    // Hàm tổng quát đọc file JSON bất đồng bộ                                                                                                                                                               
+    static async readJson<T>(fileName: string, defaultValue: T): Promise<T> {                                                                                                                                
+        try {                                                                                                                                                                                                  
+            const filePath = this.getFilePath(fileName);                                                                                                                                                         
+            const data = await fs.readFile(filePath, 'utf-8');                                                                                                                                                   
+            return JSON.parse(data) as T;                                                                                                                                                                        
+        } catch (error) {                                                                                                                                                                                      
+            return defaultValue;                                                                                                                                                                                 
+        }                                                                                                                                                                                                      
+    }                                                                                                                                                                                                        
+                                                                                                                                                                                                            
+    // Hàm tổng quát ghi file JSON bất đồng bộ                                                                                                                                                               
+    static async writeJson<T>(fileName: string, data: T): Promise<void> {                                                                                                                                    
+        const filePath = this.getFilePath(fileName);                                                                                                                                                           
+        await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');                                                                                                                                  
+    }                                                                                                                                                                                                        
+}
