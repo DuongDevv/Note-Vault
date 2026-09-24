@@ -1,14 +1,18 @@
-{                                                                                                
-    "name": "note-vault-monorepo",                                                                 
-    "private": true,                                                                               
-    "scripts": {                                                                                   
-        "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"cyan,magenta\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
-        "dev:backend": "npm run dev --prefix backend",                                               
-        "dev:frontend": "npm run dev --prefix frontend",                                             
-        "build": "npm run build --prefix backend && npm run build --prefix frontend"        
-                 
-    },                                                                                             
-    "devDependencies": {                                                                           
-    "concurrently": "^9.1.2"                                                                     
-    }                                                                                              
+{
+  "name": "note-vault-monorepo",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"cyan,magenta\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix backend && npm run build --prefix frontend",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.1",
+    "prettier": "^3.9.9",
+    "prettier-plugin-tailwindcss": "^0.8.1"
+  }
 }

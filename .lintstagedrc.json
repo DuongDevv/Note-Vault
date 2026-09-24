@@ -1,0 +1,11 @@
+{
+  "backend/src/**/*.ts": [
+    "prettier --write",
+    "oxlint --config backend/.oxlintrc.json --fix"
+  ],
+  "frontend/src/**/*.{ts,tsx}": [
+    "prettier --write",
+    "oxlint --config frontend/.oxlintrc.json --fix"
+  ],
+  "*.{json,yml,yaml,md}": ["prettier --write"]
+}
