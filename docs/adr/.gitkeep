@@ -1,0 +1,3 @@
+# Architecture Decision Records
+This directory stores Architectural Decision Records (ADRs) for NoteVault.
+Follow the conventions in `docs/standards/domain-docs.md`.
