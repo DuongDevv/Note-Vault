@@ -1,0 +1,54 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/public/**",
+    "src/components/ui/**",
+    "src/types/api-schema.d.ts"
+  ],
+  "plugins": ["typescript", "react", "import", "unicorn"],
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "options": {
+    "typeAware": true
+  },
+  "extends": [
+    "./node_modules/oxlint-config-presets/@typescript-eslint/recommended-type-checked.json",
+    "./node_modules/oxlint-config-presets/@typescript-eslint/stylistic-type-checked.json"
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "typescript/no-explicit-any": "warn",
+    "typescript/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+    ],
+    "typescript/consistent-type-imports": [
+      "error",
+      { "prefer": "type-imports", "fixStyle": "separate-type-imports" }
+    ],
+    "typescript/no-misused-promises": [
+      "error",
+      { "checksVoidReturn": { "attributes": false } }
+    ],
+    "typescript/no-deprecated": "error",
+    "typescript/no-unnecessary-condition": "error",
+    "typescript/no-empty-object-type": "error",
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+
+    "react/react-in-jsx-scope": "off",
+    "import/no-unassigned-import": [
+      "warn",
+      {
+        "allow": ["**/*.css"]
+      }
+    ]
+  }
+}
