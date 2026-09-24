@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Install Dependencies
-        run: npm install --frozen-lockfile
+        run: npm install
 
       - name: Check TypeScript Compilation
         run: npx tsc --noEmit
