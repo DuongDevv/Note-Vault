@@ -1,0 +1,52 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/migrations/**",
+    ".*/**",
+    "src/prisma/contract.d.ts",
+    "src/prisma/contract.prisma"
+  ],
+  "plugins": ["typescript", "import", "unicorn"],
+  "env": {
+    "node": true
+  },
+  "options": {
+    "typeAware": true
+  },
+  "extends": [
+    "./node_modules/oxlint-config-presets/@typescript-eslint/recommended-type-checked.json",
+    "./node_modules/oxlint-config-presets/@typescript-eslint/stylistic-type-checked.json"
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "typescript/no-explicit-any": "warn",
+    "typescript/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+    ],
+    "typescript/consistent-type-imports": [
+      "error",
+      { "prefer": "type-imports", "fixStyle": "separate-type-imports" }
+    ],
+    "typescript/no-misused-promises": [
+      "error",
+      { "checksVoidReturn": { "attributes": false } }
+    ],
+    "typescript/no-deprecated": "error",
+    "typescript/no-unnecessary-condition": "warn",
+    "typescript/no-empty-object-type": "error",
+    "typescript/no-extraneous-class": "error",
+    "typescript/unbound-method": "error",
+    "typescript/no-unsafe-assignment": "warn",
+    "typescript/no-unsafe-member-access": "warn",
+    "typescript/no-unsafe-argument": "warn",
+    "typescript/no-unsafe-call": "warn",
+    "typescript/no-unsafe-return": "warn",
+    "import/no-unassigned-import": "warn"
+  }
+}

@@ -1,6 +1,5 @@
 import app from "./app";
 import { config } from "./config/env";
-import { dbPool } from "./config/database";
 import { connectRedis } from "./config/redis";
 import { initDatabase } from "./config/init-db";
 
@@ -27,4 +26,4 @@ const startServer = async () => {
   }
 };
 
-startServer();
+void startServer();

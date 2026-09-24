@@ -1,7 +1,7 @@
- import { dbPool } from './database';                                                                                                                                                                       
-                                                                                                                                                                                                              
-   export const initDatabase = async (): Promise<void> => {                                                                                                                                                   
-     const ddlQuery = `                                                                                                                                                                                       
+import { dbPool } from "./database";
+
+export const initDatabase = async (): Promise<void> => {
+  const ddlQuery = `                                                                                                                                                                                       
        -- Kích hoạt Extension UUID và Trigram Search                                                                                                                                                          
        CREATE EXTENSION IF NOT EXISTS "uuid-ossp";                                                                                                                                                            
        CREATE EXTENSION IF NOT EXISTS "pg_trgm";                                                                                                                                                              
@@ -69,13 +69,15 @@
        CREATE INDEX IF NOT EXISTS idx_notes_user_topic ON notes(user_id, topic_id);                                                                                                                           
        CREATE INDEX IF NOT EXISTS idx_notes_user_created ON notes(user_id, created_at DESC);                                                                                                                  
        CREATE INDEX IF NOT EXISTS idx_private_notes_user ON private_notes(user_id, created_at DESC);                                                                                                          
-     `;                                                                                                                                                                                                       
-                                                                                                                                                                                                              
-     try {                                                                                                                                                                                                    
-       await dbPool.query(ddlQuery);                                                                                                                                                                          
-       console.log('[DATABASE MIGRATION]: Đã kiểm tra & khởi tạo toàn bộ Bảng & Indexes thành công!');                                                                                                     
-     } catch (error) {                                                                                                                                                                                        
-       console.error('[DATABASE MIGRATION ERROR]: Khởi tạo Bảng thất bại:', error);                                                                                                                        
-       throw error;                                                                                                                                                                                           
-     }                                                                                                                                                                                                        
-   };      
+     `;
+
+  try {
+    await dbPool.query(ddlQuery);
+    console.log(
+      "[DATABASE MIGRATION]: Đã kiểm tra & khởi tạo toàn bộ Bảng & Indexes thành công!",
+    );
+  } catch (error) {
+    console.error("[DATABASE MIGRATION ERROR]: Khởi tạo Bảng thất bại:", error);
+    throw error;
+  }
+};

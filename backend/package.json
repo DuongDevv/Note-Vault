@@ -7,11 +7,14 @@
     "dev": "npx tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "postinstall": "prisma skills sync || exit 0",
+    "check": "bun run check-types && bun run lint",
+    "check-types": "tsc --noEmit",
+    "lint": "oxlint --type-aware --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"prisma.config.ts\"",
     "contract:emit": "prisma contract emit"
   },
   "keywords": [],
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
     "@prisma/client": "^7.10.0",
     "@prisma/orm-postgres": "^8.0.0-rc.11",
@@ -22,7 +25,8 @@
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.0",
-    "redis": "^6.2.1"
+    "redis": "^6.2.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@prisma/cli-engine": "^0.4.0",
@@ -31,10 +35,11 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.2",
     "@types/pg": "^8.23.1",
-    "prettier": "^3.9.9",
+    "oxlint": "^1.85.0",
+    "oxlint-config-presets": "^0.1.20",
+    "oxlint-tsgolint": "^7.0.2002",
     "prisma": "^8.0.0-rc.15",
-    "ts-node-dev": "^2.0.0",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "6.0.3"
   }
 }
