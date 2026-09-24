@@ -58,6 +58,8 @@ export const INITIAL_NOTES: Note[] = [
     isLocked: true,
     excerpt:
       "Mô hình Event-driven và cách xử lý tính nhất quán dữ liệu với Kafka và Raft consensus protocol...",
+    content:
+      "1. Work Deeply: xây thói quen làm việc sâu, tránh gián đoạn liên tục bởi thông báo/mạng xã hội.\n\n2. Embrace Boredom: rèn khả năng chịu được sự nhàm chán thay vì luôn tìm giải trí ngay lập tức.\n\n3. Quit Social Media: đánh giá lại công cụ nào thực sự cần thiết, bỏ những gì chỉ gây xao nhãng.\n\n4. Drain the Shallows: giới hạn thời gian cho công việc nông (shallow work), ưu tiên khối thời gian dài cho việc quan trọng.",
     date: "12 Th05",
     meta: "1.8 KB",
     metaType: "size",
@@ -70,6 +72,8 @@ export const INITIAL_NOTES: Note[] = [
     isLocked: false,
     excerpt:
       "Tổng hợp các cụm từ học thuật chủ đề Environment, Technology, và Society kèm ngữ cảnh sử dụng...",
+    content:
+      "Chủ đề Environment: carbon footprint, renewable energy sources, biodiversity loss, sustainable development.\n\nChủ đề Technology: cutting-edge innovation, digital transformation, artificial intelligence, data privacy concerns.\n\nChủ đề Society: socioeconomic inequality, generational gap, cultural assimilation, civic engagement.\n\nMỗi cụm từ nên học kèm 1 câu ví dụ để nhớ ngữ cảnh sử dụng, tránh học từ đơn lẻ.",
     date: "10 Th05",
     meta: "48 cụm từ",
     metaType: "words",
@@ -82,6 +86,8 @@ export const INITIAL_NOTES: Note[] = [
     isLocked: false,
     excerpt:
       "Segment Tree, Fenwick Tree và các dạng bài quy hoạch động tối ưu hóa bộ nhớ O(N)...",
+    content:
+      "Segment Tree: cấu trúc dữ liệu dạng cây nhị phân, hỗ trợ truy vấn khoảng (range query) và cập nhật trong O(log n). Dùng cho bài toán tổng/min/max trên đoạn.\n\nFenwick Tree (Binary Indexed Tree): gọn nhẹ hơn Segment Tree, chủ yếu dùng cho prefix sum, cài đặt dựa trên tính chất bit lowbit.\n\nQuy hoạch động tối ưu bộ nhớ: thay vì lưu cả bảng 2 chiều, chỉ giữ lại dòng hiện tại và dòng trước — giảm từ O(N*M) xuống O(N).",
     date: "08 Th05",
     meta: "C++ / Python",
     metaType: "code",
@@ -94,6 +100,8 @@ export const INITIAL_NOTES: Note[] = [
     isLocked: false,
     excerpt:
       "Đạo hàm riêng, ma trận hiệp phương sai, Gradient Descent và hàm loss Cross-Entropy...",
+    content:
+      "Cuộc họp thống nhất các mốc quan trọng:\n\n1. Yêu cầu bảo mật end-to-end cho toàn bộ dữ liệu người dùng.\n2. Chuẩn mã hóa dùng AES-GCM-256, có kèm IV riêng cho mỗi bản ghi.\n3. Backend nhóm phụ trách Prisma + PostgreSQL, có kế hoạch thêm Redis cho cache.\n4. Deadline nộp báo cáo tiến độ: cuối tháng, sau đó là buổi bảo vệ thử với giảng viên hướng dẫn.\n\nMỗi thành viên cần cập nhật tiến độ hàng tuần vào file WBS chung.",
     date: "05 Th05",
     meta: "Công thức",
     metaType: "formula",
@@ -106,6 +114,8 @@ export const INITIAL_NOTES: Note[] = [
     isLocked: true,
     excerpt:
       "Thống nhất yêu cầu bảo mật end-to-end, tiêu chuẩn mã hóa AES-GCM-256 và lộ trình báo vệ...",
+    content:
+      "1. Work Deeply: xây thói quen làm việc sâu, tránh gián đoạn liên tục bởi thông báo/mạng xã hội.\n\n2. Embrace Boredom: rèn khả năng chịu được sự nhàm chán thay vì luôn tìm giải trí ngay lập tức.\n\n3. Quit Social Media: đánh giá lại công cụ nào thực sự cần thiết, bỏ những gì chỉ gây xao nhãng.\n\n4. Drain the Shallows: giới hạn thời gian cho công việc nông (shallow work), ưu tiên khối thời gian dài cho việc quan trọng.",
     date: "02 Th05",
     meta: "4 thành viên",
     metaType: "members",
@@ -118,6 +128,8 @@ export const INITIAL_NOTES: Note[] = [
     isLocked: false,
     excerpt:
       "4 quy tắc vàng để tối ưu hóa khả năng tập trung sâu trong môi trường làm việc kỹ thuật số...",
+    content:
+      "1. Work Deeply: xây thói quen làm việc sâu, tránh gián đoạn liên tục bởi thông báo/mạng xã hội.\n\n2. Embrace Boredom: rèn khả năng chịu được sự nhàm chán thay vì luôn tìm giải trí ngay lập tức.\n\n3. Quit Social Media: đánh giá lại công cụ nào thực sự cần thiết, bỏ những gì chỉ gây xao nhãng.\n\n4. Drain the Shallows: giới hạn thời gian cho công việc nông (shallow work), ưu tiên khối thời gian dài cho việc quan trọng.",
     date: "28 Th04",
     meta: "5 bài học cốt lõi",
     metaType: "lessons",

@@ -8,6 +8,7 @@ import { NoteCard } from "@/components/dashboard/NoteCard";
 import { NewNoteDialog } from "@/components/dashboard/NewNoteDialog";
 import { NewTopicDialog } from "@/components/dashboard/NewTopicDialog";
 import { ConfirmDeleteDialog } from "./components/dashboard/ConfirmDelete";
+import { NoteDetailDialog } from "./components/dashboard/NoteDetail";
 import { SortDropdown } from "@/components/dashboard/SortDropdown";
 import { ViewModeSwitcher } from "@/components/dashboard/ViewModeSwitcher";
 import { Button } from "@/components/ui/button";
@@ -218,6 +219,13 @@ export default function App() {
     setNoteToDelete(null); // đóng dialog sau khi xóa xong
   };
 
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+
+  const handleViewNote = (id: string) => {
+    const target = notes.find((n) => n.id === id);
+    if (target) setSelectedNote(target);
+  };
+
   const handleToggleLock = async (id: string) => {
     const updated = await toggleNoteLock(id);
     setNotes((prev) =>
@@ -373,6 +381,7 @@ export default function App() {
                         viewMode={viewMode}
                         onDelete={requestDeleteNote}
                         onToggleLock={handleToggleLock}
+                        onView={handleViewNote}
                       />
                     ))}
                   </div>
@@ -397,6 +406,14 @@ export default function App() {
             if (!open) setNoteToDelete(null);
           }}
           onConfirm={confirmDeleteNote}
+        />
+
+        <NoteDetailDialog
+          open={selectedNote !== null}
+          note={selectedNote}
+          onOpenChange={(open) => {
+            if (!open) setSelectedNote(null);
+          }}
         />
 
         {/* New Topic Dialog */}

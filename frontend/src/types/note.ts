@@ -17,6 +17,7 @@ export const NoteSchema = z.object({
   topicId: z.string(),
   isLocked: z.boolean(),
   excerpt: z.string(),
+  content: z.string(), //thêm nội dung note 
   date: z.string(),
   meta: z.string(),
   metaType: MetaTypeSchema,
