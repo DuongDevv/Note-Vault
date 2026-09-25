@@ -2,7 +2,6 @@ import { Router } from "express";
 import authRoutes from "./v1/auth.routes";
 import topicRoutes from "./v1/topic.routes";
 import noteRoutes from "./v1/note.routes";
-import privateNoteRoutes from "./v1/private-note.routes";
 
 const router = Router();
 
@@ -10,6 +9,5 @@ const router = Router();
 router.use("/", authRoutes);
 router.use("/", topicRoutes);
 router.use("/", noteRoutes);
-router.use("/", privateNoteRoutes);
 
 export default router;

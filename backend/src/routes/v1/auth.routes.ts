@@ -29,5 +29,11 @@ router.post(
   rateLimiter(5, 60),
   (req, res) => void AuthController.setPrivatePin(req, res),
 );
+router.post(
+  "/profile/verify-pin",
+  authenticateJWT,
+  rateLimiter(5, 60),
+  (req, res) => void AuthController.verifyPin(req, res),
+);
 
 export default router;

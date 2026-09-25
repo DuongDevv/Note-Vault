@@ -1,4 +1,7 @@
 import { z } from "zod";
+import type { Models } from "../prisma/contract.d.ts";
+
+export type User = Models.public_User;
 
 export const registerSchema = z.object({
   username: z.string().trim().min(3, "Username phải có ít nhất 3 ký tự"),
@@ -22,18 +25,18 @@ export const setPrivatePinSchema = z.object({
 
 export type SetPrivatePinInput = z.infer<typeof setPrivatePinSchema>;
 
-export interface UserDbRow {
-  id: string;
-  username: string;
-  email: string;
-  password_hash: string;
-}
+export const verifyPinSchema = z.object({
+  pin: z.string().regex(/^\d{6}$/, "Vui lòng nhập mã PIN gồm 6 chữ số"),
+});
 
-export interface ProfileDbRow {
+export type VerifyPinInput = z.infer<typeof verifyPinSchema>;
+
+export interface UserProfileResponse {
   id: string;
   username: string;
   email: string;
-  display_name: string;
-  theme: string;
-  has_private_pin: boolean;
+  displayName: string;
+  hasPrivatePin: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
