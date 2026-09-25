@@ -5,7 +5,7 @@ NoteVault is a personal knowledge management, structured markdown note-taking, a
 ## Core Knowledge & Organization
 
 **Note**:
-The primary content unit containing a title, markdown or plain text excerpt, categorization tag, creation timestamp, and metadata.
+The primary content unit containing a title, structured ProseMirror JSON AST content (encrypted at rest by default using AES-256-GCM), categorization tags, creation timestamp, and metadata.
 _Avoid_: Document, File, Item, Entry, Record
 
 **Topic**:
@@ -27,9 +27,8 @@ The encrypted storage partition within NoteVault designed for sensitive records 
 _Avoid_: Safe, Locker, Secret Box, Stash
 
 **Private Note**:
-A high-security note whose content is encrypted at rest using AES-256-GCM and requires private session authentication to unlock.
+A high-security note whose encrypted payload requires private session Master PIN authentication to unlock.
 _Avoid_: Secret Note, Hidden Note, Protected Item
-
 **Master PIN**:
 A 4-to-6 digit secret code hashed with Argon2id used to unlock private vault access and generate temporary Redis-backed session tokens.
 _Avoid_: Password, Passcode, Key, Vault Code
