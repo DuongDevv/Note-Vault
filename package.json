@@ -6,14 +6,9 @@
     "dev:backend": "npm run dev --prefix backend",
     "dev:frontend": "npm run dev --prefix frontend",
     "build": "npm run build --prefix backend && npm run build --prefix frontend",
-    "check-types": "bun run --cwd backend check-types && bun run --cwd frontend check-types",
+    "sync:types": "bun run --cwd backend contract:emit && cp backend/src/prisma/contract.d.ts frontend/src/types/backend-contract.d.ts",
+    "check-types": "bun run sync:types && bun run --cwd backend check-types && bun run --cwd frontend check-types",
     "lint": "bun run --cwd backend lint && bun run --cwd frontend lint",
-    "contract:emit": "bun run --cwd backend contract:emit",
-    "db:init": "bun run --cwd backend db:init",
-    "db:update": "bun run --cwd backend db:update",
-    "db:migrate": "bun run --cwd backend db:migrate",
-    "migration:plan": "bun run --cwd backend migration:plan",
-    "migration:status": "bun run --cwd backend migration:status",
     "prepare": "husky"
   },
   "devDependencies": {

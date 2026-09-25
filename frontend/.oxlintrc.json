@@ -5,7 +5,8 @@
     "**/dist/**",
     "**/public/**",
     "src/components/ui/**",
-    "src/types/api-schema.d.ts"
+    "src/types/api-schema.d.ts",
+    "src/types/backend-contract.d.ts"
   ],
   "plugins": ["typescript", "react", "import", "unicorn"],
   "env": {
