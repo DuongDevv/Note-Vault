@@ -37,11 +37,7 @@ _Avoid_: Password, Passcode, Key, Vault Code
 A structured JSON object storing AES-256-GCM encrypted ciphertext, a 16-byte initialization vector (`iv`), and a 16-byte authentication tag (`authTag`).
 _Avoid_: Hash, Secret Blob, Encrypted String
 
-## Presentation & Analytics
-
-**Metric Strip**:
-A responsive dashboard analytic strip summarizing key personal productivity indicators: total note count, encrypted note count, active topics, and recommended review schedule.
-_Avoid_: Stats Bar, Analytics Row, Summary Cards
+## Presentation & Layout
 
 **View Mode**:
 The visualization layout of the note collection, supporting either a responsive multi-column card `grid` or a compact row-based `list`.

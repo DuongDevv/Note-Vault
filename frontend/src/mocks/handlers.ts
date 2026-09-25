@@ -1,15 +1,10 @@
 import { http, HttpResponse } from "msw";
-import {
-  INITIAL_NOTES,
-  INITIAL_TOPICS,
-  INITIAL_METRICS,
-} from "@/data/mock-data";
-import type { Note, Topic, MetricItem } from "@/types/note";
+import { INITIAL_NOTES, INITIAL_TOPICS } from "@/data/mock-data";
+import type { Note, Topic } from "@/types/note";
 
 // In-memory data store for MSW worker session
 let topics: Topic[] = [...INITIAL_TOPICS];
 let notes: Note[] = [...INITIAL_NOTES];
-const metrics: MetricItem[] = [...INITIAL_METRICS];
 
 export const handlers = [
   // GET /api/topics
@@ -124,10 +119,5 @@ export const handlers = [
     );
 
     return HttpResponse.json({ success: true, id });
-  }),
-
-  // GET /api/metrics
-  http.get("/api/metrics", () => {
-    return HttpResponse.json(metrics);
   }),
 ];

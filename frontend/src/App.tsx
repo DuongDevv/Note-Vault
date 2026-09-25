@@ -23,19 +23,12 @@ import {
 import {
   fetchTopics,
   fetchNotes,
-  fetchMetrics,
   createTopic,
   createNote,
   deleteNote,
   toggleNoteLock,
 } from "@/services/api";
-import type {
-  Note,
-  Topic,
-  MetricItem,
-  SortOption,
-  ViewMode,
-} from "@/types/note";
+import type { Note, Topic, SortOption, ViewMode } from "@/types/note";
 
 export default function App() {
   const navigate = useNavigate();
@@ -55,7 +48,6 @@ export default function App() {
   // Data state loaded via MSW API
   const [topics, setTopics] = useState<Topic[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
-  const [metrics, setMetrics] = useState<MetricItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Controls state
@@ -84,18 +76,14 @@ export default function App() {
     activeTab = "topics";
   }
 
-  // Load initial topics and metrics from MSW API
+  // Load initial topics from MSW API
   useEffect(() => {
     let ignore = false;
     async function init() {
       try {
-        const [fetchedTopics, fetchedMetrics] = await Promise.all([
-          fetchTopics(),
-          fetchMetrics(),
-        ]);
+        const fetchedTopics = await fetchTopics();
         if (!ignore) {
           setTopics(fetchedTopics);
-          setMetrics(fetchedMetrics);
         }
       } catch (err) {
         console.error("Failed to load initial data", err);
@@ -250,7 +238,6 @@ export default function App() {
                 <DashboardPage
                   notes={notes}
                   topics={topics}
-                  metrics={metrics}
                   isLoading={isLoading}
                   searchQuery={searchQuery}
                   onClearSearch={() => setSearchQuery("")}
@@ -271,7 +258,6 @@ export default function App() {
                 <DashboardPage
                   notes={notes}
                   topics={topics}
-                  metrics={metrics}
                   isLoading={isLoading}
                   searchQuery={searchQuery}
                   onClearSearch={() => setSearchQuery("")}
@@ -292,7 +278,6 @@ export default function App() {
                 <DashboardPage
                   notes={notes}
                   topics={topics}
-                  metrics={metrics}
                   isLoading={isLoading}
                   searchQuery={searchQuery}
                   onClearSearch={() => setSearchQuery("")}

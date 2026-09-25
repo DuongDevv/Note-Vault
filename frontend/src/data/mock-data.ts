@@ -1,5 +1,4 @@
-import type { Note, Topic, MetricItem } from "@/types/note";
-
+import type { Note, Topic } from "@/types/note";
 export const INITIAL_TOPICS: Topic[] = [
   {
     id: "hoc-tap",
@@ -16,37 +15,6 @@ export const INITIAL_TOPICS: Topic[] = [
     path: "cong-viec",
   },
   { id: "y-tuong", name: "Ý tưởng", icon: "folder", count: 5, path: "y-tuong" },
-];
-
-export const INITIAL_METRICS: MetricItem[] = [
-  {
-    id: "total",
-    label: "Tổng số ghi chú",
-    value: "12",
-    icon: "auto_stories",
-    variant: "primary",
-  },
-  {
-    id: "encrypted",
-    label: "Ghi chú mã hóa",
-    value: "2 mục",
-    icon: "enhanced_encryption",
-    variant: "primary",
-  },
-  {
-    id: "tags",
-    label: "Thẻ chủ đề chính",
-    value: "6 danh mục",
-    icon: "local_offer",
-    variant: "secondary",
-  },
-  {
-    id: "review",
-    label: "Thời gian xem lại gợi ý",
-    value: "Hôm nay",
-    icon: "update",
-    variant: "tertiary",
-  },
 ];
 
 export const INITIAL_NOTES: Note[] = [

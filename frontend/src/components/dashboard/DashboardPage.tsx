@@ -1,17 +1,10 @@
 import { useMemo } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
-import type {
-  Note,
-  Topic,
-  MetricItem,
-  SortOption,
-  ViewMode,
-} from "@/types/note";
+import type { Note, Topic, SortOption, ViewMode } from "@/types/note";
 import { TopicFilterPills } from "@/components/dashboard/TopicFilterPills";
 import { SortDropdown } from "@/components/dashboard/SortDropdown";
 import { ViewModeSwitcher } from "@/components/dashboard/ViewModeSwitcher";
-import { MetricStrip } from "@/components/dashboard/MetricStrip";
 import { NoteCard } from "@/components/dashboard/NoteCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,7 +12,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface DashboardPageProps {
   notes: Note[];
   topics: Topic[];
-  metrics: MetricItem[];
   isLoading: boolean;
   searchQuery: string;
   onClearSearch: () => void;
@@ -35,7 +27,6 @@ interface DashboardPageProps {
 export function DashboardPage({
   notes,
   topics,
-  metrics,
   isLoading,
   searchQuery,
   onClearSearch,
@@ -174,11 +165,6 @@ export function DashboardPage({
                 onViewModeChange={onViewModeChange}
               />
             </div>
-          </div>
-
-          {/* Quick Analytic Strip (Desktop only) */}
-          <div className="hidden md:block">
-            <MetricStrip metrics={metrics} />
           </div>
 
           {/* Notes Container (Grid or List view) */}
