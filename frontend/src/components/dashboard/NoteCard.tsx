@@ -6,21 +6,32 @@ import { NoteActionMenu } from "@/components/dashboard/NoteActionMenu";
 interface NoteCardProps {
   note: Note;
   viewMode: ViewMode;
+  onOpen?: (note: Note) => void;
   onDelete?: (id: string) => void;
   onToggleLock?: (id: string) => void;
 }
 
-
 export function NoteCard({
   note,
   viewMode,
+  onOpen,
   onDelete,
   onToggleLock,
 }: NoteCardProps) {
-
   if (viewMode === "list") {
     return (
-      <article className="group bg-card border-border flex cursor-pointer flex-col items-start justify-between gap-4 rounded-xl border p-4 shadow-sm transition-all duration-200 hover:shadow-md sm:flex-row sm:items-center">
+      <article
+        onClick={(e) => {
+          if (
+            e.target instanceof HTMLElement &&
+            e.target.closest("button, [role='menuitem']")
+          ) {
+            return;
+          }
+          onOpen?.(note);
+        }}
+        className="group bg-card border-border flex cursor-pointer flex-col items-start justify-between gap-4 rounded-xl border p-4 shadow-sm transition-all duration-200 hover:shadow-md sm:flex-row sm:items-center"
+      >
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <NoteTagBadge tag={note.tag} isLocked={note.isLocked} />
@@ -51,7 +62,18 @@ export function NoteCard({
   }
 
   return (
-    <article className="group bg-card border-border flex min-h-55 cursor-pointer flex-col justify-between rounded-xl border p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <article
+      onClick={(e) => {
+        if (
+          e.target instanceof HTMLElement &&
+          e.target.closest("button, [role='menuitem']")
+        ) {
+          return;
+        }
+        onOpen?.(note);
+      }}
+      className="group bg-card border-border flex min-h-55 cursor-pointer flex-col justify-between rounded-xl border p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+    >
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-2">
           <NoteTagBadge tag={note.tag} isLocked={note.isLocked} />

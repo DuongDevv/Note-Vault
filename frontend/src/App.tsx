@@ -1,22 +1,25 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import { Plus } from "lucide-react";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/dashboard/Sidebar";
 import { Header } from "@/components/dashboard/Header";
-import { MetricStrip } from "@/components/dashboard/MetricStrip";
-import { NoteCard } from "@/components/dashboard/NoteCard";
+import { DashboardPage } from "@/components/dashboard/DashboardPage";
+import { NoteEditorPage } from "@/components/editor/NoteEditorPage";
 import { NewNoteDialog } from "@/components/dashboard/NewNoteDialog";
 import { NewTopicDialog } from "@/components/dashboard/NewTopicDialog";
-import { ConfirmDeleteDialog } from "./components/dashboard/ConfirmDelete";
-import { SortDropdown } from "@/components/dashboard/SortDropdown";
-import { ViewModeSwitcher } from "@/components/dashboard/ViewModeSwitcher";
+import { ConfirmDeleteDialog } from "@/components/dashboard/ConfirmDelete";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   MobileBottomNav,
   type MobileTab,
 } from "@/components/dashboard/MobileBottomNav";
-import { TopicFilterPills } from "@/components/dashboard/TopicFilterPills";
 import {
   fetchTopics,
   fetchNotes,
@@ -35,7 +38,9 @@ import type {
 } from "@/types/note";
 
 export default function App() {
-  // Theme state
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem("notevault-theme");
     if (saved) return saved === "dark";
@@ -49,7 +54,6 @@ export default function App() {
 
   // Data state loaded via MSW API
   const [topics, setTopics] = useState<Topic[]>([]);
-  const [activeTopicId, setActiveTopicId] = useState<string>("hoc-tap");
   const [notes, setNotes] = useState<Note[]>([]);
   const [metrics, setMetrics] = useState<MetricItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,8 +66,23 @@ export default function App() {
   // Modals state
   const [isNewNoteOpen, setIsNewNoteOpen] = useState(false);
   const [isNewTopicOpen, setIsNewTopicOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<MobileTab>("notes");
+  const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
 
+  // Derive activeTopicId from URL pathname
+  let activeTopicId = "hoc-tap";
+  if (location.pathname.startsWith("/topics/")) {
+    activeTopicId = location.pathname.slice("/topics/".length) || "hoc-tap";
+  } else if (location.pathname === "/locked") {
+    activeTopicId = "locked";
+  }
+
+  // Derive mobile tab from pathname
+  let activeTab: MobileTab = "notes";
+  if (location.pathname === "/locked") {
+    activeTab = "locked";
+  } else if (location.pathname.startsWith("/topics/")) {
+    activeTab = "topics";
+  }
 
   // Load initial topics and metrics from MSW API
   useEffect(() => {
@@ -74,103 +93,54 @@ export default function App() {
           fetchTopics(),
           fetchMetrics(),
         ]);
-
-        if (ignore) return;
-
-        setTopics(fetchedTopics);
-        setMetrics(fetchedMetrics);
-        if (
-          fetchedTopics.length > 0 &&
-          !fetchedTopics.some((t) => t.id === activeTopicId)
-        ) {
-          setActiveTopicId(fetchedTopics[0].id);
+        if (!ignore) {
+          setTopics(fetchedTopics);
+          setMetrics(fetchedMetrics);
         }
       } catch (err) {
-        console.error("Lỗi khi tải dữ liệu khởi tạo:", err);
+        console.error("Failed to load initial data", err);
       }
     }
-
     void init();
     return () => {
       ignore = true;
     };
-  }, [activeTopicId]);
+  }, []);
 
-  // Load notes whenever activeTopic changes
+  // Fetch notes when active topic changes
   useEffect(() => {
     let ignore = false;
-
-    async function fetchCurrentNotes() {
+    async function loadNotes() {
+      setIsLoading(true);
       try {
-        const fetchedNotes = await fetchNotes(activeTopicId);
+        const topicParam =
+          activeTopicId === "locked" ? undefined : activeTopicId;
+        const fetchedNotes = await fetchNotes(topicParam);
         if (!ignore) {
           setNotes(fetchedNotes);
         }
       } catch (err) {
-        console.error("Lỗi khi tải ghi chú:", err);
+        console.error("Failed to fetch notes", err);
       } finally {
         if (!ignore) {
           setIsLoading(false);
         }
       }
     }
-
-    void fetchCurrentNotes();
+    void loadNotes();
     return () => {
       ignore = true;
     };
   }, [activeTopicId]);
 
-  // Active topic object
-  const activeTopic = useMemo(() => {
-    return (
-      topics.find((t) => t.id === activeTopicId) ?? {
-        id: activeTopicId,
-        name: "Ghi chú",
-        icon: "folder",
-        count: 0,
-        path: activeTopicId,
-      }
-    );
-  }, [topics, activeTopicId]);
-
-  // Filtered & sorted notes
-  const filteredNotes = useMemo(() => {
-    let result = notes;
-    if (activeTab === "locked") {
-      result = result.filter((n) => n.isLocked);
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (n) =>
-          n.title.toLowerCase().includes(q) ||
-          n.tag.toLowerCase().includes(q) ||
-          n.excerpt.toLowerCase().includes(q),
-      );
-    }
-
-    return [...result].toSorted((a, b) => {
-      if (sortOption === "Theo tên (A-Z)") {
-        return a.title.localeCompare(b.title, "vi");
-      }
-      if (sortOption === "Cũ nhất") {
-        return a.id.localeCompare(b.id);
-      }
-      return b.id.localeCompare(a.id);
-    });
-  }, [notes, searchQuery, sortOption, activeTab]);
-
-  const totalNotesCount = useMemo(() => {
-    return topics.reduce((sum, t) => sum + t.count, 0);
-  }, [topics]);
   const handleSelectTopic = (id: string) => {
-    if (id === activeTopicId) return;
-    setIsLoading(true);
-    setActiveTopicId(id);
+    if (id) {
+      void navigate(`/topics/${id}`);
+    } else {
+      void navigate("/");
+    }
   };
 
-  // Handlers invoking MSW API endpoints
   const handleAddNote = async (newNoteData: {
     title: string;
     tag: string;
@@ -185,23 +155,35 @@ export default function App() {
         t.id === created.topicId ? { ...t, count: t.count + 1 } : t,
       ),
     );
+    void navigate(`/notes/${created.id}`);
+  };
+
+  const handleSaveNote = (updated: {
+    id: string;
+    title: string;
+    excerpt: string;
+    content?: string;
+  }) => {
+    setNotes((prev) =>
+      prev.map((n) =>
+        n.id === updated.id
+          ? { ...n, title: updated.title, excerpt: updated.excerpt }
+          : n,
+      ),
+    );
   };
 
   const handleAddTopic = async (name: string) => {
     const created = await createTopic(name);
     setTopics((prev) => [...prev, created]);
-    setActiveTopicId(created.id);
+    void navigate(`/topics/${created.id}`);
   };
 
-  const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
-
-  // Bấm "Xóa" ở menu -> chỉ MỞ dialog xác nhận, chưa xóa gì cả
   const requestDeleteNote = (id: string) => {
     const target = notes.find((n) => n.id === id);
     if (target) setNoteToDelete(target);
   };
 
-  // Bấm "Xóa" trong dialog -> lúc này mới thật sự gọi API xóa
   const confirmDeleteNote = async () => {
     if (!noteToDelete) return;
     const id = noteToDelete.id;
@@ -215,7 +197,7 @@ export default function App() {
           : t,
       ),
     );
-    setNoteToDelete(null); // đóng dialog sau khi xóa xong
+    setNoteToDelete(null);
   };
 
   const handleToggleLock = async (id: string) => {
@@ -227,7 +209,7 @@ export default function App() {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="bg-background text-foreground selection:bg-primary/20 selection:text-primary flex min-h-screen w-full antialiased">
+      <div className="bg-background text-foreground flex min-h-screen w-full antialiased">
         {/* Shadcn UI Sidebar */}
         <AppSidebar
           topics={topics}
@@ -246,150 +228,98 @@ export default function App() {
             onToggleTheme={() => setIsDark((prev) => !prev)}
           />
 
-          {/* Scrollable Page Body */}
-          <main className="bg-background w-full flex-1 px-4 md:px-8 pt-3 md:pt-6 pb-28 md:pb-8">
-            <div className="flex w-full flex-col">
-              <div className="mx-auto flex w-full max-w-[420px] md:max-w-290 flex-col gap-3 md:gap-6">
-                {/* Mobile Dynamic Filter Pill Bar */}
-                <TopicFilterPills
+          {/* Router Outlet / Routes */}
+          <Routes>
+            <Route
+              path="/notes/:noteId"
+              element={
+                <NoteEditorPage
+                  notes={notes}
                   topics={topics}
-                  activeTopicId={activeTopicId}
-                  totalCount={totalNotesCount}
-                  onSelectTopic={handleSelectTopic}
-                  className="md:hidden"
+                  isLoading={isLoading}
+                  onSave={handleSaveNote}
+                  onDelete={requestDeleteNote}
+                  onToggleLock={handleToggleLock}
                 />
+              }
+            />
 
-                {/* Top Action & Context Header (Desktop) */}
-                <div className="border-border hidden md:flex flex-col justify-between gap-4 border-b pb-4 md:flex-row md:items-end">
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex flex-wrap items-baseline gap-3">
-                      <h1 className="text-foreground text-3xl font-semibold tracking-tight md:text-4xl">
-                        {activeTopicId ? activeTopic.name : "Tất cả ghi chú"}
-                      </h1>
-                      <span className="text-muted-foreground text-xs">
-                        Cập nhật 2 phút trước
-                      </span>
-                    </div>
-                  </div>
+            <Route
+              path="/topics/:topicId"
+              element={
+                <DashboardPage
+                  notes={notes}
+                  topics={topics}
+                  metrics={metrics}
+                  isLoading={isLoading}
+                  searchQuery={searchQuery}
+                  onClearSearch={() => setSearchQuery("")}
+                  sortOption={sortOption}
+                  onSortChange={setSortOption}
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  onOpenNewNote={() => setIsNewNoteOpen(true)}
+                  onDeleteNote={requestDeleteNote}
+                  onToggleLock={handleToggleLock}
+                />
+              }
+            />
 
-                  {/* Right Controls Bar */}
-                  <div className="flex flex-wrap items-center gap-2.5 sm:flex-nowrap">
-                    <SortDropdown
-                      sortOption={sortOption}
-                      onSortChange={setSortOption}
-                    />
-                    <ViewModeSwitcher
-                      viewMode={viewMode}
-                      onViewModeChange={setViewMode}
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => setIsNewNoteOpen(true)}
-                      className="flex h-9 items-center gap-1.5 rounded-lg px-3.5 text-xs font-medium shadow-sm active:scale-[0.98] cursor-pointer"
-                    >
-                      <Plus className="size-4" />
-                      <span>Ghi chú mới</span>
-                    </Button>
-                  </div>
-                </div>
+            <Route
+              path="/locked"
+              element={
+                <DashboardPage
+                  notes={notes}
+                  topics={topics}
+                  metrics={metrics}
+                  isLoading={isLoading}
+                  searchQuery={searchQuery}
+                  onClearSearch={() => setSearchQuery("")}
+                  sortOption={sortOption}
+                  onSortChange={setSortOption}
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  onOpenNewNote={() => setIsNewNoteOpen(true)}
+                  onDeleteNote={requestDeleteNote}
+                  onToggleLock={handleToggleLock}
+                />
+              }
+            />
 
-                {/* Mobile Compact Controls Bar */}
-                <div className="flex items-center justify-between gap-2 md:hidden">
-                  <span className="text-muted-foreground truncate text-xs font-medium">
-                    {activeTopicId ? activeTopic.name : "Tất cả"} ({filteredNotes.length})
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <SortDropdown
-                      sortOption={sortOption}
-                      onSortChange={setSortOption}
-                    />
-                    <ViewModeSwitcher
-                      viewMode={viewMode}
-                      onViewModeChange={setViewMode}
-                    />
-                  </div>
-                </div>
+            <Route
+              path="/"
+              element={
+                <DashboardPage
+                  notes={notes}
+                  topics={topics}
+                  metrics={metrics}
+                  isLoading={isLoading}
+                  searchQuery={searchQuery}
+                  onClearSearch={() => setSearchQuery("")}
+                  sortOption={sortOption}
+                  onSortChange={setSortOption}
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  onOpenNewNote={() => setIsNewNoteOpen(true)}
+                  onDeleteNote={requestDeleteNote}
+                  onToggleLock={handleToggleLock}
+                />
+              }
+            />
 
-                {/* Quick Analytic Strip (Desktop only) */}
-                <div className="hidden md:block">
-                  <MetricStrip metrics={metrics} />
-                </div>
-
-                {/* Notes Container (Grid or List view) */}
-                {isLoading ? (
-                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                      <div
-                        key={i}
-                        className="bg-card border-border flex min-h-55 flex-col gap-3 rounded-xl border p-5"
-                      >
-                        <Skeleton className="h-5 w-20 rounded-full" />
-                        <Skeleton className="h-6 w-3/4" />
-                        <Skeleton className="h-16 w-full" />
-                        <div className="mt-auto flex justify-between">
-                          <Skeleton className="h-4 w-20" />
-                          <Skeleton className="h-4 w-16" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : filteredNotes.length === 0 ? (
-                  <div className="bg-card border-border flex min-h-65 flex-col items-center justify-center gap-3 rounded-xl border p-8 text-center shadow-sm">
-                    <p className="text-muted-foreground text-sm">
-                      {searchQuery.trim()
-                        ? `Không tìm thấy ghi chú nào phù hợp với từ khóa "${searchQuery}".`
-                        : `Chưa có ghi chú nào trong chủ đề "${activeTopic.name}".`}
-                    </p>
-                    {searchQuery.trim() ? (
-                      <Button
-                        variant="outline"
-                        onClick={() => setSearchQuery("")}
-                        className="text-primary border-primary/30"
-                      >
-                        Xóa tìm kiếm
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        onClick={() => setIsNewNoteOpen(true)}
-                        className="h-8 text-xs"
-                      >
-                        + Tạo ghi chú đầu tiên
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  <div
-                    className={
-                      viewMode === "grid"
-                        ? "grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3"
-                        : "flex flex-col gap-3"
-                    }
-                  >
-                    {filteredNotes.map((note) => (
-                      <NoteCard
-                        key={note.id}
-                        note={note}
-                        viewMode={viewMode}
-                        onDelete={requestDeleteNote}
-                        onToggleLock={handleToggleLock}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </main>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </SidebarInset>
 
         {/* New Note Dialog */}
         <NewNoteDialog
           open={isNewNoteOpen}
           onOpenChange={setIsNewNoteOpen}
-          activeTopicId={activeTopicId}
+          activeTopicId={activeTopicId === "locked" ? "hoc-tap" : activeTopicId}
           onAddNote={handleAddNote}
         />
 
+        {/* Confirm Delete Dialog */}
         <ConfirmDeleteDialog
           open={noteToDelete !== null}
           noteTitle={noteToDelete?.title}
@@ -411,8 +341,9 @@ export default function App() {
           <Button
             type="button"
             onClick={() => setIsNewNoteOpen(true)}
+            size="icon-lg"
+            className="size-14 cursor-pointer rounded-full shadow-lg"
             aria-label="Tạo ghi chú mới"
-            className="bg-primary text-primary-foreground shadow-primary/25 flex size-14 cursor-pointer items-center justify-center rounded-full shadow-lg transition-transform hover:scale-105 active:scale-90"
           >
             <Plus className="size-6" />
           </Button>
@@ -421,7 +352,13 @@ export default function App() {
         {/* Mobile Bottom Navigation Bar */}
         <MobileBottomNav
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={(tab) => {
+            if (tab === "locked") {
+              void navigate("/locked");
+            } else if (tab === "notes") {
+              void navigate("/");
+            }
+          }}
           onSelectTopic={handleSelectTopic}
         />
       </div>
