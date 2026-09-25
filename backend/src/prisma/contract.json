@@ -8,14 +8,6 @@
       "model": "Note",
       "namespace": "public"
     },
-    "private_notes": {
-      "model": "PrivateNote",
-      "namespace": "public"
-    },
-    "profiles": {
-      "model": "Profile",
-      "namespace": "public"
-    },
     "topics": {
       "model": "Topic",
       "namespace": "public"
@@ -28,30 +20,11 @@
   "domain": {
     "namespaces": {
       "public": {
-        "enum": {
-          "Theme": {
-            "codecId": "pg/text@1",
-            "members": [
-              {
-                "name": "light",
-                "value": "light"
-              },
-              {
-                "name": "dark",
-                "value": "dark"
-              },
-              {
-                "name": "system",
-                "value": "system"
-              }
-            ]
-          }
-        },
         "models": {
           "Note": {
             "fields": {
               "content": {
-                "nullable": false,
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -71,10 +44,25 @@
                   "kind": "scalar"
                 }
               },
+              "isLocked": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
               "isPinned": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
+              "tags": {
+                "many": true,
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
@@ -105,13 +93,6 @@
                   "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
-              },
-              "version": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
               }
             },
             "relations": {
@@ -119,12 +100,8 @@
                 "cardinality": "N:1",
                 "nullable": true,
                 "on": {
-                  "localFields": [
-                    "topicId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
+                  "localFields": ["topicId"],
+                  "targetFields": ["id"]
                 },
                 "to": {
                   "model": "Topic",
@@ -135,12 +112,8 @@
                 "cardinality": "N:1",
                 "nullable": false,
                 "on": {
-                  "localFields": [
-                    "userId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
+                  "localFields": ["userId"],
+                  "targetFields": ["id"]
                 },
                 "to": {
                   "model": "User",
@@ -159,8 +132,14 @@
                 "id": {
                   "column": "id"
                 },
+                "isLocked": {
+                  "column": "is_locked"
+                },
                 "isPinned": {
                   "column": "is_pinned"
+                },
+                "tags": {
+                  "column": "tags"
                 },
                 "title": {
                   "column": "title"
@@ -173,235 +152,10 @@
                 },
                 "userId": {
                   "column": "user_id"
-                },
-                "version": {
-                  "column": "version"
                 }
               },
               "namespaceId": "public",
               "table": "notes"
-            }
-          },
-          "PrivateNote": {
-            "fields": {
-              "authTag": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "createdAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "kind": "scalar"
-                }
-              },
-              "encryptedContent": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "id": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "isPinned": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/bool@1",
-                  "kind": "scalar"
-                }
-              },
-              "iv": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "title": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "updatedAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "kind": "scalar"
-                }
-              },
-              "userId": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "version": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/int4@1",
-                  "kind": "scalar"
-                }
-              }
-            },
-            "relations": {
-              "user": {
-                "cardinality": "N:1",
-                "nullable": false,
-                "on": {
-                  "localFields": [
-                    "userId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "User",
-                  "namespace": "public"
-                }
-              }
-            },
-            "storage": {
-              "fields": {
-                "authTag": {
-                  "column": "auth_tag"
-                },
-                "createdAt": {
-                  "column": "created_at"
-                },
-                "encryptedContent": {
-                  "column": "encrypted_content"
-                },
-                "id": {
-                  "column": "id"
-                },
-                "isPinned": {
-                  "column": "is_pinned"
-                },
-                "iv": {
-                  "column": "iv"
-                },
-                "title": {
-                  "column": "title"
-                },
-                "updatedAt": {
-                  "column": "updated_at"
-                },
-                "userId": {
-                  "column": "user_id"
-                },
-                "version": {
-                  "column": "version"
-                }
-              },
-              "namespaceId": "public",
-              "table": "private_notes"
-            }
-          },
-          "Profile": {
-            "fields": {
-              "displayName": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "id": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "privatePinHash": {
-                "nullable": true,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              },
-              "theme": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                },
-                "valueSet": {
-                  "entityKind": "enum",
-                  "entityName": "Theme",
-                  "namespaceId": "public",
-                  "plane": "domain"
-                }
-              },
-              "updatedAt": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "kind": "scalar"
-                }
-              },
-              "userId": {
-                "nullable": false,
-                "type": {
-                  "codecId": "pg/text@1",
-                  "kind": "scalar"
-                }
-              }
-            },
-            "relations": {
-              "user": {
-                "cardinality": "N:1",
-                "nullable": false,
-                "on": {
-                  "localFields": [
-                    "userId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
-                },
-                "to": {
-                  "model": "User",
-                  "namespace": "public"
-                }
-              }
-            },
-            "storage": {
-              "fields": {
-                "displayName": {
-                  "column": "display_name"
-                },
-                "id": {
-                  "column": "id"
-                },
-                "privatePinHash": {
-                  "column": "private_pin_hash"
-                },
-                "theme": {
-                  "column": "theme"
-                },
-                "updatedAt": {
-                  "column": "updated_at"
-                },
-                "userId": {
-                  "column": "user_id"
-                }
-              },
-              "namespaceId": "public",
-              "table": "profiles"
             }
           },
           "Topic": {
@@ -417,6 +171,13 @@
                 "nullable": false,
                 "type": {
                   "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "icon": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
@@ -460,12 +221,8 @@
               "notes": {
                 "cardinality": "1:N",
                 "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "topicId"
-                  ]
+                  "localFields": ["id"],
+                  "targetFields": ["topicId"]
                 },
                 "to": {
                   "model": "Note",
@@ -476,12 +233,8 @@
                 "cardinality": "N:1",
                 "nullable": false,
                 "on": {
-                  "localFields": [
-                    "userId"
-                  ],
-                  "targetFields": [
-                    "id"
-                  ]
+                  "localFields": ["userId"],
+                  "targetFields": ["id"]
                 },
                 "to": {
                   "model": "User",
@@ -496,6 +249,9 @@
                 },
                 "createdAt": {
                   "column": "created_at"
+                },
+                "icon": {
+                  "column": "icon"
                 },
                 "id": {
                   "column": "id"
@@ -526,6 +282,13 @@
                   "kind": "scalar"
                 }
               },
+              "displayName": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "email": {
                 "nullable": false,
                 "type": {
@@ -542,6 +305,13 @@
               },
               "passwordHash": {
                 "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "privatePinHash": {
+                "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -566,58 +336,19 @@
               "notes": {
                 "cardinality": "1:N",
                 "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "userId"
-                  ]
+                  "localFields": ["id"],
+                  "targetFields": ["userId"]
                 },
                 "to": {
                   "model": "Note",
                   "namespace": "public"
                 }
               },
-              "privateNotes": {
-                "cardinality": "1:N",
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "userId"
-                  ]
-                },
-                "to": {
-                  "model": "PrivateNote",
-                  "namespace": "public"
-                }
-              },
-              "profile": {
-                "cardinality": "1:1",
-                "nullable": true,
-                "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "userId"
-                  ]
-                },
-                "to": {
-                  "model": "Profile",
-                  "namespace": "public"
-                }
-              },
               "topics": {
                 "cardinality": "1:N",
                 "on": {
-                  "localFields": [
-                    "id"
-                  ],
-                  "targetFields": [
-                    "userId"
-                  ]
+                  "localFields": ["id"],
+                  "targetFields": ["userId"]
                 },
                 "to": {
                   "model": "Topic",
@@ -630,6 +361,9 @@
                 "createdAt": {
                   "column": "created_at"
                 },
+                "displayName": {
+                  "column": "display_name"
+                },
                 "email": {
                   "column": "email"
                 },
@@ -638,6 +372,9 @@
                 },
                 "passwordHash": {
                   "column": "password_hash"
+                },
+                "privatePinHash": {
+                  "column": "private_pin_hash"
                 },
                 "updatedAt": {
                   "column": "updated_at"
@@ -660,11 +397,18 @@
         "entries": {
           "table": {
             "notes": {
+              "checks": [
+                {
+                  "expression": "array_position(\"tags\", NULL) IS NULL",
+                  "name": "notes_tags_elem_not_null_aecbe9e2",
+                  "prefix": "notes_tags_elem_not_null"
+                }
+              ],
               "columns": {
                 "content": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
-                  "nullable": false
+                  "nullable": true
                 },
                 "created_at": {
                   "codecId": "pg/timestamptz-temporal@1",
@@ -680,6 +424,15 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "is_locked": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
                 "is_pinned": {
                   "codecId": "pg/bool@1",
                   "default": {
@@ -687,6 +440,16 @@
                     "value": false
                   },
                   "nativeType": "bool",
+                  "nullable": false
+                },
+                "tags": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": []
+                  },
+                  "many": true,
+                  "nativeType": "text",
                   "nullable": false
                 },
                 "title": {
@@ -712,31 +475,18 @@
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
-                },
-                "version": {
-                  "codecId": "pg/int4@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": 1
-                  },
-                  "nativeType": "int4",
-                  "nullable": false
                 }
               },
               "foreignKeys": [
                 {
                   "onDelete": "cascade",
                   "source": {
-                    "columns": [
-                      "user_id"
-                    ],
+                    "columns": ["user_id"],
                     "namespaceId": "public",
                     "tableName": "notes"
                   },
                   "target": {
-                    "columns": [
-                      "id"
-                    ],
+                    "columns": ["id"],
                     "namespaceId": "public",
                     "tableName": "users"
                   }
@@ -744,16 +494,12 @@
                 {
                   "onDelete": "setNull",
                   "source": {
-                    "columns": [
-                      "topic_id"
-                    ],
+                    "columns": ["topic_id"],
                     "namespaceId": "public",
                     "tableName": "notes"
                   },
                   "target": {
-                    "columns": [
-                      "id"
-                    ],
+                    "columns": ["id"],
                     "namespaceId": "public",
                     "tableName": "topics"
                   }
@@ -761,247 +507,34 @@
               ],
               "indexes": [
                 {
-                  "columns": [
-                    "topic_id"
-                  ],
+                  "columns": ["topic_id"],
                   "name": "notes_topic_id_idx_334b0e8b",
                   "prefix": "notes_topic_id_idx",
                   "unique": false
                 },
                 {
-                  "columns": [
-                    "user_id",
-                    "created_at"
-                  ],
-                  "name": "notes_user_id_created_at_idx_b562028f",
-                  "prefix": "notes_user_id_created_at_idx",
-                  "unique": false
-                },
-                {
-                  "columns": [
-                    "user_id"
-                  ],
+                  "columns": ["user_id"],
                   "name": "notes_user_id_idx_6c952402",
                   "prefix": "notes_user_id_idx",
                   "unique": false
                 },
                 {
-                  "columns": [
-                    "user_id",
-                    "topic_id"
-                  ],
+                  "columns": ["user_id", "is_pinned", "created_at"],
+                  "name": "notes_user_id_is_pinned_created_at_idx_434db8a8",
+                  "prefix": "notes_user_id_is_pinned_created_at_idx",
+                  "unique": false
+                },
+                {
+                  "columns": ["user_id", "topic_id"],
                   "name": "notes_user_id_topic_id_idx_46b1bc56",
                   "prefix": "notes_user_id_topic_id_idx",
                   "unique": false
                 }
               ],
               "primaryKey": {
-                "columns": [
-                  "id"
-                ]
+                "columns": ["id"]
               },
               "uniques": []
-            },
-            "private_notes": {
-              "columns": {
-                "auth_tag": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "created_at": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "default": {
-                    "expression": "now()",
-                    "kind": "function"
-                  },
-                  "nativeType": "timestamptz",
-                  "nullable": false
-                },
-                "encrypted_content": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "id": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "is_pinned": {
-                  "codecId": "pg/bool@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": false
-                  },
-                  "nativeType": "bool",
-                  "nullable": false
-                },
-                "iv": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "title": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "updated_at": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "default": {
-                    "expression": "now()",
-                    "kind": "function"
-                  },
-                  "nativeType": "timestamptz",
-                  "nullable": false
-                },
-                "user_id": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "version": {
-                  "codecId": "pg/int4@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": 1
-                  },
-                  "nativeType": "int4",
-                  "nullable": false
-                }
-              },
-              "foreignKeys": [
-                {
-                  "onDelete": "cascade",
-                  "source": {
-                    "columns": [
-                      "user_id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "private_notes"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "users"
-                  }
-                }
-              ],
-              "indexes": [
-                {
-                  "columns": [
-                    "user_id",
-                    "created_at"
-                  ],
-                  "name": "private_notes_user_id_created_at_idx_b562028f",
-                  "prefix": "private_notes_user_id_created_at_idx",
-                  "unique": false
-                },
-                {
-                  "columns": [
-                    "user_id"
-                  ],
-                  "name": "private_notes_user_id_idx_6c952402",
-                  "prefix": "private_notes_user_id_idx",
-                  "unique": false
-                }
-              ],
-              "primaryKey": {
-                "columns": [
-                  "id"
-                ]
-              },
-              "uniques": []
-            },
-            "profiles": {
-              "checks": [
-                {
-                  "expression": "\"theme\" IN ('light', 'dark', 'system')",
-                  "name": "profiles_theme_check_f80a9b2a",
-                  "prefix": "profiles_theme_check"
-                }
-              ],
-              "columns": {
-                "display_name": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "id": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                },
-                "private_pin_hash": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": true
-                },
-                "theme": {
-                  "codecId": "pg/text@1",
-                  "default": {
-                    "kind": "literal",
-                    "value": "light"
-                  },
-                  "nativeType": "text",
-                  "nullable": false,
-                  "valueSet": {
-                    "entityKind": "valueSet",
-                    "entityName": "Theme",
-                    "namespaceId": "public",
-                    "plane": "storage"
-                  }
-                },
-                "updated_at": {
-                  "codecId": "pg/timestamptz-temporal@1",
-                  "default": {
-                    "expression": "now()",
-                    "kind": "function"
-                  },
-                  "nativeType": "timestamptz",
-                  "nullable": false
-                },
-                "user_id": {
-                  "codecId": "pg/text@1",
-                  "nativeType": "text",
-                  "nullable": false
-                }
-              },
-              "foreignKeys": [
-                {
-                  "onDelete": "cascade",
-                  "source": {
-                    "columns": [
-                      "user_id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "profiles"
-                  },
-                  "target": {
-                    "columns": [
-                      "id"
-                    ],
-                    "namespaceId": "public",
-                    "tableName": "users"
-                  }
-                }
-              ],
-              "indexes": [],
-              "primaryKey": {
-                "columns": [
-                  "id"
-                ]
-              },
-              "uniques": [
-                {
-                  "columns": [
-                    "user_id"
-                  ]
-                }
-              ]
             },
             "topics": {
               "columns": {
@@ -1021,6 +554,15 @@
                     "kind": "function"
                   },
                   "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "icon": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "folder"
+                  },
+                  "nativeType": "text",
                   "nullable": false
                 },
                 "id": {
@@ -1057,16 +599,12 @@
                 {
                   "onDelete": "cascade",
                   "source": {
-                    "columns": [
-                      "user_id"
-                    ],
+                    "columns": ["user_id"],
                     "namespaceId": "public",
                     "tableName": "topics"
                   },
                   "target": {
-                    "columns": [
-                      "id"
-                    ],
+                    "columns": ["id"],
                     "namespaceId": "public",
                     "tableName": "users"
                   }
@@ -1074,25 +612,18 @@
               ],
               "indexes": [
                 {
-                  "columns": [
-                    "user_id"
-                  ],
+                  "columns": ["user_id"],
                   "name": "topics_user_id_idx_6c952402",
                   "prefix": "topics_user_id_idx",
                   "unique": false
                 }
               ],
               "primaryKey": {
-                "columns": [
-                  "id"
-                ]
+                "columns": ["id"]
               },
               "uniques": [
                 {
-                  "columns": [
-                    "user_id",
-                    "slug"
-                  ]
+                  "columns": ["user_id", "slug"]
                 }
               ]
             },
@@ -1105,6 +636,15 @@
                     "kind": "function"
                   },
                   "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "display_name": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "Người dùng"
+                  },
+                  "nativeType": "text",
                   "nullable": false
                 },
                 "email": {
@@ -1121,6 +661,11 @@
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
+                },
+                "private_pin_hash": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
                 },
                 "updated_at": {
                   "codecId": "pg/timestamptz-temporal@1",
@@ -1140,31 +685,15 @@
               "foreignKeys": [],
               "indexes": [],
               "primaryKey": {
-                "columns": [
-                  "id"
-                ]
+                "columns": ["id"]
               },
               "uniques": [
                 {
-                  "columns": [
-                    "username"
-                  ]
+                  "columns": ["username"]
                 },
                 {
-                  "columns": [
-                    "email"
-                  ]
+                  "columns": ["email"]
                 }
-              ]
-            }
-          },
-          "valueSet": {
-            "Theme": {
-              "kind": "valueSet",
-              "values": [
-                "light",
-                "dark",
-                "system"
               ]
             }
           }
@@ -1173,10 +702,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "415d2922d046bc784f6ca67a10ad34350b5ec6269b495966cad888fe0c7d1927"
+    "storageHash": "4cbbe9e64f1b04f6ee81cf1c679a51128b617fce726fe1bd6b29bc5d89e36965"
   },
   "execution": {
-    "executionHash": "84779d310214734ea679ddbc26e9d549371ddccfca89a91e1c15721d49bcd223",
+    "executionHash": "d38bbdd24aa362a5e2e0dc8a53099967e444ef68caaf9ed50028d7af92d66a90",
     "mutations": {
       "defaults": [
         {
@@ -1188,28 +717,6 @@
             "column": "id",
             "namespace": "public",
             "table": "notes"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "uuidv4",
-            "kind": "generator"
-          },
-          "ref": {
-            "column": "id",
-            "namespace": "public",
-            "table": "private_notes"
-          }
-        },
-        {
-          "onCreate": {
-            "id": "uuidv4",
-            "kind": "generator"
-          },
-          "ref": {
-            "column": "id",
-            "namespace": "public",
-            "table": "profiles"
           }
         },
         {

@@ -1,34 +1,17 @@
-enum Theme {
-  light
-  dark
-  system
-}
-
 model User {
-  id           String        @id @default(uuid())
-  username     String        @unique
-  email        String        @unique
-  passwordHash String        @map("password_hash")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @default(now()) @map("updated_at")
-  profile      Profile?
-  topics       Topic[]
-  notes        Note[]
-  privateNotes PrivateNote[]
+  id             String   @id @default(uuid())
+  username       String   @unique
+  email          String   @unique
+  passwordHash   String   @map("password_hash")
+  displayName    String   @default("Người dùng") @map("display_name")
+  privatePinHash String?  @map("private_pin_hash")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @map("updated_at")
+
+  topics Topic[]
+  notes  Note[]
 
   @@map("users")
-}
-
-model Profile {
-  id             String   @id @default(uuid())
-  userId         String   @unique @map("user_id")
-  displayName    String   @map("display_name")
-  theme          Theme    @default(light)
-  privatePinHash String?  @map("private_pin_hash")
-  updatedAt      DateTime @default(now()) @map("updated_at")
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("profiles")
 }
 
 model Topic {
@@ -37,10 +20,12 @@ model Topic {
   name      String
   slug      String
   color     String   @default("#000000")
+  icon      String   @default("folder")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  notes     Note[]
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes Note[]
 
   @@unique([userId, slug])
   @@map("topics")
@@ -51,32 +36,17 @@ model Note {
   userId    String   @map("user_id")
   topicId   String?  @map("topic_id")
   title     String
-  content   String
+  content   String?
+  tags      String[] @default([])
   isPinned  Boolean  @default(false) @map("is_pinned")
-  version   Int      @default(1)
+  isLocked  Boolean  @default(false) @map("is_locked")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  topic     Topic?   @relation(fields: [topicId], references: [id], onDelete: SetNull)
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic Topic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
 
   @@index([userId, topicId])
-  @@index([userId, createdAt])
+  @@index([userId, isPinned, createdAt])
   @@map("notes")
-}
-
-model PrivateNote {
-  id               String   @id @default(uuid())
-  userId           String   @map("user_id")
-  title            String
-  encryptedContent String   @map("encrypted_content")
-  iv               String
-  authTag          String   @map("auth_tag")
-  isPinned         Boolean  @default(false) @map("is_pinned")
-  version          Int      @default(1)
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @default(now()) @map("updated_at")
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, createdAt])
-  @@map("private_notes")
 }

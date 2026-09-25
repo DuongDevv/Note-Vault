@@ -1,9 +1,9 @@
 {
-  "backend/src/**/*.ts": [
+  "backend/src/**/!(*.d).ts": [
     "prettier --write",
     "oxlint --config backend/.oxlintrc.json --fix"
   ],
-  "frontend/src/**/*.{ts,tsx}": [
+  "frontend/src/**/!(*.d).{ts,tsx}": [
     "prettier --write",
     "oxlint --config frontend/.oxlintrc.json --fix"
   ],

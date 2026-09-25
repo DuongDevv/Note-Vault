@@ -1,91 +1,60 @@
-datasource db {                                                                                  
-    provider = "postgresql"                                                                        
-    url = env("DATABASE_URL")                                                                 
-}                                                                                                
-                                                                                                
-generator client {                                                                               
-    provider = "prisma-client-js"                                                                  
-}                                                                                                
-                                                                                                
-enum Theme {                                                                                     
-    light                                                                                          
-    dark                                                                                           
-    system                                                                                         
-}                                                                                                
-                                                                                                
-model User {                                                                                     
-    id String @id @default(uuid()) @db.Uuid                                       
-    username String @unique @db.VarChar(50)                                             
-    email String @unique @db.VarChar(100)                                            
-    passwordHash String @map("password_hash") @db.VarChar(255)                              
-    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz                  
-    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz       
-    profile Profile?                                                                          
-    topics Topic[]                                                                           
-    notes Note[]                                                                            
-    privateNotes PrivateNote[]                                                                     
-                                                                                                
-    @@map("users")                                                                                 
-}                                                                                                
-                                                                                                
-model Profile {                                                                                  
-    id String @id @default(uuid()) @db.Uuid                                          
-    userId String @unique @map("user_id") @db.Uuid                                       
-    displayName String @map("display_name") @db.VarChar(100)                                  
-    theme Theme @default(light)                                                        
-    privatePinHash String? @map("private_pin_hash") @db.VarChar(255)                              
-    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz          
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)       
-                                                                                                
-    @@map("profiles")                                                                              
-}                                                                                                
-                                                                                                
-model Topic {                                                                                    
-    id String @id @default(uuid()) @db.Uuid                                               
-    userId String @map("user_id") @db.Uuid                                                    
-    name String @db.VarChar(100)                                                            
-    slug String @db.VarChar(100)                                                            
-    color String @default("#000000") @db.VarChar(7)                                          
-    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz                          
-    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz               
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)            
-    notes Note[]                                                                               
-                                                                                                
-    @@unique([userId, slug], name: "uq_user_topic_slug")                                           
-    @@map("topics")                                                                                
-}                                                                                                
-                                                                                                
-model Note {                                                                                     
-    id String @id @default(uuid()) @db.Uuid                                               
-    userId String @map("user_id") @db.Uuid                                                    
-    topicId String? @map("topic_id") @db.Uuid                                                   
-    title String @db.VarChar(255)                                                            
-    content String @db.Text                                                                    
-    isPinned Boolean @default(false) @map("is_pinned")                                           
-    version Int @default(1)                                                                 
-    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz                          
-    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz               
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)            
-    topic Topic? @relation(fields: [topicId], references: [id], onDelete: SetNull)           
-                                                                                                
-    @@index([userId, topicId], map: "idx_notes_user_topic")                                        
-    @@index([userId, createdAt(sort: Desc)], map: "idx_notes_user_created")                        
-    @@map("notes")                                                                                 
-}                                                                                                
-                                                                                                
-model PrivateNote {                                                                              
-    id String @id @default(uuid()) @db.Uuid                                        
-    userId String @map("user_id") @db.Uuid                                             
-    title String @db.VarChar(255)                                                     
-    encryptedContent String @map("encrypted_content") @db.Text                                   
-    iv String @db.VarChar(64)                                                      
-    authTag String @map("auth_tag") @db.VarChar(64)                                     
-    isPinned Boolean @default(false) @map("is_pinned")                                    
-    version Int @default(1)                                                          
-    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz                   
-    updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz        
-    user User @relation(fields: [userId], references: [id], onDelete: Cascade)     
-                                                                                                
-    @@index([userId, createdAt(sort: Desc)], map: "idx_private_notes_user")                        
-    @@map("private_notes")                                                                         
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String   @id @default(uuid()) @db.Uuid
+  username       String   @unique @db.VarChar(50)
+  email          String   @unique @db.VarChar(100)
+  passwordHash   String   @map("password_hash") @db.VarChar(255)
+  displayName    String   @default("Người dùng") @map("display_name") @db.VarChar(100)
+  privatePinHash String?  @map("private_pin_hash") @db.VarChar(255)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  topics Topic[]
+  notes  Note[]
+
+  @@map("users")
+}
+
+model Topic {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  name      String   @db.VarChar(100)
+  slug      String   @db.VarChar(100)
+  color     String   @default("#000000") @db.VarChar(7)
+  icon      String   @default("folder") @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes Note[]
+
+  @@unique([userId, slug], name: "uq_user_topic_slug")
+  @@map("topics")
+}
+
+model Note {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  topicId   String?  @map("topic_id") @db.Uuid
+  title     String   @db.VarChar(255)
+  content   String?  @db.Text
+  tags      String[] @default([])
+  isPinned  Boolean  @default(false) @map("is_pinned")
+  isLocked  Boolean  @default(false) @map("is_locked")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic Topic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
+
+  @@index([userId, topicId], map: "idx_notes_user_topic")
+  @@index([userId, isPinned, createdAt], map: "idx_notes_user_pinned_created")
+  @@map("notes")
 }
