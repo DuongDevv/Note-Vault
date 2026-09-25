@@ -1,65 +1,65 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%" fill="none">
   <defs>
-    <!-- Background Squircle Gradient -->
+    <!-- Background Squircle Gradient (Obsidian / Matte Charcoal) -->
     <linearGradient id="bg-grad" x1="64" y1="32" x2="448" y2="480" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#3b82f6" />
-      <stop offset="50%" stop-color="#2563eb" />
-      <stop offset="100%" stop-color="#1d4ed8" />
+      <stop offset="0%" stop-color="#27272a" />
+      <stop offset="50%" stop-color="#18181b" />
+      <stop offset="100%" stop-color="#09090b" />
     </linearGradient>
 
-    <!-- Shackle Metallic Gradient -->
+    <!-- Shackle Metallic Silver Gradient -->
     <linearGradient id="shackle-grad" x1="184" y1="90" x2="328" y2="230" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#ffffff" />
-      <stop offset="70%" stop-color="#dbeafe" />
-      <stop offset="100%" stop-color="#93c5fd" />
+      <stop offset="45%" stop-color="#e4e4e7" />
+      <stop offset="85%" stop-color="#a1a1aa" />
+      <stop offset="100%" stop-color="#71717a" />
     </linearGradient>
 
-    <!-- Note Body Subtle Depth -->
-    <linearGradient id="body-grad" x1="256" y1="200" x2="256" y2="420" gradientUnits="userSpaceOnUse">
+    <!-- Note Body Minimalist Clean White/Silver Gradient -->
+    <linearGradient id="body-grad" x1="256" y1="180" x2="256" y2="430" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#ffffff" />
-      <stop offset="100%" stop-color="#eff6ff" />
+      <stop offset="100%" stop-color="#f4f4f5" />
     </linearGradient>
 
-    <!-- Folded Corner Gradient -->
+    <!-- Folded Corner Minimalist Gradient -->
     <linearGradient id="fold-grad" x1="300" y1="200" x2="368" y2="268" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#bfdbfe" />
-      <stop offset="100%" stop-color="#93c5fd" />
+      <stop offset="0%" stop-color="#e4e4e7" />
+      <stop offset="100%" stop-color="#d4d4d8" />
     </linearGradient>
 
-    <!-- Keyhole Glow & Depth -->
+    <!-- Keyhole Gradient -->
     <linearGradient id="keyhole-grad" x1="256" y1="280" x2="256" y2="355" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#1e40af" />
-      <stop offset="100%" stop-color="#1e3a8a" />
+      <stop offset="0%" stop-color="#18181b" />
+      <stop offset="100%" stop-color="#27272a" />
     </linearGradient>
 
-    <!-- Drop Shadows for Studio Quality -->
+    <!-- Drop Shadows for Obsidian Precision -->
     <filter id="shadow-canvas" x="0" y="0" width="512" height="512" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#1e3a8a" flood-opacity="0.35" />
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.4" />
     </filter>
 
     <filter id="shackle-shadow" x="140" y="70" width="232" height="170" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0f172a" flood-opacity="0.25" />
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.3" />
     </filter>
 
     <filter id="body-shadow" x="110" y="180" width="292" height="260" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0f172a" flood-opacity="0.2" />
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.25" />
     </filter>
   </defs>
 
-  <!-- Base App Squircle / Studio Canvas -->
+  <!-- Base App Squircle -->
   <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#bg-grad)" />
 
-  <!-- Subtle Inner Top Highlight -->
-  <rect x="34" y="34" width="444" height="444" rx="110" stroke="#ffffff" stroke-opacity="0.25" stroke-width="3" fill="none" />
+  <!-- Subtle Inner Stroke Highlight -->
+  <rect x="33" y="33" width="446" height="446" rx="111" stroke="#ffffff" stroke-opacity="0.12" stroke-width="2" fill="none" />
 
   <!-- Vault Shackle (The Lock Arch) -->
   <g filter="url(#shackle-shadow)">
-    <!-- Outer Arch -->
     <path
-      d="M184 220 V162 C184 122.235 216.235 90 256 90 C295.765 90 328 122.235 328 162 V220"
+      d="M 184 210 V 160 C 184 120, 328 120, 328 160 V 210"
       fill="none"
       stroke="url(#shackle-grad)"
-      stroke-width="34"
+      stroke-width="38"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
@@ -67,53 +67,33 @@
 
   <!-- Note Body / Vault Chest with Folded Corner -->
   <g filter="url(#body-shadow)">
-    <!-- Main Body Shape: Folded Corner on Top-Right -->
+    <!-- Base Note Document Geometry -->
     <path
-      d="M168 204
-         H304
-         L364 264
-         V376
-         C364 398.091 346.091 416 324 416
-         H168
-         C145.909 416 128 398.091 128 376
-         V244
-         C128 221.909 145.909 204 168 204 Z"
+      d="M 172 200 H 304 L 368 264 V 396 C 368 412, 356 424, 340 424 H 172 C 156 424, 144 412, 144 396 V 228 C 144 212, 156 200, 172 200 Z"
       fill="url(#body-grad)"
     />
 
-    <!-- Folded Dog-Ear Corner -->
+    <!-- Folded Corner Flap Geometry -->
     <path
-      d="M304 204
-         V248
-         C304 256.837 311.163 264 320 264
-         H364 Z"
+      d="M 304 200 V 244 C 304 256, 316 264, 328 264 H 368 Z"
       fill="url(#fold-grad)"
     />
     <path
-      d="M304 204 L364 264"
-      stroke="#93c5fd"
-      stroke-width="2"
-      fill="none"
+      d="M 304 200 L 368 264"
+      stroke="#a1a1aa"
+      stroke-width="1.5"
+      stroke-linecap="round"
     />
 
-    <!-- Minimal Note Lines (Active Recall / Knowledge representation) -->
-    <rect x="164" y="254" width="80" height="8" rx="4" fill="#cbd5e1" />
-    <rect x="164" y="276" width="56" height="8" rx="4" fill="#e2e8f0" />
+    <!-- Minimalist Note Texture Lines -->
+    <rect x="180" y="240" width="70" height="7" rx="3.5" fill="#a1a1aa" fill-opacity="0.7" />
+    <rect x="180" y="260" width="90" height="7" rx="3.5" fill="#a1a1aa" fill-opacity="0.5" />
 
-    <!-- Cryptographic Vault Keyhole (AES-256 Sanctuary) -->
-    <!-- Circular Keyhole Top -->
-    <circle cx="272" cy="326" r="20" fill="url(#keyhole-grad)" />
-    <!-- Keyhole Slot Bottom -->
+    <!-- Cryptographic Vault Keyhole -->
+    <circle cx="256" cy="326" r="18" fill="url(#keyhole-grad)" />
     <path
-      d="M263 336
-         L259 366
-         C258.5 370 261.5 374 266 374
-         H278
-         C282.5 374 285.5 370 285 366
-         L281 336 Z"
+      d="M 248 332 L 243 368 C 243 371, 246 374, 250 374 H 262 C 266 374, 269 371, 269 368 L 264 332 Z"
       fill="url(#keyhole-grad)"
     />
-    <!-- Tiny Center Security Core (Cyan Pin) -->
-    <circle cx="272" cy="326" r="6" fill="#60a5fa" />
   </g>
 </svg>

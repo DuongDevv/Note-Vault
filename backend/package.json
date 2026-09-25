@@ -4,14 +4,19 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "npx tsx watch src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "check": "bun run check-types && bun run lint",
     "check-types": "tsc --noEmit",
     "lint": "oxlint --type-aware --fix",
     "format": "prettier --write \"src/**/*.ts\" \"prisma.config.ts\"",
-    "contract:emit": "prisma contract emit"
+    "contract:emit": "prisma contract emit",
+    "db:init": "prisma db init",
+    "db:update": "prisma db update",
+    "db:migrate": "prisma db migrate",
+    "migration:plan": "prisma migration plan",
+    "migration:status": "prisma migration status"
   },
   "keywords": [],
   "type": "module",

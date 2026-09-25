@@ -21,10 +21,18 @@ export function sendSuccess(
 export function sendError(
   res: Response,
   statusCode: number,
-  message: string,
-  error: string,
+  errorCodeOrMessage: string,
+  messageOrError?: string,
   details?: unknown,
 ) {
+  const isMachineCode = /^[A-Z0-9_]+$/.test(errorCodeOrMessage);
+  const error = isMachineCode
+    ? errorCodeOrMessage
+    : (messageOrError ?? "ERROR");
+  const message = isMachineCode
+    ? (messageOrError ?? errorCodeOrMessage)
+    : errorCodeOrMessage;
+
   return res.status(statusCode).json({
     success: false,
     statusCode,

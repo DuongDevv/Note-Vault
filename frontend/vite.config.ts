@@ -13,4 +13,44 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:5000",
+        changeOrigin: true,
+      },
+    },
+  },
+  build: {
+    chunkSizeWarningLimit: 600,
+    rolldownOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (id.includes("node_modules")) {
+            if (id.includes("@tiptap") || id.includes("prosemirror")) {
+              return "vendor-tiptap";
+            }
+            if (id.includes("highlight.js") || id.includes("lowlight")) {
+              return "vendor-syntax";
+            }
+            if (
+              id.includes("react-router") ||
+              id.includes("react-dom") ||
+              id.includes("/react/")
+            ) {
+              return "vendor-react";
+            }
+            if (
+              id.includes("@base-ui") ||
+              id.includes("lucide-react") ||
+              id.includes("zod")
+            ) {
+              return "vendor-ui";
+            }
+          }
+          return undefined;
+        },
+      },
+    },
+  },
 });

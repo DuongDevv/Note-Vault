@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Response } from "express";
 import { dbPool } from "../config/database";
 import { ApiResponse } from "../utils/response.util";
@@ -5,7 +6,7 @@ import type { AuthenticatedRequest } from "../middlewares/auth.middleware";
 import {
   createTopicSchema,
   topicIdParamSchema,
-  type TopicDbRow,
+  type TopicResponse,
 } from "../schemas/topic.schema";
 
 // Lấy danh sách Chủ đề của User (GET /api/v1/topics)
@@ -21,11 +22,11 @@ export async function getTopics(req: AuthenticatedRequest, res: Response) {
   }
 
   try {
-    const result = await dbPool.query<TopicDbRow>(
-      `SELECT id, name, slug, color, created_at, updated_at                                                                                                                                              
-              FROM topics                                                                                                                                                                                       
-              WHERE user_id = $1                                                                                                                                                                                
-              ORDER BY name ASC`,
+    const result = await dbPool.query<TopicResponse>(
+      `SELECT id, user_id as "userId", name, slug, color, icon, created_at as "createdAt", updated_at as "updatedAt"
+       FROM topics
+       WHERE user_id = $1
+       ORDER BY name ASC`,
       [userId],
     );
 
@@ -61,7 +62,7 @@ export async function createTopic(req: AuthenticatedRequest, res: Response) {
     return ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
   }
 
-  const { name, color } = parsed.data;
+  const { name, color, icon } = parsed.data;
 
   // Tự sinh slug từ name
   const slug = name
@@ -71,13 +72,12 @@ export async function createTopic(req: AuthenticatedRequest, res: Response) {
     .replace(/(^-|-$)+/g, "");
 
   try {
-    const result = await dbPool.query<
-      Pick<TopicDbRow, "id" | "name" | "slug" | "color" | "created_at">
-    >(
-      `INSERT INTO topics (user_id, name, slug, color)                                                                                                                                                   
-              VALUES ($1, $2, $3, $4)                                                                                                                                                                           
-              RETURNING id, name, slug, color, created_at`,
-      [userId, name, slug, color],
+    const topicId = randomUUID();
+    const result = await dbPool.query<TopicResponse>(
+      `INSERT INTO topics (id, user_id, name, slug, color, icon)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, user_id as "userId", name, slug, color, icon, created_at as "createdAt", updated_at as "updatedAt"`,
+      [topicId, userId, name, slug, color, icon],
     );
 
     const newTopic = result.rows[0];
@@ -124,11 +124,16 @@ export async function deleteTopic(req: AuthenticatedRequest, res: Response) {
   const { id } = parsedParam.data;
 
   try {
-    const result = await dbPool.query<Pick<TopicDbRow, "id">>(
-      "DELETE FROM topics WHERE id = $1 AND user_id = $2 RETURNING id",
+    // Delete all child notes belonging to this topic
+    await dbPool.query(
+      "DELETE FROM notes WHERE topic_id = $1 AND user_id = $2",
       [id, userId],
     );
 
+    const result = await dbPool.query<{ id: string }>(
+      "DELETE FROM topics WHERE id = $1 AND user_id = $2 RETURNING id",
+      [id, userId],
+    );
     if (result.rows.length === 0) {
       return ApiResponse.error(
         res,
