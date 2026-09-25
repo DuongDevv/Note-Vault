@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { dbPool } from "../config/database";
@@ -56,11 +57,12 @@ export async function register(req: Request, res: Response) {
     // Hash mật khẩu bằng Argon2id
     const passwordHash = await CryptoService.hashData(password);
 
+    const userId = randomUUID();
     const userRes = await dbPool.query<UserRow>(
-      `INSERT INTO users (username, email, password_hash, display_name)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO users (id, username, email, password_hash, display_name)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING id, username, email, display_name, created_at, updated_at`,
-      [username, email, passwordHash, displayName],
+      [userId, username, email, passwordHash, displayName],
     );
 
     const newUser = userRes.rows[0];

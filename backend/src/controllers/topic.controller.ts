@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Response } from "express";
 import { dbPool } from "../config/database";
 import { ApiResponse } from "../utils/response.util";
@@ -71,11 +72,12 @@ export async function createTopic(req: AuthenticatedRequest, res: Response) {
     .replace(/(^-|-$)+/g, "");
 
   try {
+    const topicId = randomUUID();
     const result = await dbPool.query<TopicResponse>(
-      `INSERT INTO topics (user_id, name, slug, color, icon)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO topics (id, user_id, name, slug, color, icon)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, user_id as "userId", name, slug, color, icon, created_at as "createdAt", updated_at as "updatedAt"`,
-      [userId, name, slug, color, icon],
+      [topicId, userId, name, slug, color, icon],
     );
 
     const newTopic = result.rows[0];
@@ -122,11 +124,16 @@ export async function deleteTopic(req: AuthenticatedRequest, res: Response) {
   const { id } = parsedParam.data;
 
   try {
+    // Delete all child notes belonging to this topic
+    await dbPool.query(
+      "DELETE FROM notes WHERE topic_id = $1 AND user_id = $2",
+      [id, userId],
+    );
+
     const result = await dbPool.query<{ id: string }>(
       "DELETE FROM topics WHERE id = $1 AND user_id = $2 RETURNING id",
       [id, userId],
     );
-
     if (result.rows.length === 0) {
       return ApiResponse.error(
         res,

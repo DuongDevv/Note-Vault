@@ -132,10 +132,22 @@ export function decryptNoteContent(
       iv: String(record["iv"]),
       authTag: String(record["authTag"]),
     };
-    const key = pin ? deriveVaultKey(userId, pin) : deriveUserKey(userId);
-    return decryptPayload(payload, key);
+
+    if (pin) {
+      try {
+        const vaultKey = deriveVaultKey(userId, pin);
+        return decryptPayload(payload, vaultKey);
+      } catch {
+        // Fallback to user key if encrypted under base account key
+        const userKey = deriveUserKey(userId);
+        return decryptPayload(payload, userKey);
+      }
+    }
+
+    const userKey = deriveUserKey(userId);
+    return decryptPayload(payload, userKey);
   } catch {
-    return packedJson;
+    return null;
   }
 }
 

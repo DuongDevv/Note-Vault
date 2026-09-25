@@ -52,7 +52,7 @@ model Note {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
   user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  topic Topic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  topic Topic? @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@index([userId, topicId], map: "idx_notes_user_topic")
   @@index([userId, isPinned, createdAt], map: "idx_notes_user_pinned_created")

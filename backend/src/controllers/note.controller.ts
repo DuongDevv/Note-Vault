@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Response } from "express";
 import { dbPool } from "../config/database";
 import { ApiResponse } from "../utils/response.util";
@@ -35,26 +36,19 @@ function formatNoteResponse(
   let decryptedContent: unknown = null;
 
   if (row.content) {
-    try {
-      if (row.is_locked) {
-        if (vaultPin) {
-          decryptedContent = CryptoService.decryptNoteContent(
-            row.content,
-            userId,
-            vaultPin,
-          );
-        } else {
-          // Masked content for locked notes on list view
-          decryptedContent = null;
-        }
-      } else {
+    if (row.is_locked) {
+      if (vaultPin) {
         decryptedContent = CryptoService.decryptNoteContent(
           row.content,
           userId,
+          vaultPin,
         );
+      } else {
+        // Masked content for locked notes when not unlocked with PIN
+        decryptedContent = null;
       }
-    } catch {
-      decryptedContent = row.content;
+    } else {
+      decryptedContent = CryptoService.decryptNoteContent(row.content, userId);
     }
   }
 
@@ -214,11 +208,13 @@ export async function createNote(req: AuthenticatedRequest, res: Response) {
       isLocked ? pin : undefined,
     );
 
+    const noteId = randomUUID();
     const result = await dbPool.query<NoteDbResult>(
-      `INSERT INTO notes (user_id, topic_id, title, content, tags, is_pinned, is_locked)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO notes (id, user_id, topic_id, title, content, tags, is_pinned, is_locked)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id, user_id, topic_id, title, content, tags, is_pinned, is_locked, created_at, updated_at`,
       [
+        noteId,
         userId,
         topicId ?? null,
         title,
@@ -346,8 +342,21 @@ export async function updateNote(req: AuthenticatedRequest, res: Response) {
         userId,
         newIsLocked ? pin : undefined,
       );
+    } else if (newIsLocked !== current.is_locked && current.content) {
+      // Re-encrypt existing content under new lock key
+      const plain = CryptoService.decryptNoteContent(
+        current.content,
+        userId,
+        current.is_locked ? pin : undefined,
+      );
+      if (plain !== null) {
+        encryptedContent = CryptoService.encryptNoteContent(
+          plain,
+          userId,
+          newIsLocked ? pin : undefined,
+        );
+      }
     }
-
     const result = await dbPool.query<NoteDbResult>(
       `UPDATE notes
        SET topic_id = $1, title = $2, content = $3, tags = $4, is_pinned = $5, is_locked = $6, updated_at = CURRENT_TIMESTAMP
