@@ -130,7 +130,7 @@ export function NewNoteDialog({
               htmlFor="note-locked"
               className="text-foreground cursor-pointer text-sm select-none"
             >
-              Mã hóa ghi chú với bảo mật cao (AES-256)
+              Khóa ghi chú bằng mã PIN (Yêu cầu mã PIN khi xem)
             </label>
           </div>
 

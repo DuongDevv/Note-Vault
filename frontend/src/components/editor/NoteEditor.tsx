@@ -244,7 +244,7 @@ export function NoteEditor({
           {note.isLocked && (
             <span className="bg-primary/10 text-primary border-primary/20 inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium">
               <Lock className="text-primary size-3" />
-              <span>Đã mã hóa E2EE</span>
+              <span>Khóa bảo vệ PIN</span>
             </span>
           )}
         </div>
