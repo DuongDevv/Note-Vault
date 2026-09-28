@@ -19,7 +19,7 @@
     "migration:status": "prisma migration status"
   },
   "keywords": [],
-  "type": "module",
+  "type": "commonjs",
   "dependencies": {
     "@prisma/client": "^7.10.0",
     "@prisma/orm-postgres": "^8.0.0-rc.11",

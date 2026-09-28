@@ -1,80 +1,75 @@
 services:
-  # Service Database PostgreSQL
+  # 1. Database PostgreSQL 18-alpine
   postgres:
     image: postgres:18-alpine
     container_name: note_vault_postgres
-    restart: unless-stopped
+    restart: always
     environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres_password}
-      POSTGRES_DB: ${DB_NAME:-note_vault_db}
+      POSTGRES_USER: duong
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: note_vault_db
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - note_vault_net
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U ${DB_USER:-postgres} -d ${DB_PASSWORD:-postgres_password}",
-        ]
+      test: ["CMD-SHELL", "pg_isready -U duong -d note_vault_db"]
       interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 15s
-    networks:
-      - ticket-booking-net
-    deploy:
-      resources:
-        limits:
-          cpus: "0.50"
-          memory: 512M
-        reservations:
-          memory: 256M
 
-  # Service Cache Redis
+  # 2. In-Memory Cache Redis 8-alpine
   redis:
     image: redis:8-alpine
     container_name: note_vault_redis
-    restart: unless-stopped
+    restart: always
     ports:
       - "6379:6379"
     volumes:
-      - redisdata:/data
-    command:
-      [
-        "redis-server",
-        "--maxclients",
-        "10000",
-        "--appendonly",
-        "yes",
-        "--appendfsync",
-        "everysec",
-        "--maxmemory",
-        "128mb",
-        "--maxmemory-policy",
-        "allkeys-lru",
-      ]
+      - redis_data:/data
+    networks:
+      - note_vault_net
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
       interval: 5s
       timeout: 5s
       retries: 5
-      start_period: 5s
+
+  # 3. Service Backend Application (Express/TS)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: note_vault_backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: duong
+      DB_PASSWORD: 123456
+      DB_NAME: note_vault_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: super_secret_jwt_access_key_production
+      PRIVATE_NOTE_MASTER_KEY: 32_bytes_hex_secret_key_for_aes_256_gcm
     networks:
-      - ticket-booking-net
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25"
-          memory: 128M
-        reservations:
-          memory: 32M
+      - note_vault_net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+networks:
+  note_vault_net:
+    driver: bridge
 
 volumes:
   postgres_data:
-  redisdata:
-
-networks:
-  ticket-booking-net:
-    driver: bridge
+  redis_data:
