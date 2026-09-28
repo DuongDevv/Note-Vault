@@ -40,6 +40,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.2",
     "@types/pg": "^8.23.1",
+    "oxfmt": "^0.70.0",
     "oxlint": "^1.85.0",
     "oxlint-config-presets": "^0.1.20",
     "oxlint-tsgolint": "^7.0.2002",

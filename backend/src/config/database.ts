@@ -1,17 +1,26 @@
 import { Pool } from "pg";
 import { config } from "./env";
 
-// Tạo Connection Pool kết nối đến Postgres
-export const dbPool = new Pool({
-  host: config.DB.HOST,
-  port: config.DB.PORT,
-  user: config.DB.USER,
-  password: config.DB.PASSWORD,
-  database: config.DB.NAME,
-  max: 20, // Tối đa 20 active connections trong Pool
-  idleTimeoutMillis: 30000, // Tự động đóng Connection free sau 30 giây
-  connectionTimeoutMillis: 2000,
-});
+export const dbPool = new Pool(
+  config.DB.URL
+    ? {
+        connectionString: config.DB.URL,
+        ssl: { rejectUnauthorized: false },
+        max: 10,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 5000,
+      }
+    : {
+        host: config.DB.HOST,
+        port: config.DB.PORT,
+        user: config.DB.USER,
+        password: config.DB.PASSWORD,
+        database: config.DB.NAME,
+        max: 20,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 2000,
+      },
+);
 
 // Event listener
 dbPool.on("connect", () => {

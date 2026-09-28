@@ -10,19 +10,20 @@ export const config = {
 
   // Database Config
   DB: {
+    URL: process.env["DB_URL"],
     HOST: process.env["DB_HOST"] ?? "localhost",
     PORT: Number(process.env["DB_PORT"] ?? 5432),
-    USER: process.env["DB_USER"] ?? "postgres",
-    PASSWORD: process.env["DB_PASSWORD"] ?? "posgres_password",
+    USER: process.env["DB_USERNAME"] ?? "postgres",
+    PASSWORD: process.env["DB_PASSWORD"] ?? "postgres_password",
     NAME: process.env["DB_NAME"] ?? "note_vault_db",
   },
 
   // Redis Config
   REDIS: {
+    URL: process.env["REDIS_URL"],
     HOST: process.env["REDIS_HOST"] ?? "localhost",
     PORT: Number(process.env["REDIS_PORT"] ?? 6379),
   },
-
   // Security Secrets
   SECURITY: {
     JWT_SECRET:
