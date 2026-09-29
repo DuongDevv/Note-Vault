@@ -3,7 +3,13 @@ import { NodeViewWrapper, NodeViewContent } from "@tiptap/react";
 import type { NodeViewProps } from "@tiptap/react";
 import { Check, Copy, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 export function CodeBlockNodeView({ node, updateAttributes }: NodeViewProps) {
   const [copied, setCopied] = useState<boolean>(false);
   const language =
@@ -36,62 +42,31 @@ export function CodeBlockNodeView({ node, updateAttributes }: NodeViewProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <select
-              aria-label="Chọn ngôn ngữ lập trình"
-              contentEditable={false}
+            <Select
               value={language}
-              onChange={(e) => updateAttributes({ language: e.target.value })}
-              className="text-muted-foreground hover:text-foreground cursor-pointer bg-transparent font-mono text-[11px] outline-none"
+              onValueChange={(val) => {
+                if (typeof val === "string") {
+                  updateAttributes({ language: val });
+                }
+              }}
             >
-              <option
-                value="typescript"
-                className="bg-popover text-popover-foreground"
+              <SelectTrigger
+                size="sm"
+                className="border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground h-6 gap-1 px-1.5 font-mono text-[11px]"
               >
-                typescript
-              </option>
-              <option
-                value="javascript"
-                className="bg-popover text-popover-foreground"
-              >
-                javascript
-              </option>
-              <option
-                value="python"
-                className="bg-popover text-popover-foreground"
-              >
-                python
-              </option>
-              <option
-                value="bash"
-                className="bg-popover text-popover-foreground"
-              >
-                bash
-              </option>
-              <option
-                value="sql"
-                className="bg-popover text-popover-foreground"
-              >
-                sql
-              </option>
-              <option
-                value="json"
-                className="bg-popover text-popover-foreground"
-              >
-                json
-              </option>
-              <option
-                value="html"
-                className="bg-popover text-popover-foreground"
-              >
-                html
-              </option>
-              <option
-                value="css"
-                className="bg-popover text-popover-foreground"
-              >
-                css
-              </option>
-            </select>
+                <SelectValue placeholder="Ngôn ngữ" />
+              </SelectTrigger>
+              <SelectContent className="font-mono text-xs">
+                <SelectItem value="typescript">typescript</SelectItem>
+                <SelectItem value="javascript">javascript</SelectItem>
+                <SelectItem value="python">python</SelectItem>
+                <SelectItem value="bash">bash</SelectItem>
+                <SelectItem value="sql">sql</SelectItem>
+                <SelectItem value="json">json</SelectItem>
+                <SelectItem value="html">html</SelectItem>
+                <SelectItem value="css">css</SelectItem>
+              </SelectContent>
+            </Select>
 
             <Button
               type="button"

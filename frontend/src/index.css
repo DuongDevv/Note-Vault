@@ -183,6 +183,15 @@
   }
 }
 
+/* Modern clear text selection highlight */
+::selection {
+  background-color: rgba(59, 130, 246, 0.35);
+  color: inherit;
+}
+.dark ::selection {
+  background-color: rgba(59, 130, 246, 0.45);
+  color: #ffffff;
+}
 /* Smooth transparent custom scrollbar for any remaining elements */
 ::-webkit-scrollbar {
   width: 5px;
@@ -285,6 +294,22 @@
   cursor: pointer;
 }
 
+/* Embedded Images */
+.tiptap img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1.25rem 0;
+  border: 1px solid var(--color-border);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+  transition: all 0.15s ease-in-out;
+}
+
+.tiptap img.ProseMirror-selectednode {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
 /* Syntax highlighting tokens for Lowlight / Highlight.js */
 .hljs-keyword,
 .hljs-selector-tag,
