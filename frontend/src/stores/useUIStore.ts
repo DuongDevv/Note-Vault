@@ -9,12 +9,13 @@ export interface LockTarget {
 
 interface UIState {
   isSearchOpen: boolean;
+  searchInitialQuery: string;
   isNewTopicOpen: boolean;
   isPinSettingsOpen: boolean;
   lockTargetNote: LockTarget | null;
   noteToDelete: Note | null;
 
-  setSearchOpen: (open: boolean) => void;
+  setSearchOpen: (open: boolean, initialQuery?: string) => void;
   setNewTopicOpen: (open: boolean) => void;
   setPinSettingsOpen: (open: boolean) => void;
   setLockTargetNote: (target: LockTarget | null) => void;
@@ -29,12 +30,14 @@ interface UIState {
 
 export const useUIStore = create<UIState>((set) => ({
   isSearchOpen: false,
+  searchInitialQuery: "",
   isNewTopicOpen: false,
   isPinSettingsOpen: false,
   lockTargetNote: null,
   noteToDelete: null,
 
-  setSearchOpen: (open) => set({ isSearchOpen: open }),
+  setSearchOpen: (open, initialQuery = "") =>
+    set({ isSearchOpen: open, searchInitialQuery: initialQuery }),
   setNewTopicOpen: (open) => set({ isNewTopicOpen: open }),
   setPinSettingsOpen: (open) => set({ isPinSettingsOpen: open }),
   setLockTargetNote: (target) => set({ lockTargetNote: target }),

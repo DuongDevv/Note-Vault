@@ -8,9 +8,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+
 interface SearchModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialQuery?: string;
   notes: Note[];
   topics: Topic[];
   onSelectNote: (noteId: string) => void;
@@ -20,12 +22,19 @@ interface SearchModalProps {
 export function SearchModal({
   open,
   onOpenChange,
+  initialQuery = "",
   notes,
   topics,
   onSelectNote,
   onSelectTopic,
 }: SearchModalProps) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
+  const [prevInitialQuery, setPrevInitialQuery] = useState(initialQuery);
+
+  if (open && prevInitialQuery !== initialQuery) {
+    setPrevInitialQuery(initialQuery);
+    setQuery(initialQuery);
+  }
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
@@ -50,14 +59,14 @@ export function SearchModal({
   const filteredNotes = useMemo(() => {
     if (!query.trim()) return notes.slice(0, 8);
     const q = query.toLowerCase();
+    const tagQuery = q.replace(/^#+/, "").trim();
     return notes.filter(
       (n) =>
         n.title.toLowerCase().includes(q) ||
         n.excerpt.toLowerCase().includes(q) ||
-        n.tags.some((t) => t.toLowerCase().includes(q)),
+        (tagQuery && n.tags.some((t) => t.toLowerCase().includes(tagQuery))),
     );
   }, [notes, query]);
-
   const filteredTopics = useMemo(() => {
     if (!query.trim()) return topics.slice(0, 4);
     const q = query.toLowerCase();

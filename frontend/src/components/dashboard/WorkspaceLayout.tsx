@@ -42,6 +42,7 @@ export function WorkspaceLayout({
 
   // UI Store
   const isSearchOpen = useUIStore((s) => s.isSearchOpen);
+  const searchInitialQuery = useUIStore((s) => s.searchInitialQuery);
   const isNewTopicOpen = useUIStore((s) => s.isNewTopicOpen);
   const isPinSettingsOpen = useUIStore((s) => s.isPinSettingsOpen);
   const lockTargetNote = useUIStore((s) => s.lockTargetNote);
@@ -51,7 +52,6 @@ export function WorkspaceLayout({
   const setPinSettingsOpen = useUIStore((s) => s.setPinSettingsOpen);
   const closeDeleteDialog = useUIStore((s) => s.closeDeleteDialog);
   const closeLockDialog = useUIStore((s) => s.closeLockDialog);
-
   // Derive Active Topic & Note from current URL
   const activeTopicId = useMemo(() => {
     const match = /^\/topics\/([^/]+)/.exec(location.pathname);
@@ -124,6 +124,7 @@ export function WorkspaceLayout({
         <SearchModal
           open={isSearchOpen}
           onOpenChange={setSearchOpen}
+          initialQuery={searchInitialQuery}
           notes={notes}
           topics={topics}
           onSelectNote={(id) => void navigate(`/notes/${id}`)}

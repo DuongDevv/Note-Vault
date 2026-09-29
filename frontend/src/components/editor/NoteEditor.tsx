@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   useEditor,
   EditorContent,
@@ -12,8 +12,13 @@ import { Link } from "@tiptap/extension-link";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
 import { common, createLowlight } from "lowlight";
-import { Lock } from "lucide-react";
+import { Lock, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { Note } from "@/types/note";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { useUIStore } from "@/stores/useUIStore";
+import { normalizeTag } from "@/utils/tag";
+import { TagInputPopover } from "./TagInputPopover";
 import { EditorBubbleMenu } from "./EditorBubbleMenu";
 import { EditorDragHandle } from "./EditorDragHandle";
 import { CodeBlockNodeView } from "./CodeBlockNodeView";
@@ -40,6 +45,7 @@ interface NoteEditorProps {
     title: string;
     excerpt: string;
     content?: string;
+    tags?: string[];
   }) => void;
   onSavingStatusChange?: (isSaving: boolean) => void;
 }
@@ -54,6 +60,53 @@ export function NoteEditor({
   const saveTimeoutRef = useRef<number | undefined>(undefined);
   const currentTitleRef = useRef(note.title);
   const editorContainerRef = useRef<HTMLDivElement>(null);
+  const setSearchOpen = useUIStore((s) => s.setSearchOpen);
+  const allNotes = useWorkspaceStore((s) => s.notes);
+
+  // Aggregate all unique tags across workspace for suggestions
+  const allWorkspaceTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    for (const n of allNotes) {
+      if (Array.isArray(n.tags)) {
+        for (const t of n.tags) {
+          const clean = normalizeTag(t);
+          if (clean) tagSet.add(clean);
+        }
+      }
+    }
+    return Array.from(tagSet).toSorted();
+  }, [allNotes]);
+
+  const handleAddTag = (newTag: string) => {
+    const clean = normalizeTag(newTag);
+    if (!clean || note.tags.includes(clean) || note.tags.length >= 8) return;
+    const updatedTags = [...note.tags, clean];
+    if (onSave) {
+      onSave({
+        id: note.id,
+        title: currentTitleRef.current,
+        excerpt: note.excerpt,
+        content: JSON.stringify(editor.getJSON()),
+        tags: updatedTags,
+      });
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    const updatedTags = note.tags.filter((t) => t !== tagToRemove);
+    if (onSave) {
+      onSave({
+        id: note.id,
+        title: currentTitleRef.current,
+        excerpt: note.excerpt,
+        content: JSON.stringify(editor.getJSON()),
+        tags: updatedTags,
+      });
+    }
+  };
+  const handleTagClick = (tag: string) => {
+    setSearchOpen(true, `#${tag}`);
+  };
   const scheduleAutoSave = (
     targetTitle: string,
     targetEditor: Editor | null,
@@ -204,27 +257,55 @@ export function NoteEditor({
 
   return (
     <div className="mx-auto min-h-[calc(100vh-5rem)] w-full max-w-3xl px-6 pt-6 pb-40 sm:px-12 sm:pt-10 sm:pb-60 xl:max-w-4xl">
-      <div className="text-muted-foreground mb-4 flex items-center justify-between gap-2 text-xs select-none">
-        <div className="flex items-center gap-2">
+      <div className="text-muted-foreground mb-4 flex flex-wrap items-center justify-between gap-2 text-xs select-none">
+        <div className="flex flex-wrap items-center gap-1.5">
           {note.isLocked && (
-            <span className="bg-muted/60 text-muted-foreground inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 font-medium">
-              <Lock className="size-3 opacity-70" />
+            <span className="bg-muted/60 text-muted-foreground inline-flex h-6 items-center gap-1.5 rounded-md px-2 text-xs font-medium">
+              <Lock className="size-3.5 opacity-70" />
               <span>Đã khóa PIN</span>
             </span>
           )}
 
-          {note.tags.length > 0 && (
-            <div className="flex items-center gap-1">
-              {note.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="bg-muted/40 text-muted-foreground rounded-md px-2 py-0.5 text-[11px]"
-                >
-                  {tag.startsWith("#") ? tag : `#${tag}`}
-                </span>
-              ))}
-            </div>
-          )}
+          {/* Tag Badges with Hover Remove and Click to Search */}
+          {note.tags.map((tag) => (
+            <span
+              key={tag}
+              className="group/tag bg-muted/40 hover:bg-muted/70 text-muted-foreground hover:text-foreground inline-flex h-6 items-center gap-1 rounded-md pr-1.5 pl-2 text-xs transition-colors"
+            >
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                onClick={() => handleTagClick(tag)}
+                className="hover:text-foreground h-auto cursor-pointer p-0 text-xs font-normal hover:bg-transparent hover:underline"
+                title={`Tìm các trang có thẻ #${tag}`}
+              >
+                #{tag}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemoveTag(tag);
+                }}
+                className="text-muted-foreground/60 hover:text-foreground size-3.5 cursor-pointer rounded p-0 opacity-60 hover:opacity-100"
+                title={`Gỡ thẻ #${tag}`}
+                aria-label={`Gỡ thẻ #${tag}`}
+              >
+                <X className="size-3" />
+              </Button>
+            </span>
+          ))}
+
+          {/* Add Tag Popover Button */}
+          <TagInputPopover
+            currentTags={note.tags}
+            allWorkspaceTags={allWorkspaceTags}
+            onAddTag={handleAddTag}
+            maxTags={8}
+          />
         </div>
       </div>
 
