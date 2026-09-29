@@ -4,6 +4,7 @@ import {
   EditorContent,
   ReactNodeViewRenderer,
   type Content,
+  type Editor,
 } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Underline } from "@tiptap/extension-underline";
@@ -12,7 +13,7 @@ import { Image } from "@tiptap/extension-image";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
 import { common, createLowlight } from "lowlight";
-import { Folder, Lock } from "lucide-react";
+import { Lock } from "lucide-react";
 import type { Note } from "@/types/note";
 import { EditorBubbleMenu } from "./EditorBubbleMenu";
 import { CodeBlockNodeView } from "./CodeBlockNodeView";
@@ -41,7 +42,6 @@ interface NoteEditorProps {
 
 export function NoteEditor({
   note,
-  topicName,
   onSave,
   onSavingStatusChange,
 }: NoteEditorProps) {
@@ -49,6 +49,23 @@ export function NoteEditor({
   const saveTimeoutRef = useRef<number | undefined>(undefined);
   const currentTitleRef = useRef(note.title);
 
+  const scheduleAutoSave = (
+    targetTitle: string,
+    targetEditor: Editor | null,
+  ) => {
+    if (!targetEditor || !onSave) return;
+    onSavingStatusChange?.(true);
+    clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = setTimeout(() => {
+      onSavingStatusChange?.(false);
+      onSave({
+        id: note.id,
+        title: targetTitle,
+        excerpt: targetEditor.getText().slice(0, 160) || note.excerpt,
+        content: JSON.stringify(targetEditor.getJSON()),
+      });
+    }, 800);
+  };
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -92,19 +109,7 @@ export function NoteEditor({
       },
     },
     onUpdate: ({ editor: currentEditor }) => {
-      onSavingStatusChange?.(true);
-      clearTimeout(saveTimeoutRef.current);
-      saveTimeoutRef.current = setTimeout(() => {
-        onSavingStatusChange?.(false);
-        if (onSave) {
-          onSave({
-            id: note.id,
-            title: currentTitleRef.current,
-            excerpt: currentEditor.getText().slice(0, 160) || note.excerpt,
-            content: JSON.stringify(currentEditor.getJSON()),
-          });
-        }
-      }, 800);
+      scheduleAutoSave(currentTitleRef.current, currentEditor);
     },
   });
 
@@ -118,32 +123,13 @@ export function NoteEditor({
     const newTitle = e.target.value;
     setTitle(newTitle);
     currentTitleRef.current = newTitle;
-    onSavingStatusChange?.(true);
-    clearTimeout(saveTimeoutRef.current);
-    saveTimeoutRef.current = setTimeout(() => {
-      onSavingStatusChange?.(false);
-      if (onSave) {
-        onSave({
-          id: note.id,
-          title: newTitle,
-          excerpt: editor.getText().slice(0, 160) || note.excerpt,
-          content: JSON.stringify(editor.getJSON()),
-        });
-      }
-    }, 800);
+    scheduleAutoSave(newTitle, editor);
   };
 
   return (
     <div className="mx-auto min-h-[calc(100vh-5rem)] w-full max-w-3xl px-6 py-6 sm:px-12 sm:py-10 xl:max-w-4xl">
-      {/* Document Meta Tag / Topic Header */}
+      {/* Document Meta Tag */}
       <div className="text-muted-foreground mb-4 flex items-center gap-2 text-xs select-none">
-        {topicName && (
-          <span className="bg-muted/60 text-foreground/80 inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 font-medium">
-            <Folder className="size-3 opacity-70" />
-            <span>{topicName}</span>
-          </span>
-        )}
-
         {note.isLocked && (
           <span className="bg-muted/60 text-muted-foreground inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 font-medium">
             <Lock className="size-3 opacity-70" />

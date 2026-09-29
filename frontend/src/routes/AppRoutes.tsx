@@ -48,7 +48,7 @@ export function AppRoutes({
         }
       />
 
-      {/* Protected Notion Document Canvas Routes */}
+      {/* Protected Document Canvas Routes */}
       <Route
         path="/*"
         element={

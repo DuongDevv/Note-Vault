@@ -55,7 +55,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* NoteVault Authentic Notion Canvas - Light Mode */
+/* NoteVault Document Canvas - Light Mode */
 :root {
   --background: #ffffff;
   --foreground: #37352f;
@@ -105,7 +105,7 @@
   --chart-5: #e9e9e8;
 }
 
-/* NoteVault Authentic Notion Canvas - Dark Mode (Exact reference: #191919 & #202020) */
+/* NoteVault Document Canvas - Dark Mode (Exact reference: #191919 & #202020) */
 .dark {
   --background: #191919;
   --foreground: #ffffff;
@@ -207,7 +207,7 @@
   font-weight: normal;
 }
 
-/* Notion Canvas Tiptap Editor Styling */
+/* Document Canvas Tiptap Editor Styling */
 .tiptap {
   outline: none;
   min-height: 400px;

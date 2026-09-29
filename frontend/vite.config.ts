@@ -43,7 +43,8 @@ export default defineConfig({
             if (
               id.includes("@base-ui") ||
               id.includes("lucide-react") ||
-              id.includes("zod")
+              id.includes("zod") ||
+              id.includes("zustand")
             ) {
               return "vendor-ui";
             }

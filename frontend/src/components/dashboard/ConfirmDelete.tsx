@@ -6,6 +6,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { MODAL_BASE_CLASS } from "@/components/common/ModalLayout";
 
 interface ConfirmDeleteDialogProps {
   open: boolean;
@@ -22,7 +23,7 @@ export function ConfirmDeleteDialog({
 }: ConfirmDeleteDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card text-card-foreground sm:max-w-[420px]">
+      <DialogContent className={`${MODAL_BASE_CLASS} sm:max-w-[420px]`}>
         <DialogHeader>
           <DialogTitle className="text-foreground">Xóa ghi chú?</DialogTitle>
         </DialogHeader>

@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MODAL_BASE_CLASS } from "@/components/common/ModalLayout";
 
 interface NewTopicDialogProps {
   open: boolean;
@@ -39,7 +40,7 @@ export function NewTopicDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card text-card-foreground sm:max-w-[420px]">
+      <DialogContent className={`${MODAL_BASE_CLASS} sm:max-w-[420px]`}>
         <DialogHeader>
           <DialogTitle className="text-foreground">Tạo chủ đề mới</DialogTitle>
         </DialogHeader>

@@ -2,17 +2,16 @@
   "name": "note-vault-monorepo",
   "private": true,
   "scripts": {
-    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"cyan,magenta\" \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
-    "dev:backend": "npm run dev --prefix backend",
-    "dev:frontend": "npm run dev --prefix frontend",
-    "build": "npm run build --prefix backend && npm run build --prefix frontend",
+    "dev": "bun run --cwd backend dev && bun run --cwd frontend dev",
+    "dev:backend": "bun run dev --cwd backend",
+    "dev:frontend": "bun run dev --cwd frontend",
+    "build": "bun run --cwd backend build && bun run --cwd frontend build",
     "sync:types": "bun run --cwd backend contract:emit && cp backend/src/prisma/contract.d.ts frontend/src/types/backend-contract.d.ts",
     "check-types": "bun run sync:types && bun run --cwd backend check-types && bun run --cwd frontend check-types",
     "lint": "bun run --cwd backend lint && bun run --cwd frontend lint",
     "prepare": "husky"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2",
     "husky": "^9.1.7",
     "lint-staged": "^17.5.1",
     "oxlint": "^1.85.0",

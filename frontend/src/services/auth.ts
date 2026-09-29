@@ -18,16 +18,17 @@ export const AuthResponseDataSchema = z.object({
 });
 export type AuthResponseData = z.infer<typeof AuthResponseDataSchema>;
 
-const AuthEnvelopeSchema = z.object({
-  success: z.boolean(),
-  message: z.string().optional(),
-  data: AuthResponseDataSchema.optional(),
-});
+function createEnvelopeSchema<T>(dataSchema: z.ZodType<T>) {
+  return z.object({
+    success: z.boolean(),
+    message: z.string().optional(),
+    data: dataSchema.optional(),
+  });
+}
 
-const ProfileEnvelopeSchema = z.object({
+const EmptyEnvelopeSchema = z.object({
   success: z.boolean(),
   message: z.string().optional(),
-  data: AuthUserSchema.optional(),
 });
 
 export function getAuthToken(): string | null {
@@ -58,26 +59,36 @@ export function getAuthHeaders(
   return headers;
 }
 
+async function authRequest(
+  endpoint: string,
+  body: Record<string, unknown>,
+  fallbackMessage: string,
+): Promise<AuthResponseData> {
+  const { ok, data } = await safeFetchJson(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  const envelope = createEnvelopeSchema(AuthResponseDataSchema).parse(data);
+
+  if (!ok || !envelope.success || !envelope.data) {
+    throw new Error(envelope.message ?? fallbackMessage);
+  }
+
+  setAuthToken(envelope.data.accessToken);
+  return envelope.data;
+}
+
 export async function loginUser(
   username: string,
   password: string,
 ): Promise<AuthResponseData> {
-  const { ok, data } = await safeFetchJson("/api/v1/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
-  });
-
-  const payload = AuthEnvelopeSchema.parse(data);
-
-  if (!ok || !payload.success || !payload.data) {
-    throw new Error(
-      payload.message ?? "Tài khoản hoặc mật khẩu không chính xác",
-    );
-  }
-
-  setAuthToken(payload.data.accessToken);
-  return payload.data;
+  return await authRequest(
+    "/api/v1/auth/login",
+    { username, password },
+    "Tài khoản hoặc mật khẩu không chính xác",
+  );
 }
 
 export async function registerUser(
@@ -86,20 +97,11 @@ export async function registerUser(
   password: string,
   displayName: string,
 ): Promise<AuthResponseData> {
-  const { ok, data } = await safeFetchJson("/api/v1/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, email, password, displayName }),
-  });
-
-  const payload = AuthEnvelopeSchema.parse(data);
-
-  if (!ok || !payload.success || !payload.data) {
-    throw new Error(payload.message ?? "Đăng ký tài khoản thất bại");
-  }
-
-  setAuthToken(payload.data.accessToken);
-  return payload.data;
+  return await authRequest(
+    "/api/v1/auth/register",
+    { username, email, password, displayName },
+    "Đăng ký tài khoản thất bại",
+  );
 }
 
 export async function fetchUserProfile(): Promise<AuthUser> {
@@ -112,7 +114,7 @@ export async function fetchUserProfile(): Promise<AuthUser> {
     throw new Error("Phiên đăng nhập đã hết hạn");
   }
 
-  const payload = ProfileEnvelopeSchema.parse(data);
+  const payload = createEnvelopeSchema(AuthUserSchema).parse(data);
 
   if (!payload.success || !payload.data) {
     throw new Error("Không thể tải thông tin tài khoản");
@@ -121,11 +123,6 @@ export async function fetchUserProfile(): Promise<AuthUser> {
   return payload.data;
 }
 
-const PinEnvelopeSchema = z.object({
-  success: z.boolean(),
-  message: z.string().optional(),
-});
-
 export async function updatePrivatePin(newPin: string): Promise<void> {
   const { ok, data } = await safeFetchJson("/api/v1/profile/private-pin", {
     method: "POST",
@@ -133,7 +130,7 @@ export async function updatePrivatePin(newPin: string): Promise<void> {
     body: JSON.stringify({ newPin }),
   });
 
-  const payload = PinEnvelopeSchema.parse(data);
+  const payload = EmptyEnvelopeSchema.parse(data);
   if (!ok || !payload.success) {
     throw new Error(payload.message ?? "Không thể cập nhật mã PIN");
   }
@@ -146,6 +143,6 @@ export async function verifyPrivatePin(pin: string): Promise<boolean> {
     body: JSON.stringify({ pin }),
   });
 
-  const payload = PinEnvelopeSchema.parse(data);
+  const payload = EmptyEnvelopeSchema.parse(data);
   return ok && payload.success;
 }

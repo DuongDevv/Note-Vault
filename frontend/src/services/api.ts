@@ -11,6 +11,32 @@ function unwrapResponse(json: unknown): unknown {
   return json;
 }
 
+async function fetchAndParse<T>(
+  url: string,
+  schema: z.ZodType<T>,
+  options: RequestInit = {},
+  errorMessage = "Yêu cầu thất bại",
+): Promise<T> {
+  let customHeaders: Record<string, string> | undefined;
+  if (
+    options.headers &&
+    typeof options.headers === "object" &&
+    !(options.headers instanceof Headers)
+  ) {
+    customHeaders = Object.fromEntries(
+      Object.entries(options.headers).map(([k, v]) => [k, String(v)]),
+    );
+  }
+
+  const { ok, data } = await safeFetchJson(url, {
+    ...options,
+    headers: getAuthHeaders(customHeaders),
+  });
+  if (!ok) throw new Error(errorMessage);
+  const unwrapped = unwrapResponse(data);
+  return schema.parse(unwrapped);
+}
+
 function normalizeNote(raw: Note): Note {
   const primaryTag = raw.tags.length > 0 ? (raw.tags[0] ?? "") : raw.tag;
   const formattedTag = primaryTag
@@ -39,12 +65,12 @@ function normalizeNote(raw: Note): Note {
 }
 
 export async function fetchTopics(): Promise<Topic[]> {
-  const { ok, data } = await safeFetchJson("/api/v1/topics", {
-    headers: getAuthHeaders(),
-  });
-  if (!ok) throw new Error("Không thể tải danh sách chủ đề");
-  const unwrapped = unwrapResponse(data);
-  return z.array(TopicSchema).parse(unwrapped);
+  return await fetchAndParse(
+    "/api/v1/topics",
+    z.array(TopicSchema),
+    {},
+    "Không thể tải danh sách chủ đề",
+  );
 }
 
 export async function createTopic(
@@ -52,14 +78,15 @@ export async function createTopic(
   icon = "folder",
   color = "#000000",
 ): Promise<Topic> {
-  const { ok, data } = await safeFetchJson("/api/v1/topics", {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ name, icon, color }),
-  });
-  if (!ok) throw new Error("Không thể tạo chủ đề mới");
-  const unwrapped = unwrapResponse(data);
-  return TopicSchema.parse(unwrapped);
+  return await fetchAndParse(
+    "/api/v1/topics",
+    TopicSchema,
+    {
+      method: "POST",
+      body: JSON.stringify({ name, icon, color }),
+    },
+    "Không thể tạo chủ đề mới",
+  );
 }
 
 export async function fetchNotes(
@@ -72,50 +99,46 @@ export async function fetchNotes(
 
   const queryString = params.toString();
   const url = queryString ? `/api/v1/notes?${queryString}` : "/api/v1/notes";
-  const { ok, data } = await safeFetchJson(url, {
-    headers: getAuthHeaders(),
-  });
-  if (!ok) throw new Error("Không thể tải danh sách ghi chú");
-  const unwrapped = unwrapResponse(data);
-  const parsed = z.array(NoteSchema).parse(unwrapped);
+  const parsed = await fetchAndParse(
+    url,
+    z.array(NoteSchema),
+    {},
+    "Không thể tải danh sách ghi chú",
+  );
   return parsed.map((n) => normalizeNote(n));
 }
 
 export async function fetchNoteById(id: string, pin?: string): Promise<Note> {
-  const customHeaders: Record<string, string> = {};
-  if (pin) {
-    customHeaders["x-private-pin"] = pin;
-  }
-
-  const { ok, data } = await safeFetchJson(`/api/v1/notes/${id}`, {
-    headers: getAuthHeaders(customHeaders),
-  });
-  if (!ok) throw new Error("Không thể tải chi tiết ghi chú");
-  const unwrapped = unwrapResponse(data);
-  const parsed = NoteSchema.parse(unwrapped);
+  const parsed = await fetchAndParse(
+    `/api/v1/notes/${id}`,
+    NoteSchema,
+    {
+      headers: pin ? { "x-private-pin": pin } : undefined,
+    },
+    "Không thể tải chi tiết ghi chú",
+  );
   return normalizeNote(parsed);
 }
 
 export async function createNote(note: Partial<Note>): Promise<Note> {
-  const tagList =
-    note.tags && note.tags.length > 0 ? note.tags : note.tag ? [note.tag] : [];
   const payload = {
     title: note.title,
     content: note.content ?? "",
     topicId: note.topicId ?? null,
-    tags: tagList,
+    tags: note.tags && note.tags.length > 0 ? note.tags : [],
     isPinned: Boolean(note.isPinned),
     isLocked: Boolean(note.isLocked),
   };
 
-  const { ok, data } = await safeFetchJson("/api/v1/notes", {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(payload),
-  });
-  if (!ok) throw new Error("Không thể tạo ghi chú");
-  const unwrapped = unwrapResponse(data);
-  const parsed = NoteSchema.parse(unwrapped);
+  const parsed = await fetchAndParse(
+    "/api/v1/notes",
+    NoteSchema,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    "Không thể tạo ghi chú",
+  );
   return normalizeNote(parsed);
 }
 
@@ -123,22 +146,24 @@ export async function updateNote(
   id: string,
   note: Partial<Note>,
 ): Promise<Note> {
-  const { ok, data } = await safeFetchJson(`/api/v1/notes/${id}`, {
-    method: "PUT",
-    headers: getAuthHeaders(),
-    body: JSON.stringify(note),
-  });
-  if (!ok) throw new Error("Không thể cập nhật ghi chú");
-  const unwrapped = unwrapResponse(data);
-  const parsed = NoteSchema.parse(unwrapped);
+  const parsed = await fetchAndParse(
+    `/api/v1/notes/${id}`,
+    NoteSchema,
+    {
+      method: "PUT",
+      body: JSON.stringify(note),
+    },
+    "Không thể cập nhật ghi chú",
+  );
   return normalizeNote(parsed);
 }
 
-export async function toggleNoteLock(
+export function toggleNoteLock(
   id: string,
   isLocked: boolean,
+  pin?: string,
 ): Promise<Note> {
-  return await updateNote(id, { isLocked: !isLocked });
+  return updateNote(id, { isLocked: !isLocked, pin });
 }
 
 const DeleteResponseSchema = z.object({
@@ -149,21 +174,19 @@ const DeleteResponseSchema = z.object({
 export type DeleteResponse = z.infer<typeof DeleteResponseSchema>;
 
 export async function deleteNote(id: string): Promise<DeleteResponse> {
-  const { ok, data } = await safeFetchJson(`/api/v1/notes/${id}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
-  });
-  if (!ok) throw new Error("Không thể xóa ghi chú");
-  const unwrapped = unwrapResponse(data);
-  return DeleteResponseSchema.parse(unwrapped);
+  return await fetchAndParse(
+    `/api/v1/notes/${id}`,
+    DeleteResponseSchema,
+    { method: "DELETE" },
+    "Không thể xóa ghi chú",
+  );
 }
 
 export async function deleteTopic(id: string): Promise<DeleteResponse> {
-  const { ok, data } = await safeFetchJson(`/api/v1/topics/${id}`, {
-    method: "DELETE",
-    headers: getAuthHeaders(),
-  });
-  if (!ok) throw new Error("Không thể xóa chủ đề");
-  const unwrapped = unwrapResponse(data);
-  return DeleteResponseSchema.parse(unwrapped);
+  return await fetchAndParse(
+    `/api/v1/topics/${id}`,
+    DeleteResponseSchema,
+    { method: "DELETE" },
+    "Không thể xóa chủ đề",
+  );
 }

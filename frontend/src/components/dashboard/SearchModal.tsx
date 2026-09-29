@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-interface NotionSearchModalProps {
+interface SearchModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   notes: Note[];
@@ -17,14 +17,14 @@ interface NotionSearchModalProps {
   onSelectTopic: (topicId: string) => void;
 }
 
-export function NotionSearchModal({
+export function SearchModal({
   open,
   onOpenChange,
   notes,
   topics,
   onSelectNote,
   onSelectTopic,
-}: NotionSearchModalProps) {
+}: SearchModalProps) {
   const [query, setQuery] = useState("");
 
   const handleOpenChange = useCallback(

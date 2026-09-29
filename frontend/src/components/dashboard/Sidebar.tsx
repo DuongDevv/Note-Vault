@@ -1,23 +1,19 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Search,
   Plus,
   FileText,
   Lock,
-  Unlock,
   ChevronDown,
   ChevronRight,
   Folder,
-  Sun,
-  Moon,
-  LogOut,
   PenSquare,
-  KeyRound,
   Trash2,
-  Copy,
 } from "lucide-react";
-import type { Note, Topic } from "@/types/note";
 import type { AuthUser } from "@/services/auth";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { useUIStore } from "@/stores/useUIStore";
 import { NoteVaultLogo } from "@/components/common/NoteVaultLogo";
 import {
   Sidebar,
@@ -29,15 +25,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuAction,
-  SidebarFooter,
 } from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -46,54 +34,85 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Button } from "@/components/ui/button";
+import { NoteContextMenu } from "./NoteContextMenu";
+import { SidebarUserProfile } from "./SidebarUserProfile";
 
 interface SidebarProps {
-  notes: Note[];
-  topics: Topic[];
-  activeNoteId?: string;
-  activeTopicId?: string;
-  onSelectNote: (noteId: string) => void;
-  onSelectTopic: (topicId: string) => void;
-  onNewNoteClick: (topicId?: string) => void;
-  onNewTopicClick: () => void;
-  onSearchClick: () => void;
   currentUser?: AuthUser | null;
   onLogout?: () => void;
   isDark?: boolean;
   onToggleTheme?: () => void;
-  onOpenPinSettings?: () => void;
-  onToggleLock?: (noteId: string) => void;
-  onDeleteNote?: (noteId: string) => void;
-  onDeleteTopic?: (topicId: string) => void;
 }
 
 export function AppSidebar({
-  notes,
-  topics,
-  activeNoteId,
-  activeTopicId,
-  onSelectNote,
-  onSelectTopic,
-  onNewNoteClick,
-  onNewTopicClick,
-  onSearchClick,
   currentUser,
   onLogout,
   isDark,
   onToggleTheme,
-  onOpenPinSettings,
-  onToggleLock,
-  onDeleteNote,
-  onDeleteTopic,
 }: SidebarProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const notes = useWorkspaceStore((s) => s.notes);
+  const topics = useWorkspaceStore((s) => s.topics);
+  const createNote = useWorkspaceStore((s) => s.createNote);
+  const deleteTopic = useWorkspaceStore((s) => s.deleteTopic);
+
+  const setSearchOpen = useUIStore((s) => s.setSearchOpen);
+  const setNewTopicOpen = useUIStore((s) => s.setNewTopicOpen);
+
+  const activeTopicId = useMemo(() => {
+    const match = /^\/topics\/([^/]+)/.exec(location.pathname);
+    return match ? match[1] : undefined;
+  }, [location.pathname]);
+
+  const activeNoteId = useMemo(() => {
+    const match = /^\/notes\/([^/]+)/.exec(location.pathname);
+    return match ? match[1] : undefined;
+  }, [location.pathname]);
+
+  const handleSelectNote = (noteId: string) => {
+    void navigate(`/notes/${noteId}`);
+  };
+
+  const handleSelectTopic = (topicId: string) => {
+    void navigate(`/topics/${topicId}`);
+  };
+
+  const handleNewNote = async (topicId?: string | null) => {
+    try {
+      const targetTopicId =
+        topicId === null ? undefined : (topicId ?? activeTopicId);
+      const created = await createNote(targetTopicId);
+      void navigate(`/notes/${created.id}`);
+    } catch (err) {
+      console.error("Failed to create note:", err);
+    }
+  };
+
+  const handleDeleteTopic = async (topicId: string) => {
+    try {
+      const currentNote = notes.find((n) => n.id === activeNoteId);
+      const remainingId = await deleteTopic(topicId, currentNote?.topicId);
+      if (currentNote?.topicId === topicId) {
+        if (remainingId) {
+          void navigate(`/notes/${remainingId}`);
+        } else {
+          void navigate("/");
+        }
+      }
+    } catch (err) {
+      console.error("Failed to delete topic:", err);
+    }
+  };
   // Collapsed states
   const [isRecentsCollapsed, setIsRecentsCollapsed] = useState(false);
+  const [isUnclassifiedCollapsed, setIsUnclassifiedCollapsed] = useState(false);
   const [isTopicsSectionCollapsed, setIsTopicsSectionCollapsed] =
     useState(false);
   const [collapsedTopics, setCollapsedTopics] = useState<
     Record<string, boolean>
   >({});
-
   // Recents (Top 6 most recent notes)
   const recentNotes = notes
     .toSorted((a, b) => {
@@ -103,6 +122,17 @@ export function AppSidebar({
     })
     .slice(0, 6);
 
+  // Unclassified notes (notes without a topic)
+  const unclassifiedNotes = useMemo(() => {
+    return notes
+      .filter((n) => !n.topicId)
+      .toSorted((a, b) => {
+        if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+        const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return dateB - dateA;
+      });
+  }, [notes]);
   return (
     <Sidebar className="border-sidebar-border bg-sidebar z-50 border-r transition-colors select-none">
       {/* Top Workspace Header */}
@@ -110,7 +140,7 @@ export function AppSidebar({
         <div className="flex items-center justify-between gap-1">
           <div className="flex min-w-0 flex-1 items-center gap-2 rounded-md p-1.5">
             <NoteVaultLogo size={18} className="shrink-0 rounded" />
-            <span className="text-sidebar-foreground truncate text-xs font-semibold tracking-tight">
+            <span className="text-sidebar-foreground truncate text-sm font-semibold tracking-tight">
               NoteVault
             </span>
           </div>
@@ -118,7 +148,7 @@ export function AppSidebar({
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => onNewNoteClick()}
+            onClick={() => void handleNewNote()}
             className="text-muted-foreground hover:text-sidebar-foreground cursor-pointer"
             title="Tạo trang mới"
             aria-label="Tạo trang mới"
@@ -131,8 +161,8 @@ export function AppSidebar({
         <Button
           variant="sidebar-search"
           size="sidebar-row"
-          onClick={onSearchClick}
-          className="mt-1.5 cursor-pointer text-xs"
+          onClick={() => setSearchOpen(true)}
+          className="mt-1.5 cursor-pointer text-[13px]"
         >
           <div className="flex items-center gap-2">
             <Search className="size-3.5 opacity-70" />
@@ -151,26 +181,27 @@ export function AppSidebar({
             <ContextMenu>
               <ContextMenuTrigger className="block w-full">
                 <div className="group/recents-header hover:bg-sidebar-accent/50 flex h-7 items-center justify-between rounded-md px-2 transition-colors">
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
                     onClick={() => setIsRecentsCollapsed((prev) => !prev)}
-                    className="text-muted-foreground/80 group-hover/recents-header:text-sidebar-foreground flex min-w-0 flex-1 cursor-pointer items-center gap-1.5 text-left text-[11px] font-medium tracking-wider select-none"
+                    className="text-muted-foreground/80 group-hover/recents-header:text-sidebar-foreground h-7 w-full cursor-pointer justify-between p-0 text-left text-xs font-medium tracking-wider shadow-none select-none hover:bg-transparent"
                   >
                     <span>Gần đây</span>
                     <span className="opacity-0 transition-opacity group-hover/recents-header:opacity-100">
                       {isRecentsCollapsed ? (
-                        <ChevronRight className="text-muted-foreground size-3" />
+                        <ChevronRight className="text-muted-foreground size-3.5" />
                       ) : (
-                        <ChevronDown className="text-muted-foreground size-3" />
+                        <ChevronDown className="text-muted-foreground size-3.5" />
                       )}
                     </span>
-                  </button>
+                  </Button>
                 </div>
               </ContextMenuTrigger>
 
               <ContextMenuContent className="w-48 text-xs">
                 <ContextMenuItem
-                  onClick={() => onNewNoteClick()}
+                  onClick={() => void handleNewNote()}
                   className="flex cursor-pointer items-center gap-2"
                 >
                   <PenSquare className="text-muted-foreground size-3.5" />
@@ -201,74 +232,29 @@ export function AppSidebar({
                     const isActive = activeNoteId === note.id;
                     return (
                       <SidebarMenuItem key={`recent-${note.id}`}>
-                        <ContextMenu>
-                          <ContextMenuTrigger className="w-full">
-                            <SidebarMenuButton
-                              isActive={isActive}
-                              onClick={() => onSelectNote(note.id)}
-                              className={`h-7.5 w-full cursor-pointer justify-start rounded-md px-2 text-[13px] transition-colors ${
-                                isActive
-                                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                                  : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60"
-                              }`}
-                            >
-                              {note.isLocked ? (
-                                <Lock className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
-                              ) : (
-                                <FileText className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
-                              )}
-                              <span className="truncate text-xs">
-                                {note.title}
-                              </span>
-                            </SidebarMenuButton>
-                          </ContextMenuTrigger>
-
-                          <ContextMenuContent className="w-48 text-xs">
-                            {onToggleLock && (
-                              <ContextMenuItem
-                                onClick={() => onToggleLock(note.id)}
-                                className="flex cursor-pointer items-center gap-2"
-                              >
-                                {note.isLocked ? (
-                                  <>
-                                    <Unlock className="size-3.5" />
-                                    <span>Bỏ khóa PIN</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Lock className="size-3.5" />
-                                    <span>Khóa bằng mã PIN</span>
-                                  </>
-                                )}
-                              </ContextMenuItem>
+                        <NoteContextMenu
+                          note={note}
+                          hasPrivatePin={currentUser?.hasPrivatePin}
+                        >
+                          <SidebarMenuButton
+                            isActive={isActive}
+                            onClick={() => handleSelectNote(note.id)}
+                            className={`h-8 w-full cursor-pointer justify-start rounded-md px-2 text-[13px] transition-colors ${
+                              isActive
+                                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60"
+                            }`}
+                          >
+                            {note.isLocked ? (
+                              <Lock className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
+                            ) : (
+                              <FileText className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
                             )}
-                            <ContextMenuItem
-                              onClick={() => {
-                                if (typeof navigator !== "undefined") {
-                                  void navigator.clipboard.writeText(
-                                    note.title,
-                                  );
-                                }
-                              }}
-                              className="flex cursor-pointer items-center gap-2"
-                            >
-                              <Copy className="text-muted-foreground size-3.5" />
-                              <span>Sao chép tiêu đề</span>
-                            </ContextMenuItem>
-                            {onDeleteNote && (
-                              <>
-                                <ContextMenuSeparator />
-                                <ContextMenuItem
-                                  variant="destructive"
-                                  onClick={() => onDeleteNote(note.id)}
-                                >
-                                  <Trash2 className="size-3.5" />
-                                  <span>Xóa trang</span>
-                                </ContextMenuItem>
-                              </>
-                            )}
-                          </ContextMenuContent>
-                        </ContextMenu>
+                            <span className="truncate text-[13px]">
+                              {note.title}
+                            </span>
+                          </SidebarMenuButton>
+                        </NoteContextMenu>
                       </SidebarMenuItem>
                     );
                   })}
@@ -278,38 +264,148 @@ export function AppSidebar({
           </SidebarGroup>
         )}
 
+        {/* Section: Unclassified Notes (Quick Capture / Inbox) */}
+        {unclassifiedNotes.length > 0 && (
+          <SidebarGroup className="py-1">
+            <ContextMenu>
+              <ContextMenuTrigger className="block w-full">
+                <div className="group/unclassified-header hover:bg-sidebar-accent/50 relative flex h-7 items-center justify-between rounded-md px-2 transition-colors">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setIsUnclassifiedCollapsed((prev) => !prev)}
+                    className="text-muted-foreground/80 group-hover/unclassified-header:text-sidebar-foreground h-7 w-full cursor-pointer justify-between p-0 text-left text-xs font-medium tracking-wider shadow-none select-none hover:bg-transparent"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>Chưa phân loại</span>
+                      <span className="text-muted-foreground/60 text-[11px] font-normal">
+                        ({unclassifiedNotes.length})
+                      </span>
+                    </div>
+                    <span className="mr-5 opacity-0 transition-opacity group-hover/unclassified-header:opacity-100">
+                      {isUnclassifiedCollapsed ? (
+                        <ChevronRight className="text-muted-foreground size-3.5" />
+                      ) : (
+                        <ChevronDown className="text-muted-foreground size-3.5" />
+                      )}
+                    </span>
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleNewNote(null);
+                    }}
+                    className="text-muted-foreground hover:text-foreground absolute right-1 size-5.5 cursor-pointer rounded p-0 opacity-0 transition-opacity group-hover/unclassified-header:opacity-100"
+                    title="Tạo trang chưa phân loại"
+                    aria-label="Tạo trang chưa phân loại"
+                  >
+                    <Plus className="size-3.5" />
+                  </Button>
+                </div>
+              </ContextMenuTrigger>
+
+              <ContextMenuContent className="w-52 text-xs">
+                <ContextMenuItem
+                  onClick={() => void handleNewNote(null)}
+                  className="flex cursor-pointer items-center gap-2"
+                >
+                  <PenSquare className="text-muted-foreground size-3.5" />
+                  <span>Tạo trang mới</span>
+                </ContextMenuItem>
+                <ContextMenuSeparator />
+                <ContextMenuItem
+                  onClick={() => setIsUnclassifiedCollapsed((prev) => !prev)}
+                  className="flex cursor-pointer items-center gap-2"
+                >
+                  {isUnclassifiedCollapsed ? (
+                    <>
+                      <ChevronDown className="text-muted-foreground size-3.5" />
+                      <span>Mở rộng mục này</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronRight className="text-muted-foreground size-3.5" />
+                      <span>Thu gọn mục này</span>
+                    </>
+                  )}
+                </ContextMenuItem>
+              </ContextMenuContent>
+            </ContextMenu>
+
+            {!isUnclassifiedCollapsed && (
+              <SidebarGroupContent className="mt-0.5">
+                <SidebarMenu className="gap-0.5">
+                  {unclassifiedNotes.map((note) => {
+                    const isActive = activeNoteId === note.id;
+                    return (
+                      <SidebarMenuItem key={`unclassified-${note.id}`}>
+                        <NoteContextMenu
+                          note={note}
+                          hasPrivatePin={currentUser?.hasPrivatePin}
+                        >
+                          <SidebarMenuButton
+                            isActive={isActive}
+                            onClick={() => handleSelectNote(note.id)}
+                            className={`h-8 w-full cursor-pointer justify-start rounded-md px-2 text-[13px] transition-colors ${
+                              isActive
+                                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60"
+                            }`}
+                          >
+                            {note.isLocked ? (
+                              <Lock className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
+                            ) : (
+                              <FileText className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
+                            )}
+                            <span className="truncate text-[13px]">
+                              {note.title || "Trang chưa có tiêu đề"}
+                            </span>
+                          </SidebarMenuButton>
+                        </NoteContextMenu>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            )}
+          </SidebarGroup>
+        )}
         {/* Section: Topics & Workspace Documents (Collapsible with Hover Arrow Behind) */}
         <SidebarGroup className="py-1">
           <ContextMenu>
             <ContextMenuTrigger className="block w-full">
               <div className="group/topics-header hover:bg-sidebar-accent/50 flex h-7 items-center justify-between rounded-md px-2 transition-colors">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => setIsTopicsSectionCollapsed((prev) => !prev)}
-                  className="text-muted-foreground/80 group-hover/topics-header:text-sidebar-foreground flex min-w-0 flex-1 cursor-pointer items-center gap-1.5 text-left text-[11px] font-medium tracking-wider select-none"
+                  className="text-muted-foreground/80 group-hover/topics-header:text-sidebar-foreground h-7 w-full cursor-pointer justify-between p-0 text-left text-xs font-medium tracking-wider shadow-none select-none hover:bg-transparent"
                 >
                   <span>Chủ đề</span>
                   <span className="opacity-0 transition-opacity group-hover/topics-header:opacity-100">
                     {isTopicsSectionCollapsed ? (
-                      <ChevronRight className="text-muted-foreground size-3" />
+                      <ChevronRight className="text-muted-foreground size-3.5" />
                     ) : (
-                      <ChevronDown className="text-muted-foreground size-3" />
+                      <ChevronDown className="text-muted-foreground size-3.5" />
                     )}
                   </span>
-                </button>
+                </Button>
               </div>
             </ContextMenuTrigger>
 
             <ContextMenuContent className="w-52 text-xs">
               <ContextMenuItem
-                onClick={onNewTopicClick}
+                onClick={() => setNewTopicOpen(true)}
                 className="flex cursor-pointer items-center gap-2"
               >
                 <Folder className="text-muted-foreground size-3.5" />
                 <span>Thêm chủ đề mới</span>
               </ContextMenuItem>
               <ContextMenuItem
-                onClick={() => onNewNoteClick()}
+                onClick={() => void handleNewNote()}
                 className="flex cursor-pointer items-center gap-2"
               >
                 <PenSquare className="text-muted-foreground size-3.5" />
@@ -352,13 +448,13 @@ export function AppSidebar({
                             <SidebarMenuButton
                               isActive={isTopicActive}
                               onClick={() => {
-                                onSelectTopic(topic.id);
+                                handleSelectTopic(topic.id);
                                 setCollapsedTopics((prev) => ({
                                   ...prev,
                                   [topic.id]: !prev[topic.id],
                                 }));
                               }}
-                              className={`group/topic-item h-7.5 w-full cursor-pointer justify-start rounded-md px-2 pr-7 text-[13px] transition-colors ${
+                              className={`group/topic-item h-8 w-full cursor-pointer justify-start rounded-md px-2 pr-7 text-[13px] transition-colors ${
                                 isTopicActive
                                   ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                                   : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60"
@@ -367,14 +463,14 @@ export function AppSidebar({
                               {/* Folder Icon, Title & Hover Arrow Behind */}
                               <div className="flex min-w-0 items-center gap-2 truncate">
                                 <Folder className="size-3.5 shrink-0 opacity-70" />
-                                <span className="truncate text-xs font-medium">
+                                <span className="truncate text-[13px] font-medium">
                                   {topic.name}
                                 </span>
                                 <span className="opacity-0 transition-opacity group-hover/topic-item:opacity-100">
                                   {isCollapsed ? (
-                                    <ChevronRight className="text-muted-foreground size-3 shrink-0" />
+                                    <ChevronRight className="text-muted-foreground size-3.5 shrink-0" />
                                   ) : (
-                                    <ChevronDown className="text-muted-foreground size-3 shrink-0" />
+                                    <ChevronDown className="text-muted-foreground size-3.5 shrink-0" />
                                   )}
                                 </span>
                               </div>
@@ -385,35 +481,30 @@ export function AppSidebar({
                             showOnHover
                             onClick={(e) => {
                               e.stopPropagation();
-                              onNewNoteClick(topic.id);
+                              void handleNewNote(topic.id);
                             }}
-                            className="text-muted-foreground hover:text-foreground top-1 right-1 size-5.5 cursor-pointer rounded p-0"
+                            className="text-muted-foreground hover:text-foreground top-1.5 right-1 size-5.5 cursor-pointer rounded p-0"
                             title={`Tạo trang trong "${topic.name}"`}
                             aria-label={`Tạo trang trong "${topic.name}"`}
                           >
-                            <Plus className="size-3" />
+                            <Plus className="size-3.5" />
                           </SidebarMenuAction>
-
                           <ContextMenuContent className="w-52 text-xs">
                             <ContextMenuItem
-                              onClick={() => onNewNoteClick(topic.id)}
+                              onClick={() => void handleNewNote(topic.id)}
                               className="flex cursor-pointer items-center gap-2"
                             >
                               <Plus className="text-muted-foreground size-3.5" />
                               <span>Tạo trang mới</span>
                             </ContextMenuItem>
-                            {onDeleteTopic && (
-                              <>
-                                <ContextMenuSeparator />
-                                <ContextMenuItem
-                                  variant="destructive"
-                                  onClick={() => onDeleteTopic(topic.id)}
-                                >
-                                  <Trash2 className="size-3.5" />
-                                  <span>Xóa chủ đề</span>
-                                </ContextMenuItem>
-                              </>
-                            )}
+                            <ContextMenuSeparator />
+                            <ContextMenuItem
+                              variant="destructive"
+                              onClick={() => void handleDeleteTopic(topic.id)}
+                            >
+                              <Trash2 className="size-3.5" />
+                              <span>Xóa chủ đề</span>
+                            </ContextMenuItem>
                           </ContextMenuContent>
                         </ContextMenu>
                       </SidebarMenuItem>
@@ -424,74 +515,30 @@ export function AppSidebar({
                           {topicNotes.map((note) => {
                             const isNoteActive = activeNoteId === note.id;
                             return (
-                              <ContextMenu key={`ctx-topic-${note.id}`}>
-                                <ContextMenuTrigger className="w-full">
-                                  <SidebarMenuButton
-                                    isActive={isNoteActive}
-                                    onClick={() => onSelectNote(note.id)}
-                                    className={`h-7.5 w-full cursor-pointer justify-start rounded-md px-2 text-xs transition-colors ${
-                                      isNoteActive
-                                        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                                        : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60"
-                                    }`}
-                                  >
-                                    {note.isLocked ? (
-                                      <Lock className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
-                                    ) : (
-                                      <FileText className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
-                                    )}
-                                    <span className="truncate text-xs">
-                                      {note.title || "Trang chưa có tiêu đề"}
-                                    </span>
-                                  </SidebarMenuButton>
-                                </ContextMenuTrigger>
-
-                                <ContextMenuContent className="w-48 text-xs">
-                                  {onToggleLock && (
-                                    <ContextMenuItem
-                                      onClick={() => onToggleLock(note.id)}
-                                      className="flex cursor-pointer items-center gap-2"
-                                    >
-                                      {note.isLocked ? (
-                                        <>
-                                          <Unlock className="size-3.5" />
-                                          <span>Bỏ khóa PIN</span>
-                                        </>
-                                      ) : (
-                                        <>
-                                          <Lock className="size-3.5" />
-                                          <span>Khóa bằng mã PIN</span>
-                                        </>
-                                      )}
-                                    </ContextMenuItem>
+                              <NoteContextMenu
+                                key={`ctx-topic-${note.id}`}
+                                note={note}
+                                hasPrivatePin={currentUser?.hasPrivatePin}
+                              >
+                                <SidebarMenuButton
+                                  isActive={isNoteActive}
+                                  onClick={() => handleSelectNote(note.id)}
+                                  className={`h-8 w-full cursor-pointer justify-start rounded-md px-2 text-[13px] transition-colors ${
+                                    isNoteActive
+                                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                      : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60"
+                                  }`}
+                                >
+                                  {note.isLocked ? (
+                                    <Lock className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
+                                  ) : (
+                                    <FileText className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
                                   )}
-                                  <ContextMenuItem
-                                    onClick={() => {
-                                      if (typeof navigator !== "undefined") {
-                                        void navigator.clipboard.writeText(
-                                          note.title,
-                                        );
-                                      }
-                                    }}
-                                    className="flex cursor-pointer items-center gap-2"
-                                  >
-                                    <Copy className="text-muted-foreground size-3.5" />
-                                    <span>Sao chép tiêu đề</span>
-                                  </ContextMenuItem>
-                                  {onDeleteNote && (
-                                    <>
-                                      <ContextMenuSeparator />
-                                      <ContextMenuItem
-                                        variant="destructive"
-                                        onClick={() => onDeleteNote(note.id)}
-                                      >
-                                        <Trash2 className="size-3.5" />
-                                        <span>Xóa trang</span>
-                                      </ContextMenuItem>
-                                    </>
-                                  )}
-                                </ContextMenuContent>
-                              </ContextMenu>
+                                  <span className="truncate text-[13px]">
+                                    {note.title || "Trang chưa có tiêu đề"}
+                                  </span>
+                                </SidebarMenuButton>
+                              </NoteContextMenu>
                             );
                           })}
                         </div>
@@ -506,83 +553,12 @@ export function AppSidebar({
       </SidebarContent>
 
       {/* Bottom User Profile & Settings Footer */}
-      <SidebarFooter className="border-sidebar-border/60 border-t p-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="hover:bg-sidebar-accent text-sidebar-foreground flex h-9 w-full cursor-pointer items-center justify-between rounded-md px-2 text-xs transition-colors outline-none">
-            <div className="flex min-w-0 items-center gap-2">
-              <div className="bg-muted-foreground/20 text-foreground flex size-6 items-center justify-center rounded-md text-[11px] font-semibold">
-                {currentUser ? currentUser.displayName[0]?.toUpperCase() : "U"}
-              </div>
-              <div className="flex min-w-0 flex-col text-left">
-                <span className="truncate text-xs font-medium">
-                  {currentUser ? currentUser.displayName : "Người dùng"}
-                </span>
-                <span className="text-muted-foreground/70 truncate text-[10px]">
-                  @{currentUser ? currentUser.username : "user"}
-                </span>
-              </div>
-            </div>
-            <ChevronDown className="text-muted-foreground size-3.5 opacity-60" />
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent align="start" className="w-60 p-1.5" side="top">
-            {/* Clean Account Header: Avatar [N], Name, Subtitle is Email */}
-            <div className="flex items-center gap-2.5 rounded-md p-2">
-              <div className="bg-muted-foreground/25 text-foreground flex size-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold select-none">
-                {currentUser ? currentUser.displayName[0]?.toUpperCase() : "U"}
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col">
-                <span className="text-foreground truncate text-xs leading-tight font-semibold">
-                  {currentUser ? currentUser.displayName : "Người dùng"}
-                </span>
-                <span className="text-muted-foreground mt-0.5 truncate text-[11px]">
-                  {currentUser ? currentUser.email : ""}
-                </span>
-              </div>
-            </div>
-
-            <DropdownMenuSeparator className="my-1" />
-
-            {/* Action List */}
-            {onOpenPinSettings && (
-              <DropdownMenuItem
-                onClick={onOpenPinSettings}
-                className="flex cursor-pointer items-center gap-2.5 px-2 py-1.5 text-xs"
-              >
-                <KeyRound className="text-muted-foreground size-3.5" />
-                <span>Đổi mã Master PIN</span>
-              </DropdownMenuItem>
-            )}
-
-            {onToggleTheme && (
-              <DropdownMenuItem
-                onClick={onToggleTheme}
-                className="flex cursor-pointer items-center justify-between px-2 py-1.5 text-xs"
-              >
-                <span className="flex items-center gap-2.5">
-                  {isDark ? (
-                    <Sun className="text-muted-foreground size-3.5" />
-                  ) : (
-                    <Moon className="text-muted-foreground size-3.5" />
-                  )}
-                  <span>{isDark ? "Giao diện: Sáng" : "Giao diện: Tối"}</span>
-                </span>
-              </DropdownMenuItem>
-            )}
-
-            <DropdownMenuSeparator className="my-1" />
-
-            {/* Logout Action */}
-            <DropdownMenuItem
-              onClick={onLogout}
-              className="text-destructive focus:text-destructive flex cursor-pointer items-center gap-2.5 px-2 py-1.5 text-xs"
-            >
-              <LogOut className="size-3.5" />
-              <span>Đăng xuất</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarFooter>
+      <SidebarUserProfile
+        currentUser={currentUser}
+        onLogout={onLogout}
+        isDark={isDark}
+        onToggleTheme={onToggleTheme}
+      />
     </Sidebar>
   );
 }

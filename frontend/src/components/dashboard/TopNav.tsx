@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   Lock,
@@ -9,6 +10,8 @@ import {
   Clock,
 } from "lucide-react";
 import type { Note, Topic } from "@/types/note";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { useUIStore } from "@/stores/useUIStore";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,27 +20,25 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-interface NotionTopNavProps {
+interface TopNavProps {
   currentNote?: Note | null;
   currentTopic?: Topic | null;
-  isSaving?: boolean;
-  lastSavedAt?: Date | null;
-  onToggleLock?: (noteId: string) => void;
-  onDeleteNote?: (noteId: string) => void;
-  onNavigateTopic?: (topicId: string) => void;
+  hasPrivatePin?: boolean;
 }
 
-export function NotionTopNav({
+export function TopNav({
   currentNote,
   currentTopic,
-  isSaving,
-  lastSavedAt,
-  onToggleLock,
-  onDeleteNote,
-  onNavigateTopic,
-}: NotionTopNavProps) {
+  hasPrivatePin,
+}: TopNavProps) {
+  const navigate = useNavigate();
+  const isSaving = useWorkspaceStore((s) => s.isSaving);
+  const lastSavedAt = useWorkspaceStore((s) => s.lastSavedAt);
+  const requestLockToggle = useUIStore((s) => s.requestLockToggle);
+  const setNoteToDelete = useUIStore((s) => s.setNoteToDelete);
   // Format last edited status string
   const formatLastEdited = () => {
+    if (!currentNote) return null;
     if (isSaving) return "Đang lưu...";
     if (lastSavedAt) {
       return `Đã lưu ${lastSavedAt.toLocaleTimeString("vi-VN", {
@@ -45,7 +46,7 @@ export function NotionTopNav({
         minute: "2-digit",
       })}`;
     }
-    if (currentNote?.updatedAt) {
+    if (currentNote.updatedAt) {
       const date = new Date(currentNote.updatedAt);
       return `Đã sửa ${date.toLocaleDateString("vi-VN", {
         day: "2-digit",
@@ -67,7 +68,7 @@ export function NotionTopNav({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onNavigateTopic?.(currentTopic.id)}
+              onClick={() => void navigate(`/topics/${currentTopic.id}`)}
               className="text-muted-foreground hover:text-foreground h-auto cursor-pointer truncate p-0 font-normal hover:bg-transparent"
             >
               <Folder className="size-3.5 opacity-70" />
@@ -76,7 +77,7 @@ export function NotionTopNav({
           ) : (
             <span className="text-muted-foreground flex items-center gap-1 truncate font-normal">
               <FileText className="size-3.5 opacity-70" />
-              <span>Ghi chú</span>
+              <span>Chưa phân loại</span>
             </span>
           )}
 
@@ -92,19 +93,20 @@ export function NotionTopNav({
 
       {/* Right: Actions & Last Edited Status */}
       <div className="flex items-center gap-1 sm:gap-2">
-        {/* Last Edited Status */}
-        <span className="text-muted-foreground/70 mr-1 hidden items-center gap-1 font-sans text-[11px] sm:inline-flex">
-          <Clock className="size-3 opacity-60" />
-          {formatLastEdited()}
-        </span>
-
+        {/* Last Edited Status (Only displayed when a note is active) */}
+        {currentNote && (
+          <span className="text-muted-foreground/70 mr-1 hidden items-center gap-1 font-sans text-[11px] sm:inline-flex">
+            <Clock className="size-3 opacity-60" />
+            {formatLastEdited()}
+          </span>
+        )}
         {/* PIN Lock Toggle Button */}
-        {currentNote && onToggleLock && (
+        {currentNote && (
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            onClick={() => onToggleLock(currentNote.id)}
+            onClick={() => requestLockToggle(currentNote, hasPrivatePin)}
             title={
               currentNote.isLocked
                 ? "Mở khóa ghi chú (Bỏ mã hóa PIN)"
@@ -121,7 +123,7 @@ export function NotionTopNav({
         )}
 
         {/* More Actions Menu */}
-        {currentNote && onDeleteNote && (
+        {currentNote && (
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
@@ -137,7 +139,7 @@ export function NotionTopNav({
             <DropdownMenuContent align="end" className="w-40 text-xs">
               <DropdownMenuItem
                 variant="destructive"
-                onClick={() => onDeleteNote(currentNote.id)}
+                onClick={() => setNoteToDelete(currentNote)}
               >
                 <Trash2 className="size-3.5" />
                 <span>Xóa trang</span>
