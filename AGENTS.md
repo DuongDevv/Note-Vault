@@ -29,6 +29,7 @@ MUST read the corresponding standard file under `docs/standards/` before modifyi
 - **Auth, hashing, and sanitization** → `docs/standards/security-and-cryptography.md`
 - **Branches, commits, and PRs** → `docs/standards/git-flow-and-pr-matrix.md`
 - **Architecture & Deep Modules** → `docs/standards/code-architecture-and-design-principles.md`
+- **UI & Visual Design Philosophy** → `docs/standards/ui-design-philosophy.md`
 
 ---
 
@@ -53,8 +54,9 @@ MUST read the corresponding standard file under `docs/standards/` before modifyi
 
 - `backend/` — Express 5 REST API Server (`src/routes/`, `src/controllers/`, `src/middlewares/`, `src/services/`, `src/prisma/`)
 - `frontend/` — React 19 Single Page Dashboard (`src/components/`, `src/services/`, `src/types/`, `src/mocks/`)
-- `docs/standards/` — 10 Engineering Standard documents
+- `docs/standards/` — 11 Engineering Standard documents
 - `docs/adr/` — Architectural Decision Records
+- `docs/dataflow/` — 6 End-to-End System Dataflow documents
 - `docker-compose.yml` — Local PostgreSQL & Redis infrastructure
 
 ---
