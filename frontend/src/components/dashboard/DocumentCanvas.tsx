@@ -79,7 +79,7 @@ export function DocumentCanvas({ note }: DocumentCanvasProps) {
   }
 
   return (
-    <div className="w-full flex-1 overflow-y-auto">
+    <div className="w-full flex-1">
       <NoteEditor
         key={note.id}
         note={note}

@@ -89,6 +89,21 @@ export async function createTopic(
   );
 }
 
+export async function updateTopic(
+  id: string,
+  data: { name?: string; color?: string; icon?: string },
+): Promise<Topic> {
+  return await fetchAndParse(
+    `/api/v1/topics/${id}`,
+    TopicSchema,
+    {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    },
+    "Không thể cập nhật chủ đề",
+  );
+}
+
 export async function fetchNotes(
   topicId?: string,
   query?: string,

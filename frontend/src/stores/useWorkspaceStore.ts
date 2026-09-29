@@ -5,13 +5,13 @@ import {
   fetchNotes,
   fetchNoteById,
   createTopic as apiCreateTopic,
+  updateTopic as apiUpdateTopic,
   createNote as apiCreateNote,
   deleteNote as apiDeleteNote,
   deleteTopic as apiDeleteTopic,
   updateNote as apiUpdateNote,
   toggleNoteLock as apiToggleNoteLock,
 } from "@/services/api";
-
 interface WorkspaceState {
   notes: Note[];
   topics: Topic[];
@@ -31,6 +31,8 @@ interface WorkspaceState {
     content?: string;
   }) => Promise<void>;
   createTopic: (name: string, icon?: string) => Promise<Topic>;
+  updateTopic: (id: string, name: string) => Promise<Topic>;
+  moveNoteToTopic: (noteId: string, topicId: string | null) => Promise<void>;
   deleteNote: (noteId: string) => Promise<string | undefined>;
   deleteTopic: (
     topicId: string,
@@ -136,6 +138,21 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       topics: [...state.topics, created],
     }));
     return created;
+  },
+
+  updateTopic: async (id: string, name: string) => {
+    const updated = await apiUpdateTopic(id, { name });
+    set((state) => ({
+      topics: state.topics.map((t) => (t.id === id ? updated : t)),
+    }));
+    return updated;
+  },
+
+  moveNoteToTopic: async (noteId: string, topicId: string | null) => {
+    await apiUpdateNote(noteId, { topicId });
+    set((state) => ({
+      notes: state.notes.map((n) => (n.id === noteId ? { ...n, topicId } : n)),
+    }));
   },
 
   deleteNote: async (noteId: string) => {

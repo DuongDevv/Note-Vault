@@ -96,8 +96,11 @@ export function WorkspaceLayout({
   }, [topics, currentNote, activeTopicId]);
 
   return (
-    <SidebarProvider defaultOpen={true}>
-      <div className="bg-background text-foreground flex min-h-screen w-full antialiased">
+    <SidebarProvider
+      defaultOpen={true}
+      className="h-svh max-h-svh overflow-hidden"
+    >
+      <div className="bg-background text-foreground flex h-svh max-h-svh w-full overflow-hidden antialiased">
         <AppSidebar
           currentUser={currentUser}
           onLogout={onLogout}
@@ -105,14 +108,14 @@ export function WorkspaceLayout({
           onToggleTheme={onToggleTheme}
         />
 
-        <SidebarInset className="bg-background flex min-w-0 flex-1 flex-col overflow-hidden">
+        <SidebarInset className="bg-background flex h-full min-w-0 flex-1 flex-col overflow-hidden">
           <TopNav
             currentNote={currentNote}
             currentTopic={currentTopic}
             hasPrivatePin={currentUser?.hasPrivatePin}
           />
 
-          <main className="flex flex-1 overflow-y-auto">
+          <main className="flex min-h-0 flex-1 overflow-y-auto">
             <DocumentCanvas note={currentNote} />
           </main>
         </SidebarInset>
