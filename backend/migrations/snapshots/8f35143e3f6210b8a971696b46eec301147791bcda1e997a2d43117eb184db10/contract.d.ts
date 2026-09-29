@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'b112970dd332a68c8c101820f10d197305b1e11982952b08c87496e2baaa7c7a'>;
+  StorageHashBase<'8f35143e3f6210b8a971696b46eec301147791bcda1e997a2d43117eb184db10'>;
 export type ExecutionHash =
   ExecutionHashBase<'d38bbdd24aa362a5e2e0dc8a53099967e444ef68caaf9ed50028d7af92d66a90'>;
 export type ProfileHash =
@@ -249,6 +249,7 @@ export type FieldOutputTypes = {
       readonly title: CodecTypes['pg/text@1']['output'];
       readonly content: CodecTypes['pg/text@1']['output'] | null;
       readonly tags: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
+      readonly isPinned: CodecTypes['pg/bool@1']['output'];
       readonly isLocked: CodecTypes['pg/bool@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -257,6 +258,7 @@ export type FieldOutputTypes = {
       readonly id: CodecTypes['pg/text@1']['output'];
       readonly userId: CodecTypes['pg/text@1']['output'];
       readonly name: CodecTypes['pg/text@1']['output'];
+      readonly slug: CodecTypes['pg/text@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
@@ -281,6 +283,7 @@ export type FieldInputTypes = {
       readonly title: CodecTypes['pg/text@1']['input'];
       readonly content: CodecTypes['pg/text@1']['input'] | null;
       readonly tags: ReadonlyArray<CodecTypes['pg/text@1']['input']>;
+      readonly isPinned: CodecTypes['pg/bool@1']['input'];
       readonly isLocked: CodecTypes['pg/bool@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -289,6 +292,7 @@ export type FieldInputTypes = {
       readonly id: CodecTypes['pg/text@1']['input'];
       readonly userId: CodecTypes['pg/text@1']['input'];
       readonly name: CodecTypes['pg/text@1']['input'];
+      readonly slug: CodecTypes['pg/text@1']['input'];
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
@@ -311,6 +315,7 @@ export type StorageColumnTypes = {
       readonly created_at: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly id: CodecTypes['pg/text@1']['output'];
       readonly is_locked: CodecTypes['pg/bool@1']['output'];
+      readonly is_pinned: CodecTypes['pg/bool@1']['output'];
       readonly tags: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
       readonly title: CodecTypes['pg/text@1']['output'];
       readonly topic_id: CodecTypes['pg/text@1']['output'] | null;
@@ -321,6 +326,7 @@ export type StorageColumnTypes = {
       readonly created_at: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly id: CodecTypes['pg/text@1']['output'];
       readonly name: CodecTypes['pg/text@1']['output'];
+      readonly slug: CodecTypes['pg/text@1']['output'];
       readonly updated_at: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly user_id: CodecTypes['pg/text@1']['output'];
     };
@@ -343,6 +349,7 @@ export type StorageColumnInputTypes = {
       readonly created_at: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly id: CodecTypes['pg/text@1']['input'];
       readonly is_locked: CodecTypes['pg/bool@1']['input'];
+      readonly is_pinned: CodecTypes['pg/bool@1']['input'];
       readonly tags: ReadonlyArray<CodecTypes['pg/text@1']['input']>;
       readonly title: CodecTypes['pg/text@1']['input'];
       readonly topic_id: CodecTypes['pg/text@1']['input'] | null;
@@ -353,6 +360,7 @@ export type StorageColumnInputTypes = {
       readonly created_at: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly id: CodecTypes['pg/text@1']['input'];
       readonly name: CodecTypes['pg/text@1']['input'];
+      readonly slug: CodecTypes['pg/text@1']['input'];
       readonly updated_at: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly user_id: CodecTypes['pg/text@1']['input'];
     };
@@ -387,6 +395,7 @@ export namespace Models {
     id: CodecTypes['pg/text@1']['output'];
     userId: CodecTypes['pg/text@1']['output'];
     name: CodecTypes['pg/text@1']['output'];
+    slug: CodecTypes['pg/text@1']['output'];
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     notes: public_Note[];
@@ -400,6 +409,7 @@ export namespace Models {
     title: CodecTypes['pg/text@1']['output'];
     content: CodecTypes['pg/text@1']['output'] | null;
     tags: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
+    isPinned: CodecTypes['pg/bool@1']['output'];
     isLocked: CodecTypes['pg/bool@1']['output'];
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -471,6 +481,15 @@ type ContractBase = Omit<
                     readonly value: DefaultLiteralValue<'pg/text@1', readonly []>;
                   };
                 };
+                readonly is_pinned: {
+                  readonly nativeType: 'bool';
+                  readonly codecId: 'pg/bool@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/bool@1', false>;
+                  };
+                };
                 readonly is_locked: {
                   readonly nativeType: 'bool';
                   readonly codecId: 'pg/bool@1';
@@ -503,9 +522,9 @@ type ContractBase = Omit<
                   readonly unique: false;
                 },
                 {
-                  readonly name: 'notes_user_id_created_at_idx_b562028f';
-                  readonly prefix: 'notes_user_id_created_at_idx';
-                  readonly columns: readonly ['user_id', 'created_at'];
+                  readonly name: 'notes_user_id_is_pinned_created_at_idx_434db8a8';
+                  readonly prefix: 'notes_user_id_is_pinned_created_at_idx';
+                  readonly columns: readonly ['user_id', 'is_pinned', 'created_at'];
                   readonly unique: false;
                 },
                 {
@@ -565,6 +584,11 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
                 };
+                readonly slug: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
                 readonly created_at: {
                   readonly nativeType: 'timestamptz';
                   readonly codecId: 'pg/timestamptz-temporal@1';
@@ -579,7 +603,7 @@ type ContractBase = Omit<
                 };
               };
               primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [{ readonly columns: readonly ['user_id', 'name'] }];
+              uniques: readonly [{ readonly columns: readonly ['user_id', 'slug'] }];
               indexes: readonly [
                 {
                   readonly name: 'topics_user_id_idx_6c952402';
@@ -706,6 +730,10 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
                 readonly many: true;
               };
+              readonly isPinned: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
+              };
               readonly isLocked: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
@@ -758,6 +786,7 @@ type ContractBase = Omit<
                 readonly title: { readonly column: 'title' };
                 readonly content: { readonly column: 'content' };
                 readonly tags: { readonly column: 'tags' };
+                readonly isPinned: { readonly column: 'is_pinned' };
                 readonly isLocked: { readonly column: 'is_locked' };
                 readonly createdAt: { readonly column: 'created_at' };
                 readonly updatedAt: { readonly column: 'updated_at' };
@@ -775,6 +804,10 @@ type ContractBase = Omit<
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
               readonly name: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly slug: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
@@ -819,6 +852,7 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly userId: { readonly column: 'user_id' };
                 readonly name: { readonly column: 'name' };
+                readonly slug: { readonly column: 'slug' };
                 readonly createdAt: { readonly column: 'created_at' };
                 readonly updatedAt: { readonly column: 'updated_at' };
               };

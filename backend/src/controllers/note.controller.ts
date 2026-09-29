@@ -20,14 +20,13 @@ interface NoteDbResult {
   title: string;
   content: string | null;
   tags: string[];
-  is_pinned: boolean;
   is_locked: boolean;
   created_at: string;
   updated_at: string;
 }
 
 const NOTE_COLUMNS =
-  "id, user_id, topic_id, title, content, tags, is_pinned, is_locked, created_at, updated_at";
+  "id, user_id, topic_id, title, content, tags, is_locked, created_at, updated_at";
 
 /**
  * Decrypts note content safely or masks if locked without credentials.
@@ -68,7 +67,6 @@ function formatNoteResponse(
           ? decryptedContent
           : JSON.stringify(decryptedContent),
     tags: row.tags,
-    isPinned: row.is_pinned,
     isLocked: row.is_locked,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -104,9 +102,7 @@ export async function getNotes(
       params.push(`%${search.trim()}%`);
       sql += ` AND (title ILIKE $${params.length} OR tags::text ILIKE $${params.length})`;
     }
-
-    sql += ` ORDER BY is_pinned DESC, created_at DESC`;
-
+    sql += ` ORDER BY created_at DESC`;
     const result = await dbPool.query<NoteDbResult>(sql, params);
     const formattedNotes = result.rows.map((row) =>
       formatNoteResponse(row, userId),
@@ -199,8 +195,7 @@ export async function createNote(
     return;
   }
 
-  const { topicId, title, content, tags, isPinned, isLocked, pin } =
-    parsed.data;
+  const { topicId, title, content, tags, isLocked, pin } = parsed.data;
 
   try {
     // Encrypt at rest by default
@@ -212,19 +207,10 @@ export async function createNote(
 
     const noteId = randomUUID();
     const result = await dbPool.query<NoteDbResult>(
-      `INSERT INTO notes (id, user_id, topic_id, title, content, tags, is_pinned, is_locked)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO notes (id, user_id, topic_id, title, content, tags, is_locked)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING ${NOTE_COLUMNS}`,
-      [
-        noteId,
-        userId,
-        topicId ?? null,
-        title,
-        encryptedPacked,
-        tags,
-        isPinned,
-        isLocked,
-      ],
+      [noteId, userId, topicId ?? null, title, encryptedPacked, tags, isLocked],
     );
 
     const newNote = result.rows[0];
@@ -302,12 +288,11 @@ export async function updateNote(
     return;
   }
   const { id } = parsedParam.data;
-  const { topicId, title, content, tags, isPinned, isLocked, pin } =
-    parsedBody.data;
+  const { topicId, title, content, tags, isLocked, pin } = parsedBody.data;
 
   try {
     const existing = await dbPool.query<NoteDbResult>(
-      "SELECT id, topic_id, title, content, tags, is_pinned, is_locked FROM notes WHERE id = $1 AND user_id = $2",
+      "SELECT id, topic_id, title, content, tags, is_locked FROM notes WHERE id = $1 AND user_id = $2",
       [id, userId],
     );
 
@@ -325,7 +310,6 @@ export async function updateNote(
     const newTopicId = topicId !== undefined ? topicId : current.topic_id;
     const newTitle = title ?? current.title;
     const newTags = tags ?? current.tags;
-    const newIsPinned = isPinned ?? current.is_pinned;
     const newIsLocked = isLocked ?? current.is_locked;
     if (newIsLocked !== current.is_locked) {
       if (!pin) {
@@ -384,15 +368,14 @@ export async function updateNote(
     }
     const result = await dbPool.query<NoteDbResult>(
       `UPDATE notes
-       SET topic_id = $1, title = $2, content = $3, tags = $4, is_pinned = $5, is_locked = $6, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $7 AND user_id = $8
+       SET topic_id = $1, title = $2, content = $3, tags = $4, is_locked = $5, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $6 AND user_id = $7
        RETURNING ${NOTE_COLUMNS}`,
       [
         newTopicId,
         newTitle,
         encryptedContent,
         newTags,
-        newIsPinned,
         newIsLocked,
         id,
         userId,

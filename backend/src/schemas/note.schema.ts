@@ -29,7 +29,6 @@ export const createNoteSchema = z.object({
   title: z.string().trim().min(1, "Tiêu đề không được để trống"),
   content: noteContentSchema.optional().default(""),
   tags: z.array(z.string()).optional().default([]),
-  isPinned: z.boolean().optional().default(false),
   isLocked: z.boolean().optional().default(false),
   pin: z.string().optional(), // Optional PIN when creating locked note directly
 });
@@ -41,7 +40,6 @@ export const updateNoteSchema = z.object({
   title: z.string().trim().min(1, "Tiêu đề không được để trống").optional(),
   content: noteContentSchema.optional(),
   tags: z.array(z.string()).optional(),
-  isPinned: z.boolean().optional(),
   isLocked: z.boolean().optional(),
   pin: z.string().optional(),
 });

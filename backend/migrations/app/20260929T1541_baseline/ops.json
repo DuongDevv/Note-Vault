@@ -1,0 +1,507 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.notes",
+    "label": "Create table \"notes\"",
+    "summary": "Creates table \"notes\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "notes"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"notes\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": ["\"public\".\"notes\""]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"notes\"",
+        "sql": "CREATE TABLE \"public\".\"notes\" (\n  \"content\" text,\n  \"created_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"is_locked\" bool DEFAULT false NOT NULL,\n  \"is_pinned\" bool DEFAULT false NOT NULL,\n  \"tags\" text[] DEFAULT '{}' NOT NULL,\n  \"title\" text NOT NULL,\n  \"topic_id\" text,\n  \"updated_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"user_id\" text NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"notes_tags_elem_not_null_aecbe9e2\" CHECK (array_position(\"tags\", NULL) IS NULL)\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"notes\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": ["\"public\".\"notes\""]
+      }
+    ]
+  },
+  {
+    "id": "table.topics",
+    "label": "Create table \"topics\"",
+    "summary": "Creates table \"topics\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "topics"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"topics\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": ["\"public\".\"topics\""]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"topics\"",
+        "sql": "CREATE TABLE \"public\".\"topics\" (\n  \"color\" text DEFAULT '#000000' NOT NULL,\n  \"created_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"icon\" text DEFAULT 'folder' NOT NULL,\n  \"id\" text NOT NULL,\n  \"name\" text NOT NULL,\n  \"slug\" text NOT NULL,\n  \"updated_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"user_id\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"topics\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": ["\"public\".\"topics\""]
+      }
+    ]
+  },
+  {
+    "id": "table.users",
+    "label": "Create table \"users\"",
+    "summary": "Creates table \"users\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "users"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"users\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": ["\"public\".\"users\""]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"users\"",
+        "sql": "CREATE TABLE \"public\".\"users\" (\n  \"created_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"display_name\" text DEFAULT 'Người dùng' NOT NULL,\n  \"email\" text NOT NULL,\n  \"id\" text NOT NULL,\n  \"password_hash\" text NOT NULL,\n  \"private_pin_hash\" text,\n  \"updated_at\" timestamptz DEFAULT (now()) NOT NULL,\n  \"username\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"users\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": ["\"public\".\"users\""]
+      }
+    ]
+  },
+  {
+    "id": "unique.topics.topics_user_id_slug_key",
+    "label": "Add unique constraint on \"topics\" (user_id, slug)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "topics_user_id_slug_key",
+        "table": "topics"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"topics_user_id_slug_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": ["topics_user_id_slug_key", "public", "\"public\".\"topics\""]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"topics_user_id_slug_key\"",
+        "sql": "ALTER TABLE \"public\".\"topics\" ADD CONSTRAINT \"topics_user_id_slug_key\" UNIQUE (\"user_id\", \"slug\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"topics_user_id_slug_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": ["topics_user_id_slug_key", "public", "\"public\".\"topics\""]
+      }
+    ]
+  },
+  {
+    "id": "unique.users.users_username_key",
+    "label": "Add unique constraint on \"users\" (username)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "users_username_key",
+        "table": "users"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"users_username_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": ["users_username_key", "public", "\"public\".\"users\""]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"users_username_key\"",
+        "sql": "ALTER TABLE \"public\".\"users\" ADD CONSTRAINT \"users_username_key\" UNIQUE (\"username\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"users_username_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": ["users_username_key", "public", "\"public\".\"users\""]
+      }
+    ]
+  },
+  {
+    "id": "unique.users.users_email_key",
+    "label": "Add unique constraint on \"users\" (email)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "users_email_key",
+        "table": "users"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"users_email_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": ["users_email_key", "public", "\"public\".\"users\""]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"users_email_key\"",
+        "sql": "ALTER TABLE \"public\".\"users\" ADD CONSTRAINT \"users_email_key\" UNIQUE (\"email\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"users_email_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": ["users_email_key", "public", "\"public\".\"users\""]
+      }
+    ]
+  },
+  {
+    "id": "index.notes.notes_topic_id_idx_334b0e8b",
+    "label": "Create index \"notes_topic_id_idx_334b0e8b\" on \"notes\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "notes_topic_id_idx_334b0e8b",
+        "table": "notes"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"notes_topic_id_idx_334b0e8b\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": ["\"public\".\"notes_topic_id_idx_334b0e8b\""]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"notes_topic_id_idx_334b0e8b\"",
+        "sql": "CREATE INDEX \"notes_topic_id_idx_334b0e8b\" ON \"public\".\"notes\" (\"topic_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"notes_topic_id_idx_334b0e8b\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": ["\"public\".\"notes_topic_id_idx_334b0e8b\""]
+      }
+    ]
+  },
+  {
+    "id": "index.notes.notes_user_id_idx_6c952402",
+    "label": "Create index \"notes_user_id_idx_6c952402\" on \"notes\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "notes_user_id_idx_6c952402",
+        "table": "notes"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"notes_user_id_idx_6c952402\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": ["\"public\".\"notes_user_id_idx_6c952402\""]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"notes_user_id_idx_6c952402\"",
+        "sql": "CREATE INDEX \"notes_user_id_idx_6c952402\" ON \"public\".\"notes\" (\"user_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"notes_user_id_idx_6c952402\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": ["\"public\".\"notes_user_id_idx_6c952402\""]
+      }
+    ]
+  },
+  {
+    "id": "index.notes.notes_user_id_is_pinned_created_at_idx_434db8a8",
+    "label": "Create index \"notes_user_id_is_pinned_created_at_idx_434db8a8\" on \"notes\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "notes_user_id_is_pinned_created_at_idx_434db8a8",
+        "table": "notes"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"notes_user_id_is_pinned_created_at_idx_434db8a8\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notes_user_id_is_pinned_created_at_idx_434db8a8\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"notes_user_id_is_pinned_created_at_idx_434db8a8\"",
+        "sql": "CREATE INDEX \"notes_user_id_is_pinned_created_at_idx_434db8a8\" ON \"public\".\"notes\" (\"user_id\", \"is_pinned\", \"created_at\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"notes_user_id_is_pinned_created_at_idx_434db8a8\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notes_user_id_is_pinned_created_at_idx_434db8a8\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.notes.notes_user_id_topic_id_idx_46b1bc56",
+    "label": "Create index \"notes_user_id_topic_id_idx_46b1bc56\" on \"notes\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "notes_user_id_topic_id_idx_46b1bc56",
+        "table": "notes"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"notes_user_id_topic_id_idx_46b1bc56\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": ["\"public\".\"notes_user_id_topic_id_idx_46b1bc56\""]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"notes_user_id_topic_id_idx_46b1bc56\"",
+        "sql": "CREATE INDEX \"notes_user_id_topic_id_idx_46b1bc56\" ON \"public\".\"notes\" (\"user_id\", \"topic_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"notes_user_id_topic_id_idx_46b1bc56\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": ["\"public\".\"notes_user_id_topic_id_idx_46b1bc56\""]
+      }
+    ]
+  },
+  {
+    "id": "index.topics.topics_user_id_idx_6c952402",
+    "label": "Create index \"topics_user_id_idx_6c952402\" on \"topics\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "topics_user_id_idx_6c952402",
+        "table": "topics"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"topics_user_id_idx_6c952402\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": ["\"public\".\"topics_user_id_idx_6c952402\""]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"topics_user_id_idx_6c952402\"",
+        "sql": "CREATE INDEX \"topics_user_id_idx_6c952402\" ON \"public\".\"topics\" (\"user_id\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"topics_user_id_idx_6c952402\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": ["\"public\".\"topics_user_id_idx_6c952402\""]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.notes.notes_user_id_fkey",
+    "label": "Add foreign key \"notes_user_id_fkey\" on \"notes\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "notes_user_id_fkey",
+        "table": "notes"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"notes_user_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": ["notes_user_id_fkey", "public", "\"public\".\"notes\""]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"notes_user_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"notes\"\nADD CONSTRAINT \"notes_user_id_fkey\"\nFOREIGN KEY (\"user_id\")\nREFERENCES \"public\".\"users\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"notes_user_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": ["notes_user_id_fkey", "public", "\"public\".\"notes\""]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.notes.notes_topic_id_fkey",
+    "label": "Add foreign key \"notes_topic_id_fkey\" on \"notes\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "notes_topic_id_fkey",
+        "table": "notes"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"notes_topic_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": ["notes_topic_id_fkey", "public", "\"public\".\"notes\""]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"notes_topic_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"notes\"\nADD CONSTRAINT \"notes_topic_id_fkey\"\nFOREIGN KEY (\"topic_id\")\nREFERENCES \"public\".\"topics\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"notes_topic_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": ["notes_topic_id_fkey", "public", "\"public\".\"notes\""]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.topics.topics_user_id_fkey",
+    "label": "Add foreign key \"topics_user_id_fkey\" on \"topics\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "topics_user_id_fkey",
+        "table": "topics"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"topics_user_id_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": ["topics_user_id_fkey", "public", "\"public\".\"topics\""]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"topics_user_id_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"topics\"\nADD CONSTRAINT \"topics_user_id_fkey\"\nFOREIGN KEY (\"user_id\")\nREFERENCES \"public\".\"users\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"topics_user_id_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": ["topics_user_id_fkey", "public", "\"public\".\"topics\""]
+      }
+    ]
+  }
+]

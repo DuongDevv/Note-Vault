@@ -21,7 +21,7 @@ export async function getTopics(
 
   try {
     const result = await dbPool.query<TopicResponse>(
-      `SELECT id, user_id as "userId", name, slug, color, icon, created_at as "createdAt", updated_at as "updatedAt"
+      `SELECT id, user_id as "userId", name, created_at as "createdAt", updated_at as "updatedAt"
        FROM topics
        WHERE user_id = $1
        ORDER BY name ASC`,
@@ -54,22 +54,15 @@ export async function createTopic(
     return;
   }
 
-  const { name, color, icon } = parsed.data;
-
-  // Tự sinh slug từ name
-  const slug = name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
+  const { name } = parsed.data;
 
   try {
     const topicId = randomUUID();
     const result = await dbPool.query<TopicResponse>(
-      `INSERT INTO topics (id, user_id, name, slug, color, icon)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, user_id as "userId", name, slug, color, icon, created_at as "createdAt", updated_at as "updatedAt"`,
-      [topicId, userId, name, slug, color, icon],
+      `INSERT INTO topics (id, user_id, name)
+       VALUES ($1, $2, $3)
+       RETURNING id, user_id as "userId", name, created_at as "createdAt", updated_at as "updatedAt"`,
+      [topicId, userId, name],
     );
 
     const newTopic = result.rows[0];
@@ -115,28 +108,15 @@ export async function updateTopic(
     ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
     return;
   }
-  const { name, color, icon } = parsedBody.data;
+  const { name } = parsedBody.data;
 
   const updates: string[] = [];
   const values: unknown[] = [];
   let paramIndex = 1;
 
   if (name !== undefined) {
-    const slug = name
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "");
-    updates.push(`name = $${paramIndex++}`, `slug = $${paramIndex++}`);
-    values.push(name, slug);
-  }
-  if (color !== undefined) {
-    updates.push(`color = $${paramIndex++}`);
-    values.push(color);
-  }
-  if (icon !== undefined) {
-    updates.push(`icon = $${paramIndex++}`);
-    values.push(icon);
+    updates.push(`name = $${paramIndex++}`);
+    values.push(name);
   }
 
   if (updates.length === 0) {
@@ -157,7 +137,7 @@ export async function updateTopic(
       `UPDATE topics
        SET ${updates.join(", ")}
        WHERE id = $${paramIndex++} AND user_id = $${paramIndex++}
-       RETURNING id, user_id as "userId", name, slug, color, icon, created_at as "createdAt", updated_at as "updatedAt"`,
+       RETURNING id, user_id as "userId", name, created_at as "createdAt", updated_at as "updatedAt"`,
       values,
     );
 

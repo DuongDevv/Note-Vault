@@ -1,5 +1,6 @@
 datasource db {
   provider = "postgresql"
+  url      = env("DB_URL")
 }
 
 generator client {
@@ -26,16 +27,13 @@ model Topic {
   id        String   @id @default(uuid()) @db.Uuid
   userId    String   @map("user_id") @db.Uuid
   name      String   @db.VarChar(100)
-  slug      String   @db.VarChar(100)
-  color     String   @default("#000000") @db.VarChar(7)
-  icon      String   @default("folder") @db.VarChar(50)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
   user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   notes Note[]
 
-  @@unique([userId, slug], name: "uq_user_topic_slug")
+  @@unique([userId, name], name: "uq_user_topic_name")
   @@map("topics")
 }
 
@@ -46,7 +44,6 @@ model Note {
   title     String   @db.VarChar(255)
   content   String?  @db.Text
   tags      String[] @default([])
-  isPinned  Boolean  @default(false) @map("is_pinned")
   isLocked  Boolean  @default(false) @map("is_locked")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
@@ -55,6 +52,6 @@ model Note {
   topic Topic? @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@index([userId, topicId], map: "idx_notes_user_topic")
-  @@index([userId, isPinned, createdAt], map: "idx_notes_user_pinned_created")
+  @@index([userId, createdAt], map: "idx_notes_user_created")
   @@map("notes")
 }

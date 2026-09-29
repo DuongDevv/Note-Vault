@@ -1,0 +1,70 @@
+[
+  {
+    "id": "dropColumn.topics.color",
+    "label": "Drop column \"color\" from \"topics\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "color",
+        "table": "topics"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"color\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": ["public", "topics", "color"]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop column \"color\"",
+        "sql": "ALTER TABLE \"public\".\"topics\" DROP COLUMN \"color\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"color\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": ["public", "topics", "color"]
+      }
+    ]
+  },
+  {
+    "id": "dropColumn.topics.icon",
+    "label": "Drop column \"icon\" from \"topics\"",
+    "operationClass": "destructive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "column",
+        "name": "icon",
+        "table": "topics"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure column \"icon\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": ["public", "topics", "icon"]
+      }
+    ],
+    "execute": [
+      {
+        "description": "drop column \"icon\"",
+        "sql": "ALTER TABLE \"public\".\"topics\" DROP COLUMN \"icon\""
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify column \"icon\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"information_schema\".\"columns\" WHERE (\"table_schema\" = $1 AND \"table_name\" = $2 AND \"column_name\" = $3)) AS \"result\"",
+        "params": ["public", "topics", "icon"]
+      }
+    ]
+  }
+]

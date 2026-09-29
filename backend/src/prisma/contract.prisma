@@ -18,16 +18,12 @@ model Topic {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
   name      String
-  slug      String
-  color     String   @default("#000000")
-  icon      String   @default("folder")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
-
   user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   notes Note[]
 
-  @@unique([userId, slug])
+  @@unique([userId, name])
   @@map("topics")
 }
 
@@ -38,7 +34,6 @@ model Note {
   title     String
   content   String?
   tags      String[] @default([])
-  isPinned  Boolean  @default(false) @map("is_pinned")
   isLocked  Boolean  @default(false) @map("is_locked")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
@@ -47,6 +42,6 @@ model Note {
   topic Topic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
 
   @@index([userId, topicId])
-  @@index([userId, isPinned, createdAt])
+  @@index([userId, createdAt])
   @@map("notes")
 }
