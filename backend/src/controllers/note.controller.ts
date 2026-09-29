@@ -135,7 +135,8 @@ export async function getNoteById(
 
   const { id } = parsedParam.data;
   const rawPinHeader = req.headers["x-private-pin"];
-  const vaultPin = typeof rawPinHeader === "string" ? rawPinHeader : undefined;
+  const vaultPin =
+    typeof rawPinHeader === "string" ? rawPinHeader.trim() : undefined;
 
   try {
     const result = await dbPool.query<NoteDbResult>(
@@ -151,23 +152,49 @@ export async function getNoteById(
       return;
     }
 
-    let isValidPin = false;
     if (vaultPin && note.is_locked) {
       const userRes = await dbPool.query<{ private_pin_hash: string | null }>(
         "SELECT private_pin_hash FROM users WHERE id = $1",
         [userId],
       );
       const pinHash = userRes.rows[0]?.private_pin_hash;
-      if (pinHash) {
-        isValidPin = await CryptoService.verifyHash(pinHash, vaultPin);
+      if (!pinHash) {
+        ApiResponse.error(
+          res,
+          400,
+          "BAD_REQUEST",
+          "Bạn chưa thiết lập mã Master PIN trên hệ thống",
+        );
+        return;
+      }
+
+      const isValidPin = await CryptoService.verifyHash(pinHash, vaultPin);
+      if (!isValidPin) {
+        ApiResponse.error(res, 403, "FORBIDDEN", "Mã PIN không chính xác");
+        return;
       }
     }
 
     const formattedNote = formatNoteResponse(
       note,
       userId,
-      isValidPin ? vaultPin : undefined,
+      vaultPin && note.is_locked ? vaultPin : undefined,
     );
+
+    if (
+      vaultPin &&
+      note.is_locked &&
+      formattedNote.content === null &&
+      note.content !== null
+    ) {
+      ApiResponse.error(
+        res,
+        403,
+        "FORBIDDEN",
+        "Không thể giải mã nội dung với mã PIN này",
+      );
+      return;
+    }
     ApiResponse.success(
       res,
       200,
@@ -288,8 +315,15 @@ export async function updateNote(
     return;
   }
   const { id } = parsedParam.data;
-  const { topicId, title, content, tags, isLocked, pin } = parsedBody.data;
-
+  const {
+    topicId,
+    title,
+    content,
+    tags,
+    isLocked,
+    pin: rawPin,
+  } = parsedBody.data;
+  const pin = typeof rawPin === "string" ? rawPin.trim() : undefined;
   try {
     const existing = await dbPool.query<NoteDbResult>(
       "SELECT id, topic_id, title, content, tags, is_locked FROM notes WHERE id = $1 AND user_id = $2",

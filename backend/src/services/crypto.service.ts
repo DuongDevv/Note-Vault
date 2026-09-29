@@ -136,7 +136,13 @@ export function decryptNoteContent(
 
     if (pin) {
       const vaultKey = deriveVaultKey(userId, pin);
-      return decryptPayload(parsed, vaultKey);
+      try {
+        return decryptPayload(parsed, vaultKey);
+      } catch {
+        // Fallback: nếu ghi chú trước đó từng được lưu với userKey
+        const userKey = deriveUserKey(userId);
+        return decryptPayload(parsed, userKey);
+      }
     }
 
     const userKey = deriveUserKey(userId);
@@ -145,7 +151,6 @@ export function decryptNoteContent(
     return null;
   }
 }
-
 export const CryptoService = {
   hashData,
   verifyHash,
