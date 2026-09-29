@@ -1,8 +1,6 @@
-import { useState, useEffect } from "react";
 import { BubbleMenu } from "@tiptap/react/menus";
-import type { Editor } from "@tiptap/react";
+import { useEditorState, type Editor } from "@tiptap/react";
 import { NodeSelection } from "@tiptap/pm/state";
-import { Underline as _Underline } from "@tiptap/extension-underline";
 import { Link as _Link } from "@tiptap/extension-link";
 import { Image as _Image } from "@tiptap/extension-image";
 import {
@@ -32,31 +30,45 @@ const handleOpenImageDialog = () => {
 };
 
 export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
-  const [, setTick] = useState(0);
+  const editorState = useEditorState({
+    editor,
+    selector: (ctx) => {
+      if (!ctx.editor) {
+        return {
+          isBold: false,
+          isItalic: false,
+          isUnderline: false,
+          isBulletList: false,
+          isOrderedList: false,
+          isLink: false,
+          isCodeBlock: false,
+          isH1: false,
+          isH2: false,
+          isH3: false,
+        };
+      }
+      return {
+        isBold: ctx.editor.isActive("bold"),
+        isItalic: ctx.editor.isActive("italic"),
+        isUnderline: ctx.editor.isActive("underline"),
+        isBulletList: ctx.editor.isActive("bulletList"),
+        isOrderedList: ctx.editor.isActive("orderedList"),
+        isLink: ctx.editor.isActive("link"),
+        isCodeBlock: ctx.editor.isActive("codeBlock"),
+        isH1: ctx.editor.isActive("heading", { level: 1 }),
+        isH2: ctx.editor.isActive("heading", { level: 2 }),
+        isH3: ctx.editor.isActive("heading", { level: 3 }),
+      };
+    },
+  });
 
-  useEffect(() => {
-    if (!editor) return undefined;
+  if (!editor || !editorState) return null;
 
-    const handleUpdate = () => {
-      setTick((t) => t + 1);
-    };
-
-    editor.on("selectionUpdate", handleUpdate);
-    editor.on("transaction", handleUpdate);
-
-    return () => {
-      editor.off("selectionUpdate", handleUpdate);
-      editor.off("transaction", handleUpdate);
-    };
-  }, [editor]);
-
-  if (!editor) return null;
   const setLink = () => {
     const rawAttrs: Record<string, unknown> = editor.getAttributes("link");
     const previousUrl =
       typeof rawAttrs.href === "string" ? rawAttrs.href : undefined;
     const url = window.prompt("Nhập địa chỉ URL:", previousUrl);
-
     if (url === null) return;
     if (url === "") {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
@@ -94,7 +106,7 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
           variant="ghost"
           size="icon-sm"
           onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`font-bold ${getButtonClass(editor.isActive("bold"))}`}
+          className={`font-bold ${getButtonClass(editorState.isBold)}`}
           title="Đậm (Ctrl+B)"
         >
           B
@@ -106,7 +118,7 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
           variant="ghost"
           size="icon-sm"
           onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`font-serif italic ${getButtonClass(editor.isActive("italic"))}`}
+          className={`font-serif italic ${getButtonClass(editorState.isItalic)}`}
           title="Nghiêng (Ctrl+I)"
         >
           I
@@ -118,7 +130,7 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
           variant="ghost"
           size="icon-sm"
           onClick={() => editor.chain().focus().toggleUnderline().run()}
-          className={`font-medium underline ${getButtonClass(editor.isActive("underline"))}`}
+          className={`font-medium underline ${getButtonClass(editorState.isUnderline)}`}
           title="Gạch chân (Ctrl+U)"
         >
           U
@@ -132,7 +144,7 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
           variant="ghost"
           size="icon-sm"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={getButtonClass(editor.isActive("bulletList"))}
+          className={getButtonClass(editorState.isBulletList)}
           title="Danh sách không thứ tự"
         >
           <List className="size-3.5" />
@@ -144,7 +156,7 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
           variant="ghost"
           size="icon-sm"
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={getButtonClass(editor.isActive("orderedList"))}
+          className={getButtonClass(editorState.isOrderedList)}
           title="Danh sách đánh số"
         >
           <ListOrdered className="size-3.5" />
@@ -158,7 +170,7 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
           variant="ghost"
           size="icon-sm"
           onClick={setLink}
-          className={getButtonClass(editor.isActive("link"))}
+          className={getButtonClass(editorState.isLink)}
           title="Chèn liên kết"
         >
           <Link2 className="size-3.5" />
@@ -182,7 +194,7 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
           variant="ghost"
           size="icon-sm"
           onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          className={`font-mono text-[11px] ${getButtonClass(editor.isActive("codeBlock"))}`}
+          className={`font-mono text-[11px] ${getButtonClass(editorState.isCodeBlock)}`}
           title="Khối mã nguồn"
         >
           &lt;/&gt;
@@ -199,7 +211,7 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
             editor.chain().focus().toggleHeading({ level: 1 }).run()
           }
           className={`text-[11px] font-semibold tracking-wider ${getButtonClass(
-            editor.isActive("heading", { level: 1 }),
+            editorState.isH1,
           )}`}
           title="Tiêu đề 1"
         >
@@ -215,7 +227,7 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
             editor.chain().focus().toggleHeading({ level: 2 }).run()
           }
           className={`text-[11px] font-semibold tracking-wider ${getButtonClass(
-            editor.isActive("heading", { level: 2 }),
+            editorState.isH2,
           )}`}
           title="Tiêu đề 2"
         >
@@ -231,7 +243,7 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
             editor.chain().focus().toggleHeading({ level: 3 }).run()
           }
           className={`text-[11px] font-semibold tracking-wider ${getButtonClass(
-            editor.isActive("heading", { level: 3 }),
+            editorState.isH3,
           )}`}
           title="Tiêu đề 3"
         >

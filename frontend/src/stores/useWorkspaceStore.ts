@@ -29,6 +29,7 @@ interface WorkspaceState {
     title: string;
     excerpt: string;
     content?: string;
+    tags?: string[];
   }) => Promise<void>;
   createTopic: (name: string, icon?: string) => Promise<Topic>;
   updateTopic: (id: string, name: string) => Promise<Topic>;
@@ -114,6 +115,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
               title: updated.title,
               excerpt: updated.excerpt,
               content: updated.content ?? n.content,
+              tags: updated.tags ?? n.tags,
             }
           : n,
       ),
@@ -124,6 +126,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         title: updated.title,
         excerpt: updated.excerpt,
         content: updated.content ?? "",
+        tags: updated.tags,
       });
       set({ lastSavedAt: new Date() });
     } catch (err) {
@@ -203,19 +206,15 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
 
   unlockNoteWithPin: async (noteId: string, pin: string) => {
-    try {
-      const unlocked = await fetchNoteById(noteId, pin);
-      if (unlocked.isLocked && unlocked.content === null) {
-        return false;
-      }
-      set((state) => ({
-        notes: state.notes.map((n) => (n.id === noteId ? unlocked : n)),
-        unlockedNoteId: noteId,
-      }));
-      return true;
-    } catch {
-      return false;
+    const unlocked = await fetchNoteById(noteId, pin);
+    if (unlocked.isLocked && unlocked.content === null) {
+      throw new Error("Không thể giải mã nội dung với mã PIN này");
     }
+    set((state) => ({
+      notes: state.notes.map((n) => (n.id === noteId ? unlocked : n)),
+      unlockedNoteId: noteId,
+    }));
+    return true;
   },
 
   setSavingStatus: (isSaving) => set({ isSaving }),

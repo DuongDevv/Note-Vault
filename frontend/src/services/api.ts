@@ -32,7 +32,16 @@ async function fetchAndParse<T>(
     ...options,
     headers: getAuthHeaders(customHeaders),
   });
-  if (!ok) throw new Error(errorMessage);
+  if (!ok) {
+    const serverMessage =
+      data &&
+      typeof data === "object" &&
+      "message" in data &&
+      typeof data.message === "string"
+        ? data.message
+        : errorMessage;
+    throw new Error(serverMessage);
+  }
   const unwrapped = unwrapResponse(data);
   return schema.parse(unwrapped);
 }
