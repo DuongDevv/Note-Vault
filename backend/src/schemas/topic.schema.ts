@@ -23,6 +23,18 @@ export const createTopicSchema = z.object({
 
 export type CreateTopicInput = z.infer<typeof createTopicSchema>;
 
+export const updateTopicSchema = z.object({
+  name: z.string().trim().min(1, "Tên chủ đề không được để rỗng").optional(),
+  color: z
+    .string()
+    .trim()
+    .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Màu sắc không hợp lệ")
+    .optional(),
+  icon: z.string().trim().min(1).optional(),
+});
+
+export type UpdateTopicInput = z.infer<typeof updateTopicSchema>;
+
 export const topicIdParamSchema = z.object({
   id: z.string().min(1, "ID chủ đề không được để trống"),
 });
