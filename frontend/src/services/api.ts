@@ -141,7 +141,6 @@ export async function createNote(note: Partial<Note>): Promise<Note> {
     content: note.content ?? "",
     topicId: note.topicId ?? null,
     tags: note.tags && note.tags.length > 0 ? note.tags : [],
-    isPinned: Boolean(note.isPinned),
     isLocked: Boolean(note.isLocked),
   };
 

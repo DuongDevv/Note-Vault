@@ -133,7 +133,6 @@ export function AppSidebar({
     return notes
       .filter((n) => !n.topicId)
       .toSorted((a, b) => {
-        if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
         const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
         const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
         return dateB - dateA;

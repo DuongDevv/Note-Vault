@@ -96,7 +96,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       }),
       topicId: topicId ?? null,
       tags: [],
-      isPinned: false,
       isLocked: false,
     });
 
