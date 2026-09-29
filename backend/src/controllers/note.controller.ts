@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Response } from "express";
 import { dbPool } from "../config/database";
 import { ApiResponse } from "../utils/response.util";
+import { requireUserId } from "../utils/auth.util";
 import type { AuthenticatedRequest } from "../middlewares/auth.middleware";
 import { CryptoService } from "../services/crypto.service";
 import {
@@ -24,6 +25,9 @@ interface NoteDbResult {
   created_at: string;
   updated_at: string;
 }
+
+const NOTE_COLUMNS =
+  "id, user_id, topic_id, title, content, tags, is_pinned, is_locked, created_at, updated_at";
 
 /**
  * Decrypts note content safely or masks if locked without credentials.
@@ -72,16 +76,12 @@ function formatNoteResponse(
 }
 
 // Lấy danh sách Ghi chú từ Database (GET /api/v1/notes)
-export async function getNotes(req: AuthenticatedRequest, res: Response) {
-  const userId = req.user?.userId;
-  if (!userId) {
-    return ApiResponse.error(
-      res,
-      401,
-      "UNAUTHORIZED",
-      "Chưa xác thực người dùng",
-    );
-  }
+export async function getNotes(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<void> {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
 
   const parsedQuery = getNotesQuerySchema.safeParse(req.query);
   const query = parsedQuery.success ? parsedQuery.data : {};
@@ -89,7 +89,7 @@ export async function getNotes(req: AuthenticatedRequest, res: Response) {
 
   try {
     let sql = `
-      SELECT id, user_id, topic_id, title, content, tags, is_pinned, is_locked, created_at, updated_at
+      SELECT ${NOTE_COLUMNS}
       FROM notes
       WHERE user_id = $1
     `;
@@ -112,39 +112,29 @@ export async function getNotes(req: AuthenticatedRequest, res: Response) {
       formatNoteResponse(row, userId),
     );
 
-    return ApiResponse.success(
+    ApiResponse.success(
       res,
       200,
       "Lấy danh sách ghi chú thành công",
       formattedNotes,
     );
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Lỗi server nội bộ";
-    return ApiResponse.error(res, 500, "INTERNAL_SERVER_ERROR", message);
+    ApiResponse.serverError(res, error);
   }
 }
 
 // Lấy chi tiết một Ghi chú theo ID (GET /api/v1/notes/:id)
-export async function getNoteById(req: AuthenticatedRequest, res: Response) {
-  const userId = req.user?.userId;
-  if (!userId) {
-    return ApiResponse.error(
-      res,
-      401,
-      "UNAUTHORIZED",
-      "Chưa xác thực người dùng",
-    );
-  }
+export async function getNoteById(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<void> {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
 
   const parsedParam = noteIdParamSchema.safeParse(req.params);
   if (!parsedParam.success) {
-    return ApiResponse.error(
-      res,
-      400,
-      "BAD_REQUEST",
-      "ID ghi chú không hợp lệ",
-    );
+    ApiResponse.error(res, 400, "BAD_REQUEST", "ID ghi chú không hợp lệ");
+    return;
   }
 
   const { id } = parsedParam.data;
@@ -153,7 +143,7 @@ export async function getNoteById(req: AuthenticatedRequest, res: Response) {
 
   try {
     const result = await dbPool.query<NoteDbResult>(
-      `SELECT id, user_id, topic_id, title, content, tags, is_pinned, is_locked, created_at, updated_at
+      `SELECT ${NOTE_COLUMNS}
        FROM notes
        WHERE id = $1 AND user_id = $2`,
       [id, userId],
@@ -161,40 +151,52 @@ export async function getNoteById(req: AuthenticatedRequest, res: Response) {
 
     const note = result.rows[0];
     if (!note) {
-      return ApiResponse.error(res, 404, "NOT_FOUND", "Không tìm thấy ghi chú");
+      ApiResponse.error(res, 404, "NOT_FOUND", "Không tìm thấy ghi chú");
+      return;
     }
 
-    const formattedNote = formatNoteResponse(note, userId, vaultPin);
-    return ApiResponse.success(
+    let isValidPin = false;
+    if (vaultPin && note.is_locked) {
+      const userRes = await dbPool.query<{ private_pin_hash: string | null }>(
+        "SELECT private_pin_hash FROM users WHERE id = $1",
+        [userId],
+      );
+      const pinHash = userRes.rows[0]?.private_pin_hash;
+      if (pinHash) {
+        isValidPin = await CryptoService.verifyHash(pinHash, vaultPin);
+      }
+    }
+
+    const formattedNote = formatNoteResponse(
+      note,
+      userId,
+      isValidPin ? vaultPin : undefined,
+    );
+    ApiResponse.success(
       res,
       200,
       "Lấy chi tiết ghi chú thành công",
       formattedNote,
     );
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Lỗi server nội bộ";
-    return ApiResponse.error(res, 500, "INTERNAL_SERVER_ERROR", message);
+    ApiResponse.serverError(res, error);
   }
 }
 
 // Tạo Ghi chú mới lưu vào Database (POST /api/v1/notes)
-export async function createNote(req: AuthenticatedRequest, res: Response) {
-  const userId = req.user?.userId;
-  if (!userId) {
-    return ApiResponse.error(
-      res,
-      401,
-      "UNAUTHORIZED",
-      "Chưa xác thực người dùng",
-    );
-  }
+export async function createNote(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<void> {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
 
   const parsed = createNoteSchema.safeParse(req.body);
   if (!parsed.success) {
     const errorMsg =
       parsed.error.issues[0]?.message ?? "Tiêu đề ghi chú là bắt buộc";
-    return ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
+    ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
+    return;
   }
 
   const { topicId, title, content, tags, isPinned, isLocked, pin } =
@@ -212,7 +214,7 @@ export async function createNote(req: AuthenticatedRequest, res: Response) {
     const result = await dbPool.query<NoteDbResult>(
       `INSERT INTO notes (id, user_id, topic_id, title, content, tags, is_pinned, is_locked)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING id, user_id, topic_id, title, content, tags, is_pinned, is_locked, created_at, updated_at`,
+       RETURNING ${NOTE_COLUMNS}`,
       [
         noteId,
         userId,
@@ -231,33 +233,27 @@ export async function createNote(req: AuthenticatedRequest, res: Response) {
     }
 
     const formatted = formatNoteResponse(newNote, userId, pin);
-    return ApiResponse.success(res, 201, "Tạo ghi chú thành công", formatted);
+    ApiResponse.success(res, 201, "Tạo ghi chú thành công", formatted);
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Lỗi server nội bộ";
-    return ApiResponse.error(res, 500, "INTERNAL_SERVER_ERROR", message);
+    ApiResponse.serverError(res, error);
   }
 }
 
 // Xóa Ghi chú khỏi Database (DELETE /api/v1/notes/:id)
-export async function deleteNote(req: AuthenticatedRequest, res: Response) {
-  const userId = req.user?.userId;
-  if (!userId) {
-    return ApiResponse.error(
-      res,
-      401,
-      "UNAUTHORIZED",
-      "Chưa xác thực người dùng",
-    );
-  }
+export async function deleteNote(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<void> {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
 
   const parsedParam = noteIdParamSchema.safeParse(req.params);
   if (!parsedParam.success) {
     const errorMsg =
       parsedParam.error.issues[0]?.message ?? "ID ghi chú không hợp lệ";
-    return ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
+    ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
+    return;
   }
-
   const { id } = parsedParam.data;
 
   try {
@@ -267,48 +263,44 @@ export async function deleteNote(req: AuthenticatedRequest, res: Response) {
     );
 
     if (result.rows.length === 0) {
-      return ApiResponse.error(
+      ApiResponse.error(
         res,
         404,
         "NOT_FOUND",
         "Không tìm thấy ghi chú hoặc không có quyền xóa",
       );
+      return;
     }
 
-    return ApiResponse.success(res, 200, "Xóa ghi chú thành công", { id });
+    ApiResponse.success(res, 200, "Xóa ghi chú thành công", { id });
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Lỗi server nội bộ";
-    return ApiResponse.error(res, 500, "INTERNAL_SERVER_ERROR", message);
+    ApiResponse.serverError(res, error);
   }
 }
 
 // Cập nhật Ghi chú trong Database (PUT /api/v1/notes/:id)
-export async function updateNote(req: AuthenticatedRequest, res: Response) {
-  const userId = req.user?.userId;
-  if (!userId) {
-    return ApiResponse.error(
-      res,
-      401,
-      "UNAUTHORIZED",
-      "Chưa xác thực người dùng",
-    );
-  }
+export async function updateNote(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<void> {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
 
   const parsedParam = noteIdParamSchema.safeParse(req.params);
   if (!parsedParam.success) {
     const errorMsg =
       parsedParam.error.issues[0]?.message ?? "ID ghi chú không hợp lệ";
-    return ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
+    ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
+    return;
   }
 
   const parsedBody = updateNoteSchema.safeParse(req.body);
   if (!parsedBody.success) {
     const errorMsg =
       parsedBody.error.issues[0]?.message ?? "Dữ liệu cập nhật không hợp lệ";
-    return ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
+    ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
+    return;
   }
-
   const { id } = parsedParam.data;
   const { topicId, title, content, tags, isPinned, isLocked, pin } =
     parsedBody.data;
@@ -321,12 +313,13 @@ export async function updateNote(req: AuthenticatedRequest, res: Response) {
 
     const current = existing.rows[0];
     if (!current) {
-      return ApiResponse.error(
+      ApiResponse.error(
         res,
         404,
         "NOT_FOUND",
         "Không tìm thấy ghi chú để cập nhật",
       );
+      return;
     }
 
     const newTopicId = topicId !== undefined ? topicId : current.topic_id;
@@ -334,6 +327,38 @@ export async function updateNote(req: AuthenticatedRequest, res: Response) {
     const newTags = tags ?? current.tags;
     const newIsPinned = isPinned ?? current.is_pinned;
     const newIsLocked = isLocked ?? current.is_locked;
+    if (newIsLocked !== current.is_locked) {
+      if (!pin) {
+        ApiResponse.error(
+          res,
+          400,
+          "BAD_REQUEST",
+          "Vui lòng nhập mã PIN để thực hiện thao tác này",
+        );
+        return;
+      }
+
+      const userRes = await dbPool.query<{ private_pin_hash: string | null }>(
+        "SELECT private_pin_hash FROM users WHERE id = $1",
+        [userId],
+      );
+      const pinHash = userRes.rows[0]?.private_pin_hash;
+      if (!pinHash) {
+        ApiResponse.error(
+          res,
+          400,
+          "BAD_REQUEST",
+          "Bạn chưa thiết lập mã Master PIN trên hệ thống",
+        );
+        return;
+      }
+
+      const isValidPin = await CryptoService.verifyHash(pinHash, pin);
+      if (!isValidPin) {
+        ApiResponse.error(res, 400, "BAD_REQUEST", "Mã PIN không chính xác");
+        return;
+      }
+    }
 
     let encryptedContent = current.content;
     if (content !== undefined) {
@@ -361,7 +386,7 @@ export async function updateNote(req: AuthenticatedRequest, res: Response) {
       `UPDATE notes
        SET topic_id = $1, title = $2, content = $3, tags = $4, is_pinned = $5, is_locked = $6, updated_at = CURRENT_TIMESTAMP
        WHERE id = $7 AND user_id = $8
-       RETURNING id, user_id, topic_id, title, content, tags, is_pinned, is_locked, created_at, updated_at`,
+       RETURNING ${NOTE_COLUMNS}`,
       [
         newTopicId,
         newTitle,
@@ -380,16 +405,9 @@ export async function updateNote(req: AuthenticatedRequest, res: Response) {
     }
 
     const formatted = formatNoteResponse(updatedNote, userId, pin);
-    return ApiResponse.success(
-      res,
-      200,
-      "Cập nhật ghi chú thành công",
-      formatted,
-    );
+    ApiResponse.success(res, 200, "Cập nhật ghi chú thành công", formatted);
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Lỗi server nội bộ";
-    return ApiResponse.error(res, 500, "INTERNAL_SERVER_ERROR", message);
+    ApiResponse.serverError(res, error);
   }
 }
 

@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Response } from "express";
 import { dbPool } from "../config/database";
 import { ApiResponse } from "../utils/response.util";
+import { requireUserId } from "../utils/auth.util";
 import type { AuthenticatedRequest } from "../middlewares/auth.middleware";
 import {
   createTopicSchema,
@@ -10,16 +11,12 @@ import {
 } from "../schemas/topic.schema";
 
 // Lấy danh sách Chủ đề của User (GET /api/v1/topics)
-export async function getTopics(req: AuthenticatedRequest, res: Response) {
-  const userId = req.user?.userId;
-  if (!userId) {
-    return ApiResponse.error(
-      res,
-      401,
-      "UNAUTHORIZED",
-      "Chưa xác thực người dùng",
-    );
-  }
+export async function getTopics(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<void> {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
 
   try {
     const result = await dbPool.query<TopicResponse>(
@@ -29,37 +26,31 @@ export async function getTopics(req: AuthenticatedRequest, res: Response) {
        ORDER BY name ASC`,
       [userId],
     );
-
-    return ApiResponse.success(
+    ApiResponse.success(
       res,
       200,
       "Lấy danh sách chủ đề thành công",
       result.rows,
     );
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Lỗi server nội bộ";
-    return ApiResponse.error(res, 500, "INTERNAL_SERVER_ERROR", message);
+    ApiResponse.serverError(res, error);
   }
 }
 
 // Tạo Chủ đề mới (POST /api/v1/topics)
-export async function createTopic(req: AuthenticatedRequest, res: Response) {
-  const userId = req.user?.userId;
-  if (!userId) {
-    return ApiResponse.error(
-      res,
-      401,
-      "UNAUTHORIZED",
-      "Chưa xác thực người dùng",
-    );
-  }
+export async function createTopic(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<void> {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
 
   const parsed = createTopicSchema.safeParse(req.body);
   if (!parsed.success) {
     const errorMsg =
       parsed.error.issues[0]?.message ?? "Tên chủ đề không được để rỗng";
-    return ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
+    ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
+    return;
   }
 
   const { name, color, icon } = parsed.data;
@@ -84,8 +75,7 @@ export async function createTopic(req: AuthenticatedRequest, res: Response) {
     if (!newTopic) {
       throw new Error("Không thể tạo chủ đề mới");
     }
-
-    return ApiResponse.success(res, 201, "Tạo chủ đề thành công", newTopic);
+    ApiResponse.success(res, 201, "Tạo chủ đề thành công", newTopic);
   } catch (error: unknown) {
     if (
       typeof error === "object" &&
@@ -94,31 +84,26 @@ export async function createTopic(req: AuthenticatedRequest, res: Response) {
       error.code === "23505"
     ) {
       // Postgres Unique Constraint Violation
-      return ApiResponse.error(res, 409, "CONFLICT", "Chủ đề này đã tồn tại");
+      ApiResponse.error(res, 409, "CONFLICT", "Chủ đề này đã tồn tại");
+      return;
     }
-    const message =
-      error instanceof Error ? error.message : "Lỗi server nội bộ";
-    return ApiResponse.error(res, 500, "INTERNAL_SERVER_ERROR", message);
+    ApiResponse.serverError(res, error);
   }
 }
 
-// Xóa Chủ đề (DELETE /api/v1/topics/:id)
-export async function deleteTopic(req: AuthenticatedRequest, res: Response) {
-  const userId = req.user?.userId;
-  if (!userId) {
-    return ApiResponse.error(
-      res,
-      401,
-      "UNAUTHORIZED",
-      "Chưa xác thực người dùng",
-    );
-  }
+export async function deleteTopic(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<void> {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
 
   const parsedParam = topicIdParamSchema.safeParse(req.params);
   if (!parsedParam.success) {
     const errorMsg =
       parsedParam.error.issues[0]?.message ?? "ID chủ đề không hợp lệ";
-    return ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
+    ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
+    return;
   }
 
   const { id } = parsedParam.data;
@@ -135,19 +120,18 @@ export async function deleteTopic(req: AuthenticatedRequest, res: Response) {
       [id, userId],
     );
     if (result.rows.length === 0) {
-      return ApiResponse.error(
+      ApiResponse.error(
         res,
         404,
         "NOT_FOUND",
         "Không tìm thấy chủ đề hoặc không có quyền xóa",
       );
+      return;
     }
 
-    return ApiResponse.success(res, 200, "Xóa chủ đề thành công");
+    ApiResponse.success(res, 200, "Xóa chủ đề thành công");
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Lỗi server nội bộ";
-    return ApiResponse.error(res, 500, "INTERNAL_SERVER_ERROR", message);
+    ApiResponse.serverError(res, error);
   }
 }
 

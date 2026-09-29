@@ -83,6 +83,7 @@ export async function register(req: Request, res: Response) {
         username: newUser.username,
         email: newUser.email,
         displayName: newUser.display_name,
+        hasPrivatePin: false,
       },
       accessToken: token,
     });
@@ -105,11 +106,13 @@ export async function login(req: Request, res: Response) {
   const { username, password } = parsed.data;
 
   try {
-    const result = await dbPool.query<UserRow>(
-      "SELECT id, username, email, password_hash, display_name FROM users WHERE username = $1",
+    const result = await dbPool.query<UserProfileDbRow>(
+      `SELECT id, username, email, password_hash, display_name,
+              (private_pin_hash IS NOT NULL) AS has_private_pin
+       FROM users
+       WHERE username = $1`,
       [username],
     );
-
     const user = result.rows[0];
     if (!user) {
       return ApiResponse.error(
@@ -119,7 +122,6 @@ export async function login(req: Request, res: Response) {
         "Username hoặc mật khẩu không chính xác",
       );
     }
-
     const isValidPassword = await CryptoService.verifyHash(
       user.password_hash,
       password,
@@ -147,6 +149,7 @@ export async function login(req: Request, res: Response) {
         username: user.username,
         email: user.email,
         displayName: user.display_name,
+        hasPrivatePin: user.has_private_pin,
       },
       accessToken: token,
     });

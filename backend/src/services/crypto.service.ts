@@ -107,6 +107,19 @@ export function encryptNoteContent(
   return JSON.stringify(payload);
 }
 
+function isEncryptedPayload(data: unknown): data is EncryptedPayload {
+  if (typeof data !== "object" || data === null) return false;
+  if (!("ciphertext" in data) || !("iv" in data) || !("authTag" in data)) {
+    return false;
+  }
+  const obj = data;
+  return (
+    typeof obj.ciphertext === "string" &&
+    typeof obj.iv === "string" &&
+    typeof obj.authTag === "string"
+  );
+}
+
 /**
  * Convenience helper: Decrypts a packed JSON string into structured content.
  */
@@ -117,35 +130,17 @@ export function decryptNoteContent(
 ): unknown {
   try {
     const parsed: unknown = JSON.parse(packedJson);
-    if (
-      typeof parsed !== "object" ||
-      parsed === null ||
-      !("ciphertext" in parsed) ||
-      !("iv" in parsed) ||
-      !("authTag" in parsed)
-    ) {
+    if (!isEncryptedPayload(parsed)) {
       return packedJson;
     }
-    const record = parsed as Record<string, unknown>;
-    const payload: EncryptedPayload = {
-      ciphertext: String(record["ciphertext"]),
-      iv: String(record["iv"]),
-      authTag: String(record["authTag"]),
-    };
 
     if (pin) {
-      try {
-        const vaultKey = deriveVaultKey(userId, pin);
-        return decryptPayload(payload, vaultKey);
-      } catch {
-        // Fallback to user key if encrypted under base account key
-        const userKey = deriveUserKey(userId);
-        return decryptPayload(payload, userKey);
-      }
+      const vaultKey = deriveVaultKey(userId, pin);
+      return decryptPayload(parsed, vaultKey);
     }
 
     const userKey = deriveUserKey(userId);
-    return decryptPayload(payload, userKey);
+    return decryptPayload(parsed, userKey);
   } catch {
     return null;
   }

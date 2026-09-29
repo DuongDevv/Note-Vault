@@ -43,7 +43,13 @@ export function sendError(
   });
 }
 
+export function handleServerError(res: Response, error: unknown) {
+  const message = error instanceof Error ? error.message : "Lỗi server nội bộ";
+  return sendError(res, 500, "INTERNAL_SERVER_ERROR", message);
+}
+
 export const ApiResponse = {
   success: sendSuccess,
   error: sendError,
+  serverError: handleServerError,
 };
