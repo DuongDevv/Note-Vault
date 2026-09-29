@@ -37,6 +37,10 @@ _Avoid_: Password, Passcode, Key, Vault Code
 A structured JSON object storing AES-256-GCM encrypted ciphertext, a 16-byte initialization vector (`iv`), and a 16-byte authentication tag (`authTag`).
 _Avoid_: Hash, Secret Blob, Encrypted String
 
+**Secret Block**:
+A structured ProseMirror AST node within a note representing an operational credential or token (API key, server password, webhook secret), masked by default (`••••••••`) with single-click quick-copy and ephemeral clipboard clearing (ADR-0002).
+_Avoid_: Password Field, Hidden Text, Secret Box
+
 ## Presentation & Layout
 
 **View Mode**:
@@ -46,3 +50,8 @@ _Avoid_: Layout Style, Display Mode, View Type
 **Recent Searches**:
 A locally persisted dropdown history of search keywords, allowing instant re-execution and individual item deletion.
 _Avoid_: History, Search Log, Past Queries
+
+## Architectural Decisions
+
+- **ADR-0001**: `docs/adr/0001-default-encryption-json-ast-and-prisma-contract.md`
+- **ADR-0002**: `docs/adr/0002-secure-masked-blocks-and-credential-templates.md`
