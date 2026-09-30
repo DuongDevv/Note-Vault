@@ -20,7 +20,13 @@ export const loginSchema = z.object({
 export type LoginInput = z.infer<typeof loginSchema>;
 
 export const setPrivatePinSchema = z.object({
-  newPin: z.string().regex(/^\d{6}$/, "Mã PIN bắt buộc phải gồm đúng 6 chữ số"),
+  currentPin: z
+    .string()
+    .regex(/^\d{6}$/, "Mã PIN hiện tại bắt buộc phải gồm đúng 6 chữ số")
+    .optional(),
+  newPin: z
+    .string()
+    .regex(/^\d{6}$/, "Mã PIN mới bắt buộc phải gồm đúng 6 chữ số"),
 });
 
 export type SetPrivatePinInput = z.infer<typeof setPrivatePinSchema>;

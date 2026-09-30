@@ -235,21 +235,107 @@ export async function setPrivatePin(req: AuthenticatedRequest, res: Response) {
     return ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
   }
 
-  const { newPin } = parsed.data;
+  const { currentPin, newPin } = parsed.data;
+  const client = await dbPool.connect();
 
   try {
-    const pinHash = await CryptoService.hashData(newPin);
+    await client.query("BEGIN");
 
-    await dbPool.query(
-      "UPDATE users SET private_pin_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
-      [pinHash, userId],
+    // Lấy thông tin hash hiện tại của user
+    const userRes = await client.query<{ private_pin_hash: string | null }>(
+      "SELECT private_pin_hash FROM users WHERE id = $1 FOR UPDATE",
+      [userId],
     );
 
+    const existingPinHash = userRes.rows[0]?.private_pin_hash;
+
+    // Nếu tài khoản đã có PIN từ trước, bắt buộc phải truyền currentPin và xác thực
+    if (existingPinHash) {
+      if (!currentPin) {
+        await client.query("ROLLBACK");
+        return ApiResponse.error(
+          res,
+          400,
+          "BAD_REQUEST",
+          "Vui lòng nhập mã PIN hiện tại để xác thực thay đổi",
+        );
+      }
+
+      const isCurrentPinValid = await CryptoService.verifyHash(
+        existingPinHash,
+        currentPin.trim(),
+      );
+      if (!isCurrentPinValid) {
+        await client.query("ROLLBACK");
+        return ApiResponse.error(
+          res,
+          403,
+          "FORBIDDEN",
+          "Mã PIN hiện tại không chính xác",
+        );
+      }
+
+      // Enveloped Key Rotation: Re-wrap toàn bộ encrypted_key của các note đang khóa
+      const lockedNotesRes = await client.query<{
+        id: string;
+        content: string | null;
+        encrypted_key: string | null;
+      }>(
+        "SELECT id, content, encrypted_key FROM notes WHERE user_id = $1 AND is_locked = true FOR UPDATE",
+        [userId],
+      );
+
+      for (const note of lockedNotesRes.rows) {
+        if (note.encrypted_key) {
+          // Note đã có DEK: chỉ cần rewrap KEK (từ oldPin sang newPin)
+          const rewrappedKey = CryptoService.rewrapDataKey(
+            note.encrypted_key,
+            userId,
+            currentPin.trim(),
+            newPin.trim(),
+          );
+          await client.query(
+            "UPDATE notes SET encrypted_key = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+            [rewrappedKey, note.id],
+          );
+        } else if (note.content) {
+          // Note cũ chưa có DEK (mã hóa trực tiếp bằng PIN cũ): giải mã rồi bọc Enveloped mới
+          const plain = CryptoService.decryptNoteContent(
+            note.content,
+            userId,
+            currentPin.trim(),
+          );
+          if (plain !== null) {
+            const enveloped = CryptoService.encryptEnveloped(
+              plain,
+              userId,
+              newPin.trim(),
+            );
+            await client.query(
+              "UPDATE notes SET content = $1, encrypted_key = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3",
+              [enveloped.encryptedContent, enveloped.encryptedKey, note.id],
+            );
+          }
+        }
+      }
+    }
+
+    // Cập nhật mã hash PIN mới
+    const newPinHash = await CryptoService.hashData(newPin.trim());
+    await client.query(
+      "UPDATE users SET private_pin_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2",
+      [newPinHash, userId],
+    );
+
+    await client.query("COMMIT");
     return ApiResponse.success(res, 200, "Cài đặt mã PIN bảo vệ thành công");
   } catch (error: unknown) {
+    await client.query("ROLLBACK");
     const message =
       error instanceof Error ? error.message : "Lỗi server nội bộ";
     return ApiResponse.error(res, 500, "INTERNAL_SERVER_ERROR", message);
+  } finally {
+    client.release();
   }
 }
 

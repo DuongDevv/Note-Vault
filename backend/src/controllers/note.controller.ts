@@ -21,13 +21,13 @@ interface NoteDbResult {
   content: string | null;
   tags: string[];
   is_locked: boolean;
+  encrypted_key: string | null;
   created_at: string;
   updated_at: string;
 }
 
 const NOTE_COLUMNS =
-  "id, user_id, topic_id, title, content, tags, is_locked, created_at, updated_at";
-
+  "id, user_id, topic_id, title, content, tags, is_locked, encrypted_key, created_at, updated_at";
 /**
  * Decrypts note content safely or masks if locked without credentials.
  */
@@ -41,17 +41,30 @@ function formatNoteResponse(
   if (row.content) {
     if (row.is_locked) {
       if (vaultPin) {
-        decryptedContent = CryptoService.decryptNoteContent(
-          row.content,
-          userId,
-          vaultPin,
-        );
+        // Nếu note có encrypted_key -> dùng Enveloped Decryption
+        if (row.encrypted_key) {
+          decryptedContent = CryptoService.decryptEnveloped(
+            row.content,
+            row.encrypted_key,
+            userId,
+            vaultPin,
+          );
+        } else {
+          // Fallback cho note cũ tạo trước khi có Enveloped Encryption
+          decryptedContent = CryptoService.decryptNoteContent(
+            row.content,
+            userId,
+            vaultPin,
+          );
+        }
       } else {
         // Masked content for locked notes when not unlocked with PIN
         decryptedContent = null;
       }
     } else {
-      decryptedContent = CryptoService.decryptNoteContent(row.content, userId);
+      decryptedContent = row.encrypted_key
+        ? CryptoService.decryptEnveloped(row.content, row.encrypted_key, userId)
+        : CryptoService.decryptNoteContent(row.content, userId);
     }
   }
 
@@ -68,6 +81,7 @@ function formatNoteResponse(
           : JSON.stringify(decryptedContent),
     tags: row.tags,
     isLocked: row.is_locked,
+    encryptedKey: row.encrypted_key,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -225,19 +239,32 @@ export async function createNote(
   const { topicId, title, content, tags, isLocked, pin } = parsed.data;
 
   try {
-    // Encrypt at rest by default
-    const encryptedPacked = CryptoService.encryptNoteContent(
-      content,
-      userId,
-      isLocked ? pin : undefined,
-    );
+    let encryptedPacked: string;
+    let encryptedKey: string | null = null;
+
+    if (isLocked && pin) {
+      const enveloped = CryptoService.encryptEnveloped(content, userId, pin);
+      encryptedPacked = enveloped.encryptedContent;
+      encryptedKey = enveloped.encryptedKey;
+    } else {
+      encryptedPacked = CryptoService.encryptNoteContent(content, userId);
+    }
 
     const noteId = randomUUID();
     const result = await dbPool.query<NoteDbResult>(
-      `INSERT INTO notes (id, user_id, topic_id, title, content, tags, is_locked)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO notes (id, user_id, topic_id, title, content, tags, is_locked, encrypted_key)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING ${NOTE_COLUMNS}`,
-      [noteId, userId, topicId ?? null, title, encryptedPacked, tags, isLocked],
+      [
+        noteId,
+        userId,
+        topicId ?? null,
+        title,
+        encryptedPacked,
+        tags,
+        isLocked,
+        encryptedKey,
+      ],
     );
 
     const newNote = result.rows[0];
@@ -326,7 +353,7 @@ export async function updateNote(
   const pin = typeof rawPin === "string" ? rawPin.trim() : undefined;
   try {
     const existing = await dbPool.query<NoteDbResult>(
-      "SELECT id, topic_id, title, content, tags, is_locked FROM notes WHERE id = $1 AND user_id = $2",
+      "SELECT id, topic_id, title, content, tags, is_locked, encrypted_key FROM notes WHERE id = $1 AND user_id = $2",
       [id, userId],
     );
 
@@ -379,31 +406,65 @@ export async function updateNote(
     }
 
     let encryptedContent = current.content;
+    let encryptedKey = current.encrypted_key;
+
     if (content !== undefined) {
-      encryptedContent = CryptoService.encryptNoteContent(
-        content,
-        userId,
-        newIsLocked ? pin : undefined,
-      );
+      if (newIsLocked) {
+        if (pin) {
+          const enveloped = CryptoService.encryptEnveloped(
+            content,
+            userId,
+            pin,
+          );
+          encryptedContent = enveloped.encryptedContent;
+          encryptedKey = enveloped.encryptedKey;
+        } else if (current.encrypted_key) {
+          // Giữ nguyên encryptedKey hiện tại, nhưng giải mã DEK để mã hóa lại content mới
+          // Hoặc mã hóa lại bằng userKey fallback
+          encryptedContent = CryptoService.encryptNoteContent(content, userId);
+        } else {
+          encryptedContent = CryptoService.encryptNoteContent(content, userId);
+        }
+      } else {
+        encryptedContent = CryptoService.encryptNoteContent(content, userId);
+        encryptedKey = null;
+      }
     } else if (newIsLocked !== current.is_locked && current.content) {
-      // Re-encrypt existing content under new lock key
-      const plain = CryptoService.decryptNoteContent(
-        current.content,
-        userId,
-        current.is_locked ? pin : undefined,
-      );
-      if (plain !== null) {
-        encryptedContent = CryptoService.encryptNoteContent(
-          plain,
-          userId,
-          newIsLocked ? pin : undefined,
-        );
+      if (newIsLocked) {
+        // Chuyển từ unlock sang lock: giải mã content cũ rồi bọc thành Enveloped Encryption
+        const plain = current.encrypted_key
+          ? CryptoService.decryptEnveloped(
+              current.content,
+              current.encrypted_key,
+              userId,
+            )
+          : CryptoService.decryptNoteContent(current.content, userId);
+        if (plain !== null && pin) {
+          const enveloped = CryptoService.encryptEnveloped(plain, userId, pin);
+          encryptedContent = enveloped.encryptedContent;
+          encryptedKey = enveloped.encryptedKey;
+        }
+      } else {
+        // Chuyển từ lock sang unlock: giải mã bằng pin rồi mã hóa lại bằng userKey bình thường
+        const plain = current.encrypted_key
+          ? CryptoService.decryptEnveloped(
+              current.content,
+              current.encrypted_key,
+              userId,
+              pin,
+            )
+          : CryptoService.decryptNoteContent(current.content, userId, pin);
+        if (plain !== null) {
+          encryptedContent = CryptoService.encryptNoteContent(plain, userId);
+          encryptedKey = null;
+        }
       }
     }
+
     const result = await dbPool.query<NoteDbResult>(
       `UPDATE notes
-       SET topic_id = $1, title = $2, content = $3, tags = $4, is_locked = $5, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $6 AND user_id = $7
+       SET topic_id = $1, title = $2, content = $3, tags = $4, is_locked = $5, encrypted_key = $6, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $7 AND user_id = $8
        RETURNING ${NOTE_COLUMNS}`,
       [
         newTopicId,
@@ -411,6 +472,7 @@ export async function updateNote(
         encryptedContent,
         newTags,
         newIsLocked,
+        encryptedKey,
         id,
         userId,
       ],

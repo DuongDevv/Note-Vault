@@ -95,8 +95,99 @@ export function decryptPayload(
 }
 
 /**
- * Convenience helper: Encrypts note content and returns a packed JSON string.
+ * Encrypts note content using Enveloped Encryption (DEK wrapped by KEK).
+ * Generates a random 32-byte DEK, encrypts content with DEK,
+ * then encrypts DEK with KEK (vaultKey derived from Master PIN or userKey).
  */
+export function encryptEnveloped(
+  content: unknown,
+  userId: string,
+  pin?: string,
+): { encryptedContent: string; encryptedKey: string } {
+  const dataKey = crypto.randomBytes(32);
+  const contentPayload = encryptPayload(content, dataKey);
+  const kek = pin ? deriveVaultKey(userId, pin) : deriveUserKey(userId);
+  const keyPayload = encryptPayload(dataKey.toString("base64"), kek);
+
+  return {
+    encryptedContent: JSON.stringify(contentPayload),
+    encryptedKey: JSON.stringify(keyPayload),
+  };
+}
+
+/**
+ * Decrypts note content using Enveloped Encryption.
+ * Unwraps dataKey using KEK, then decrypts content using dataKey.
+ */
+export function decryptEnveloped(
+  packedContent: string,
+  packedKey: string,
+  userId: string,
+  pin?: string,
+): unknown {
+  try {
+    const keyPayload = JSON.parse(packedKey) as unknown;
+    if (!isEncryptedPayload(keyPayload)) return null;
+
+    let dataKeyBase64: unknown = null;
+    if (pin) {
+      const vaultKey = deriveVaultKey(userId, pin);
+      try {
+        dataKeyBase64 = decryptPayload(keyPayload, vaultKey);
+      } catch {
+        const userKey = deriveUserKey(userId);
+        dataKeyBase64 = decryptPayload(keyPayload, userKey);
+      }
+    } else {
+      const userKey = deriveUserKey(userId);
+      dataKeyBase64 = decryptPayload(keyPayload, userKey);
+    }
+
+    if (typeof dataKeyBase64 !== "string") return null;
+    const dataKey = Buffer.from(dataKeyBase64, "base64");
+
+    const contentPayload = JSON.parse(packedContent) as unknown;
+    if (!isEncryptedPayload(contentPayload)) return packedContent;
+
+    return decryptPayload(contentPayload, dataKey);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Rotates the KEK wrapping a DEK (from old PIN to new PIN) without touching content.
+ */
+export function rewrapDataKey(
+  packedKey: string,
+  userId: string,
+  oldPin: string,
+  newPin: string,
+): string {
+  const keyPayload = JSON.parse(packedKey) as unknown;
+  if (!isEncryptedPayload(keyPayload)) {
+    throw new Error("Mã hóa khóa không đúng định dạng");
+  }
+
+  const oldVaultKey = deriveVaultKey(userId, oldPin);
+  let dataKeyBase64: unknown;
+  try {
+    dataKeyBase64 = decryptPayload(keyPayload, oldVaultKey);
+  } catch {
+    // Fallback nếu note trước đó bọc bằng userKey
+    const userKey = deriveUserKey(userId);
+    dataKeyBase64 = decryptPayload(keyPayload, userKey);
+  }
+
+  if (typeof dataKeyBase64 !== "string") {
+    throw new Error("Không thể giải mã khóa dữ liệu với mã PIN cũ");
+  }
+
+  const newVaultKey = deriveVaultKey(userId, newPin);
+  const newKeyPayload = encryptPayload(dataKeyBase64, newVaultKey);
+  return JSON.stringify(newKeyPayload);
+}
+
 export function encryptNoteContent(
   content: unknown,
   userId: string,
@@ -151,6 +242,7 @@ export function decryptNoteContent(
     return null;
   }
 }
+
 export const CryptoService = {
   hashData,
   verifyHash,
@@ -160,4 +252,7 @@ export const CryptoService = {
   decryptPayload,
   encryptNoteContent,
   decryptNoteContent,
+  encryptEnveloped,
+  decryptEnveloped,
+  rewrapDataKey,
 };
