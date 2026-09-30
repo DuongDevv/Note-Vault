@@ -153,6 +153,9 @@ export function WorkspaceLayout({
                 onUserUpdate({ ...currentUser, hasPrivatePin: true });
               }
             }
+            // Khóa lại toàn bộ phiên giải mã và làm mới dữ liệu
+            useWorkspaceStore.getState().setUnlockedNoteId(null);
+            void useWorkspaceStore.getState().fetchWorkspaceData();
           }}
         />
 

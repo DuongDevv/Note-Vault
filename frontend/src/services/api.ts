@@ -68,7 +68,7 @@ function normalizeNote(raw: Note): Note {
           month: "2-digit",
         })
       : raw.date,
-    meta: raw.meta || (raw.isLocked ? "Đã khóa PIN" : "Bản thảo"),
+    meta: raw.meta ? raw.meta : raw.isLocked ? "Đã khóa PIN" : "Bản thảo",
     metaType: raw.metaType,
   };
 }

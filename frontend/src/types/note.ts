@@ -26,6 +26,7 @@ export const NoteSchema = z.object({
   tag: z.string().optional().default(""),
   topicId: z.string().nullable().optional(),
   isLocked: z.boolean().optional().default(false),
+  encryptedKey: z.string().nullable().optional(),
   pin: z.string().optional(),
   excerpt: z.string().optional().default(""),
   date: z.string().optional().default("Hôm nay"),

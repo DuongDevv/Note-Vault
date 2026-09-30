@@ -123,11 +123,17 @@ export async function fetchUserProfile(): Promise<AuthUser> {
   return payload.data;
 }
 
-export async function updatePrivatePin(newPin: string): Promise<void> {
+export async function updatePrivatePin(
+  newPin: string,
+  currentPin?: string,
+): Promise<void> {
   const { ok, data } = await safeFetchJson("/api/v1/profile/private-pin", {
     method: "POST",
     headers: getAuthHeaders(),
-    body: JSON.stringify({ newPin }),
+    body: JSON.stringify({
+      newPin,
+      currentPin: currentPin ?? undefined,
+    }),
   });
 
   const payload = EmptyEnvelopeSchema.parse(data);
