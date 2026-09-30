@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'b112970dd332a68c8c101820f10d197305b1e11982952b08c87496e2baaa7c7a'>;
+  StorageHashBase<'c2a0714d56381471e73c81615bf6ab36bdaf92bb3029b15a7d96578aae1694fe'>;
 export type ExecutionHash =
   ExecutionHashBase<'d38bbdd24aa362a5e2e0dc8a53099967e444ef68caaf9ed50028d7af92d66a90'>;
 export type ProfileHash =
@@ -250,6 +250,7 @@ export type FieldOutputTypes = {
       readonly content: CodecTypes['pg/text@1']['output'] | null;
       readonly tags: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
       readonly isLocked: CodecTypes['pg/bool@1']['output'];
+      readonly encryptedKey: CodecTypes['pg/text@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     };
@@ -282,6 +283,7 @@ export type FieldInputTypes = {
       readonly content: CodecTypes['pg/text@1']['input'] | null;
       readonly tags: ReadonlyArray<CodecTypes['pg/text@1']['input']>;
       readonly isLocked: CodecTypes['pg/bool@1']['input'];
+      readonly encryptedKey: CodecTypes['pg/text@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
     };
@@ -309,6 +311,7 @@ export type StorageColumnTypes = {
     readonly notes: {
       readonly content: CodecTypes['pg/text@1']['output'] | null;
       readonly created_at: CodecTypes['pg/timestamptz-temporal@1']['output'];
+      readonly encrypted_key: CodecTypes['pg/text@1']['output'] | null;
       readonly id: CodecTypes['pg/text@1']['output'];
       readonly is_locked: CodecTypes['pg/bool@1']['output'];
       readonly tags: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
@@ -341,6 +344,7 @@ export type StorageColumnInputTypes = {
     readonly notes: {
       readonly content: CodecTypes['pg/text@1']['input'] | null;
       readonly created_at: CodecTypes['pg/timestamptz-temporal@1']['input'];
+      readonly encrypted_key: CodecTypes['pg/text@1']['input'] | null;
       readonly id: CodecTypes['pg/text@1']['input'];
       readonly is_locked: CodecTypes['pg/bool@1']['input'];
       readonly tags: ReadonlyArray<CodecTypes['pg/text@1']['input']>;
@@ -401,6 +405,7 @@ export namespace Models {
     content: CodecTypes['pg/text@1']['output'] | null;
     tags: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
     isLocked: CodecTypes['pg/bool@1']['output'];
+    encryptedKey: CodecTypes['pg/text@1']['output'] | null;
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     topic: public_Topic | null;
@@ -479,6 +484,11 @@ type ContractBase = Omit<
                     readonly kind: 'literal';
                     readonly value: DefaultLiteralValue<'pg/bool@1', false>;
                   };
+                };
+                readonly encrypted_key: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
                 };
                 readonly created_at: {
                   readonly nativeType: 'timestamptz';
@@ -710,6 +720,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
               };
+              readonly encryptedKey: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -759,6 +773,7 @@ type ContractBase = Omit<
                 readonly content: { readonly column: 'content' };
                 readonly tags: { readonly column: 'tags' };
                 readonly isLocked: { readonly column: 'is_locked' };
+                readonly encryptedKey: { readonly column: 'encrypted_key' };
                 readonly createdAt: { readonly column: 'created_at' };
                 readonly updatedAt: { readonly column: 'updated_at' };
               };

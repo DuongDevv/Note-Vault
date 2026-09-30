@@ -33,8 +33,9 @@ model Note {
   topicId   String?  @map("topic_id")
   title     String
   content   String?
-  tags      String[] @default([])
-  isLocked  Boolean  @default(false) @map("is_locked")
+  tags         String[] @default([])
+  isLocked     Boolean  @default(false) @map("is_locked")
+  encryptedKey String?  @map("encrypted_key")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
 
