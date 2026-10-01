@@ -6,8 +6,15 @@ const PORT = config.PORT;
 
 const startServer = async () => {
   try {
-    // Kết nối Redis
-    await connectRedis();
+    // Kết nối Redis với Graceful Fallback cho Cloud Environments
+    try {
+      await connectRedis();
+    } catch (redisErr) {
+      console.warn(
+        "⚠️ [REDIS] Không thể kết nối Redis Cache, hệ thống chuyển sang chế độ Standalone:",
+        redisErr,
+      );
+    }
 
     // Khởi động HTTP Server
     app.listen(PORT, () => {
