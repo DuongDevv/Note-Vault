@@ -10,18 +10,23 @@ export class HttpError extends Error {
   }
 }
 
+const API_BASE_URL = (import.meta.env["VITE_API_URL"] as string | undefined)?.replace(/\/+$/, "") ?? "";
+
 /**
  * Robust fetch wrapper that gracefully handles server offline,
  * gateway timeouts, empty responses, and non-JSON payloads.
  */
 export async function safeFetchJson(
-  url: string,
+  endpoint: string,
   options?: RequestInit,
 ): Promise<{ ok: boolean; status: number; data: unknown }> {
   let res: Response;
+  const fullUrl = endpoint.startsWith("http")
+    ? endpoint
+    : `${API_BASE_URL}${endpoint}`;
 
   try {
-    res = await fetch(url, options);
+    res = await fetch(fullUrl, options);
   } catch (err: unknown) {
     // Network failure (e.g. backend server is not running or connection refused)
     const isNetworkError =
