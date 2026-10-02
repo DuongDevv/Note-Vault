@@ -10,7 +10,7 @@ export const config = {
 
   // Database Config
   DB: {
-    URL: process.env["DB_URL"],
+    URL: process.env["DATABASE_URL"] ?? process.env["DB_URL"],
     HOST: process.env["DB_HOST"] ?? "localhost",
     PORT: Number(process.env["DB_PORT"] ?? 5432),
     USER: process.env["DB_USERNAME"] ?? "postgres",
