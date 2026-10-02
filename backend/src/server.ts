@@ -7,6 +7,7 @@ const PORT = config.PORT;
 
 async function ensureTablesExist() {
   try {
+    // Tạo bảng nếu chưa tồn tại — schema đã được làm sạch (bỏ slug/icon/color khỏi topics)
     await dbPool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
@@ -23,12 +24,9 @@ async function ensureTablesExist() {
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         name TEXT NOT NULL,
-        slug TEXT NOT NULL,
-        icon TEXT NOT NULL DEFAULT 'folder',
-        color TEXT NOT NULL DEFAULT '#000000',
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        CONSTRAINT topics_user_id_slug_key UNIQUE (user_id, slug)
+        CONSTRAINT topics_user_id_name_key UNIQUE (user_id, name)
       );
 
       CREATE TABLE IF NOT EXISTS notes (
@@ -38,17 +36,24 @@ async function ensureTablesExist() {
         title TEXT NOT NULL,
         content TEXT,
         is_locked BOOLEAN NOT NULL DEFAULT FALSE,
-        is_pinned BOOLEAN NOT NULL DEFAULT FALSE,
+        encrypted_key TEXT,
         tags TEXT[] NOT NULL DEFAULT '{}',
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
     `);
+
+    // Bổ sung cột còn thiếu trên database hiện hữu (idempotent ALTER TABLE)
+    await dbPool.query(`
+      ALTER TABLE notes ADD COLUMN IF NOT EXISTS encrypted_key TEXT;
+    `);
+
     console.log("✅ [DATABASE] Schema tables verified and ready!");
   } catch (err) {
     console.error("⚠️ [DATABASE] Table verification error:", err);
   }
 }
+
 
 const startServer = async () => {
   try {
