@@ -39,6 +39,7 @@ Note-Vault is an enterprise-grade document management engine and secure vault sy
 ## Technical Features
 
 ### Frontend Document Architecture
+
 - Notion-Style AST Canvas Engine: Document editing is driven by TipTap 3 and ProseMirror, outputting structured AST JSON payloads for lossless document storage.
 - Custom Extension Node Views: Implements custom React components for complex document nodes:
   - `SecretBlockNodeView`: Embedded encrypted payload node within standard notes.
@@ -49,6 +50,7 @@ Note-Vault is an enterprise-grade document management engine and secure vault sy
 - Master PIN & Vault Lock UI: Integrated 6-digit OTP PIN input controls, global search palette (`Cmd + K`), and in-canvas `UnlockCard` components for encrypted documents.
 
 ### Backend & Infrastructure Architecture
+
 - Zero-Trust Cryptographic Engine: Document contents with privacy controls enabled are encrypted using AES-256-GCM authenticated encryption with unique 12-byte initialization vectors and 16-byte authentication tags per record.
 - Argon2id Key Derivation: Passwords and secondary 6-digit Master PINs are hashed using Argon2id with memory-hard cost factors (64MB memory, 3 iterations) to mitigate GPU brute-force and side-channel attacks.
 - High Concurrency and Rate Limiting: Redis 8 handles request sliding-window rate limiting and token session invalidation with sub-millisecond latency.
@@ -60,6 +62,7 @@ Note-Vault is an enterprise-grade document management engine and secure vault sy
 ## Technical Stack Specifications
 
 ### Frontend Subsystem
+
 - Package Manager & Runtime: Bun (`bun.lock`)
 - Core Framework: React 19 (`react@^19.2.8`), React DOM 19
 - Next-Gen Compiler: React Compiler (`babel-plugin-react-compiler` automatic memoization)
@@ -75,6 +78,7 @@ Note-Vault is an enterprise-grade document management engine and secure vault sy
 - High-Speed Linter: Oxlint (`oxlint`, `oxlint-tsgolint`)
 
 ### Backend Subsystem
+
 - Language & Runtime: Node.js 22 LTS, TypeScript (Strict Mode)
 - Framework: Express.js (Layered Architecture)
 - Primary Database: PostgreSQL 18 Alpine
@@ -88,12 +92,14 @@ Note-Vault is an enterprise-grade document management engine and secure vault sy
 ## Cryptographic Specification
 
 ### Passwords and Secondary Master PIN
+
 - Hashing Algorithm: Argon2id (`argon2.argon2id`)
 - Memory Cost: 65,536 KB (64 MB)
 - Time Cost: 3 iterations
 - Parallelism: 1 thread
 
 ### Document Payload Encryption
+
 - Cipher Algorithm: AES-256-GCM (`aes-256-gcm`)
 - Key Length: 256 bits (32 bytes derived via Key Derivation Function)
 - Initialization Vector (IV): 12 bytes (96 bits) randomly generated per operation
@@ -104,11 +110,13 @@ Note-Vault is an enterprise-grade document management engine and secure vault sy
 ## Database Schema & Indexes
 
 ### Tables
+
 1. `users`: Stores user identity, Argon2id password hash, display name, and optional Argon2id secondary `private_pin_hash`.
 2. `topics`: Stores document categories with per-user unique `(user_id, slug)` constraints.
 3. `notes`: Stores standard and locked documents. Contains fields `id`, `user_id`, `topic_id`, `title`, `content`, `is_locked`, `is_pinned`, `tags`, `created_at`, `updated_at`.
 
 ### Composite Indexes
+
 - `(user_id, is_pinned, created_at)`: Enables O(log N) sorting and pagination for user dashboard queries.
 
 ---
@@ -116,16 +124,19 @@ Note-Vault is an enterprise-grade document management engine and secure vault sy
 ## REST API Specification
 
 ### Authentication Endpoints (`/api/v1/auth`)
+
 - `POST /api/v1/auth/register`: Register a new user account.
 - `POST /api/v1/auth/login`: Authenticate credentials and receive a JWT Access Token.
 - `POST /api/v1/auth/setup-pin`: Configure or update the 6-digit secondary Argon2id Master PIN.
 
 ### Category Management Endpoints (`/api/v1/topics`)
+
 - `GET /api/v1/topics`: Retrieve user document topics.
 - `POST /api/v1/topics`: Create a new category topic.
 - `DELETE /api/v1/topics/:id`: Remove a category topic.
 
 ### Document Management Endpoints (`/api/v1/notes`)
+
 - `GET /api/v1/notes`: List documents with filtering, search, and pagination.
 - `POST /api/v1/notes`: Create a standard or locked document.
 - `GET /api/v1/notes/:id`: Fetch document details.
@@ -138,6 +149,7 @@ Note-Vault is an enterprise-grade document management engine and secure vault sy
 ## Local Setup and Deployment
 
 ### Prerequisites
+
 - Node.js 22 LTS or Bun 1.x
 - Docker Engine 24.0+ and Docker Compose v2
 
@@ -161,6 +173,7 @@ bun dev
 > Note: If Bun is not installed in your local environment, you can use `npm install` and `npm run dev` as fallbacks.
 
 ### Access Points
+
 - Backend REST API: `http://localhost:5000`
 - System Healthcheck: `http://localhost:5000/health`
 - Frontend Web Interface: `http://localhost:5173`
@@ -169,9 +182,9 @@ bun dev
 
 ## Project Contributors & Engineering Team
 
-- Project Manager (PM): Dang Duy Lam (https://github.com/VandesDang)
+- Project Manager & Tech Lead (PM): Dang Duy Lam (https://github.com/VandesDang)
 - Frontend Engineer (FE): Tran Van Ngoc (https://github.com/ngxccc)
-- Backend Architect & Tech Lead (BE): Nguyen Quoc Duong (https://github.com/DuongDevv)
+- Backend Architect (BE): Nguyen Quoc Duong (https://github.com/DuongDevv)
 
 ---
 
