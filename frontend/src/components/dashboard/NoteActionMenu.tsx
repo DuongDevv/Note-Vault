@@ -62,6 +62,23 @@ export function NoteActionMenu({ note, hasPrivatePin }: NoteActionMenuProps) {
         className="w-48 text-xs"
       >
         <DropdownMenuItem
+          onClick={() => void toggleNotePin(note.id)}
+          className="flex cursor-pointer items-center gap-2"
+        >
+          {note.isPinned ? (
+            <>
+              <PinOff className="text-muted-foreground size-3.5" />
+              <span>Bỏ ghim trang</span>
+            </>
+          ) : (
+            <>
+              <Pin className="text-muted-foreground size-3.5" />
+              <span>Ghim trang</span>
+            </>
+          )}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
           onClick={() => requestLockToggle(note, hasPrivatePin)}
           className="flex cursor-pointer items-center gap-2"
         >

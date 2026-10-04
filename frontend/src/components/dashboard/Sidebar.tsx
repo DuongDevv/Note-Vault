@@ -12,6 +12,7 @@ import {
   Trash2,
   Pencil,
   MoreHorizontal,
+  Pin,
 } from "lucide-react";
 import type { AuthUser } from "@/services/auth";
 import type { Topic } from "@/types/note";
@@ -112,6 +113,7 @@ export function AppSidebar({
     }
   };
   // Collapsed states
+  const [isPinnedCollapsed, setIsPinnedCollapsed] = useState(false);
   const [isRecentsCollapsed, setIsRecentsCollapsed] = useState(false);
   const [isUnclassifiedCollapsed, setIsUnclassifiedCollapsed] = useState(false);
   const [isTopicsSectionCollapsed, setIsTopicsSectionCollapsed] =
@@ -119,6 +121,16 @@ export function AppSidebar({
   const [collapsedTopics, setCollapsedTopics] = useState<
     Record<string, boolean>
   >({});
+  // Pinned notes (sorted by most recently updated)
+  const pinnedNotes = useMemo(() => {
+    return notes
+      .filter((n) => n.isPinned)
+      .toSorted((a, b) => {
+        const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return dateB - dateA;
+      });
+  }, [notes]);
   // Recents (Top 6 most recent notes)
   const recentNotes = notes
     .toSorted((a, b) => {
