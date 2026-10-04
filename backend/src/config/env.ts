@@ -5,32 +5,32 @@ import path from "path";
 dotenvConfig({ path: path.resolve(process.cwd(), ".env") });
 
 export const config = {
-  PORT: process.env["PORT"] ?? 5000,
-  NODE_ENV: process.env["NODE_ENV"] ?? "development",
+  PORT: process.env.PORT ?? 5000,
+  NODE_ENV: process.env.NODE_ENV ?? "development",
 
   // Database Config
   DB: {
-    URL: process.env["DATABASE_URL"] ?? process.env["DB_URL"],
-    HOST: process.env["DB_HOST"] ?? "localhost",
-    PORT: Number(process.env["DB_PORT"] ?? 5432),
-    USER: process.env["DB_USERNAME"] ?? "postgres",
-    PASSWORD: process.env["DB_PASSWORD"] ?? "postgres_password",
-    NAME: process.env["DB_NAME"] ?? "note_vault_db",
+    URL: process.env.DATABASE_URL ?? process.env.DB_URL,
+    HOST: process.env.DB_HOST ?? "localhost",
+    PORT: Number(process.env.DB_PORT ?? 5432),
+    USER: process.env.DB_USERNAME ?? "postgres",
+    PASSWORD: process.env.DB_PASSWORD ?? "postgres_password",
+    NAME: process.env.DB_NAME ?? "note_vault_db",
   },
 
   // Redis Config
   REDIS: {
-    URL: process.env["REDIS_URL"],
-    HOST: process.env["REDIS_HOST"] ?? "localhost",
-    PORT: Number(process.env["REDIS_PORT"] ?? 6379),
+    URL: process.env.REDIS_URL,
+    HOST: process.env.REDIS_HOST ?? "localhost",
+    PORT: Number(process.env.REDIS_PORT ?? 6379),
   },
   // Security Secrets
   SECURITY: {
     JWT_SECRET:
-      process.env["JWT_SECRET"] ?? "super_secret_jwt_access_key_default",
+      process.env.JWT_SECRET ?? "super_secret_jwt_access_key_default",
     JWT_EXPIRES_IN: 86400, // 24h in seconds
     PRIVATE_NOTE_MASTER_KEY:
-      process.env["PRIVATE_NOTE_MASTER_KEY"] ??
+      process.env.PRIVATE_NOTE_MASTER_KEY ??
       "default_32_bytes_key_for_aes_256",
   },
 };

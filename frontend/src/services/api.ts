@@ -213,3 +213,13 @@ export async function deleteTopic(id: string): Promise<DeleteResponse> {
     "Không thể xóa chủ đề",
   );
 }
+
+export async function toggleNotePin(id: string): Promise<Note> {
+  const parsed = await fetchAndParse(
+    `/api/v1/notes/${id}/toggle-pin`,
+    NoteSchema,
+    { method: "POST" },
+    "Không thể thay đổi trạng thái ghim",
+  );
+  return normalizeNote(parsed);
+}

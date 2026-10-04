@@ -7,8 +7,8 @@ import { config } from "../config/env";
 dotenv.config();
 
 const connectionString =
-  process.env["DATABASE_URL"] ||
-  process.env["DB_URL"] ||
+  process.env.DATABASE_URL ||
+  process.env.DB_URL ||
   config.DB.URL ||
   `postgresql://${config.DB.USER}:${config.DB.PASSWORD}@${config.DB.HOST}:${config.DB.PORT}/${config.DB.NAME}`;
 

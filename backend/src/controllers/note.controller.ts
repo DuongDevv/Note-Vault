@@ -21,13 +21,14 @@ interface NoteDbResult {
   content: string | null;
   tags: string[];
   is_locked: boolean;
+  is_pinned: boolean;
   encrypted_key: string | null;
   created_at: string;
   updated_at: string;
 }
 
 const NOTE_COLUMNS =
-  "id, user_id, topic_id, title, content, tags, is_locked, encrypted_key, created_at, updated_at";
+  "id, user_id, topic_id, title, content, tags, is_locked, is_pinned, encrypted_key, created_at, updated_at";
 /**
  * Decrypts note content safely or masks if locked without credentials.
  */
@@ -81,6 +82,7 @@ function formatNoteResponse(
           : JSON.stringify(decryptedContent),
     tags: row.tags,
     isLocked: row.is_locked,
+    isPinned: row.is_pinned,
     encryptedKey: row.encrypted_key,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -353,7 +355,7 @@ export async function updateNote(
   const pin = typeof rawPin === "string" ? rawPin.trim() : undefined;
   try {
     const existing = await dbPool.query<NoteDbResult>(
-      "SELECT id, topic_id, title, content, tags, is_locked, encrypted_key FROM notes WHERE id = $1 AND user_id = $2",
+      "SELECT id, topic_id, title, content, tags, is_locked, is_pinned, encrypted_key FROM notes WHERE id = $1 AND user_id = $2",
       [id, userId],
     );
 
@@ -490,10 +492,58 @@ export async function updateNote(
   }
 }
 
+// Toggle trạng thái Ghim ghi chú (POST /api/v1/notes/:id/toggle-pin)
+export async function toggleNotePin(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<void> {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+
+  const parsedParam = noteIdParamSchema.safeParse(req.params);
+  if (!parsedParam.success) {
+    ApiResponse.error(res, 400, "BAD_REQUEST", "ID ghi chú không hợp lệ");
+    return;
+  }
+  const { id } = parsedParam.data;
+
+  try {
+    const result = await dbPool.query<NoteDbResult>(
+      `UPDATE notes
+       SET is_pinned = NOT is_pinned, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1 AND user_id = $2
+       RETURNING ${NOTE_COLUMNS}`,
+      [id, userId],
+    );
+
+    const updatedNote = result.rows[0];
+    if (!updatedNote) {
+      ApiResponse.error(
+        res,
+        404,
+        "NOT_FOUND",
+        "Không tìm thấy ghi chú hoặc không có quyền chỉnh sửa",
+      );
+      return;
+    }
+
+    const formatted = formatNoteResponse(updatedNote, userId);
+    ApiResponse.success(
+      res,
+      200,
+      updatedNote.is_pinned ? "Ghim ghi chú thành công" : "Bỏ ghim ghi chú thành công",
+      formatted,
+    );
+  } catch (error: unknown) {
+    ApiResponse.serverError(res, error);
+  }
+}
+
 export const NoteController = {
   getNotes,
   getNoteById,
   createNote,
   deleteNote,
   updateNote,
+  toggleNotePin,
 };

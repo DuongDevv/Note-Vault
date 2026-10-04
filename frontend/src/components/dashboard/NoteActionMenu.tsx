@@ -8,6 +8,8 @@ import {
   FileText,
   Check,
   FolderSync,
+  Pin,
+  PinOff,
 } from "lucide-react";
 import type { Note } from "@/types/note";
 import { useUIStore } from "@/stores/useUIStore";
@@ -37,6 +39,7 @@ export function NoteActionMenu({ note, hasPrivatePin }: NoteActionMenuProps) {
   const setNoteToDelete = useUIStore((s) => s.setNoteToDelete);
   const topics = useWorkspaceStore((s) => s.topics);
   const moveNoteToTopic = useWorkspaceStore((s) => s.moveNoteToTopic);
+  const toggleNotePin = useWorkspaceStore((s) => s.toggleNotePin);
 
   return (
     <DropdownMenu>
