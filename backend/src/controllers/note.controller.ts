@@ -238,7 +238,7 @@ export async function createNote(
     return;
   }
 
-  const { topicId, title, content, tags, isLocked, pin } = parsed.data;
+  const { topicId, title, content, tags, isLocked, isPinned, pin } = parsed.data;
 
   try {
     let encryptedPacked: string;
@@ -254,8 +254,8 @@ export async function createNote(
 
     const noteId = randomUUID();
     const result = await dbPool.query<NoteDbResult>(
-      `INSERT INTO notes (id, user_id, topic_id, title, content, tags, is_locked, encrypted_key)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO notes (id, user_id, topic_id, title, content, tags, is_locked, is_pinned, encrypted_key)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING ${NOTE_COLUMNS}`,
       [
         noteId,
@@ -265,6 +265,7 @@ export async function createNote(
         encryptedPacked,
         tags,
         isLocked,
+        isPinned,
         encryptedKey,
       ],
     );
@@ -350,6 +351,7 @@ export async function updateNote(
     content,
     tags,
     isLocked,
+    isPinned,
     pin: rawPin,
   } = parsedBody.data;
   const pin = typeof rawPin === "string" ? rawPin.trim() : undefined;
@@ -374,6 +376,7 @@ export async function updateNote(
     const newTitle = title ?? current.title;
     const newTags = tags ?? current.tags;
     const newIsLocked = isLocked ?? current.is_locked;
+    const newIsPinned = isPinned ?? current.is_pinned;
     if (newIsLocked !== current.is_locked) {
       if (!pin) {
         ApiResponse.error(
@@ -465,8 +468,8 @@ export async function updateNote(
 
     const result = await dbPool.query<NoteDbResult>(
       `UPDATE notes
-       SET topic_id = $1, title = $2, content = $3, tags = $4, is_locked = $5, encrypted_key = $6, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $7 AND user_id = $8
+       SET topic_id = $1, title = $2, content = $3, tags = $4, is_locked = $5, is_pinned = $6, encrypted_key = $7, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $8 AND user_id = $9
        RETURNING ${NOTE_COLUMNS}`,
       [
         newTopicId,
@@ -474,6 +477,7 @@ export async function updateNote(
         encryptedContent,
         newTags,
         newIsLocked,
+        newIsPinned,
         encryptedKey,
         id,
         userId,

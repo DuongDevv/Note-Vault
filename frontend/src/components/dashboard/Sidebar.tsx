@@ -192,6 +192,70 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-1">
+        {/* Section: Đã ghim — chỉ hiện khi có ít nhất 1 note được ghim */}
+        {pinnedNotes.length > 0 && (
+          <SidebarGroup className="py-1">
+            <div className="group/pinned-header hover:bg-sidebar-accent/50 flex h-7 items-center justify-between rounded-md px-2 transition-colors">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsPinnedCollapsed((prev) => !prev)}
+                className="text-muted-foreground/80 group-hover/pinned-header:text-sidebar-foreground h-7 w-full cursor-pointer justify-between p-0 text-left text-xs font-medium tracking-wider shadow-none select-none hover:bg-transparent"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Pin className="size-3 opacity-70" />
+                  <span>Đã ghim</span>
+                  <span className="text-muted-foreground/60 text-[11px] font-normal">
+                    ({pinnedNotes.length})
+                  </span>
+                </span>
+                <span className="opacity-0 transition-opacity group-hover/pinned-header:opacity-100">
+                  {isPinnedCollapsed ? (
+                    <ChevronRight className="text-muted-foreground size-3.5" />
+                  ) : (
+                    <ChevronDown className="text-muted-foreground size-3.5" />
+                  )}
+                </span>
+              </Button>
+            </div>
+            {!isPinnedCollapsed && (
+              <SidebarGroupContent className="mt-0.5">
+                <SidebarMenu className="gap-0.5">
+                  {pinnedNotes.map((note) => {
+                    const isActive = activeNoteId === note.id;
+                    return (
+                      <SidebarMenuItem key={`pinned-${note.id}`}>
+                        <SidebarMenuButton
+                          isActive={isActive}
+                          onClick={() => handleSelectNote(note.id)}
+                          className={`h-8 w-full cursor-pointer justify-start rounded-md px-2 pr-7 text-[13px] transition-colors ${
+                            isActive
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                              : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60"
+                          }`}
+                        >
+                          {note.isLocked ? (
+                            <Lock className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
+                          ) : (
+                            <FileText className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
+                          )}
+                          <span className="truncate text-[13px]">
+                            {note.title || "Trang chưa có tiêu đề"}
+                          </span>
+                        </SidebarMenuButton>
+                        <NoteActionMenu
+                          note={note}
+                          hasPrivatePin={currentUser?.hasPrivatePin}
+                        />
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            )}
+          </SidebarGroup>
+        )}
+
         {/* Section: Recents (Collapsible with Hover Arrow Behind) */}
         {recentNotes.length > 0 && (
           <SidebarGroup className="py-1">
