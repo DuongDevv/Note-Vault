@@ -131,8 +131,9 @@ export function AppSidebar({
         return dateB - dateA;
       });
   }, [notes]);
-  // Recents (Top 6 most recent notes)
+  
   const recentNotes = notes
+    .filter((n) => !n.isPinned) //lọc đã ghim và gần đây
     .toSorted((a, b) => {
       const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
       const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;

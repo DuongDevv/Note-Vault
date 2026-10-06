@@ -220,7 +220,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
 
   toggleNotePin: async (noteId: string) => {
-    // Optimistic update: toggle isPinned ngay lập tức trên UI
     set((state) => ({
       notes: state.notes.map((n) =>
         n.id === noteId ? { ...n, isPinned: !n.isPinned } : n,
@@ -228,12 +227,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     }));
     try {
       const updated = await apiToggleNotePin(noteId);
-      // Sync lại với giá trị thực từ server
       set((state) => ({
         notes: state.notes.map((n) => (n.id === noteId ? updated : n)),
       }));
     } catch (err) {
-      // Rollback optimistic update nếu thất bại
       set((state) => ({
         notes: state.notes.map((n) =>
           n.id === noteId ? { ...n, isPinned: !n.isPinned } : n,

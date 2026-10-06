@@ -118,7 +118,7 @@ export async function getNotes(
       params.push(`%${search.trim()}%`);
       sql += ` AND (title ILIKE $${params.length} OR tags::text ILIKE $${params.length})`;
     }
-    sql += ` ORDER BY created_at DESC`;
+    sql += ` ORDER BY is_pinned DESC, created_at DESC`; //note ghim luôn ở trên đầu
     const result = await dbPool.query<NoteDbResult>(sql, params);
     const formattedNotes = result.rows.map((row) =>
       formatNoteResponse(row, userId),

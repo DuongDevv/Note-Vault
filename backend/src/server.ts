@@ -44,7 +44,11 @@ async function ensureTablesExist() {
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
     `);
-    console.log("✅ [DATABASE] Schema tables verified and ready!");
+    await dbPool.query(`
+      ALTER TABLE notes ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN NOT NULL DEFAULT FALSE;
+      ALTER TABLE notes ADD COLUMN IF NOT EXISTS encrypted_key TEXT;
+    `);
+    console.log(" [DATABASE] Schema tables verified and ready!");
   } catch (err) {
     console.error("⚠️ [DATABASE] Table verification error:", err);
   }
