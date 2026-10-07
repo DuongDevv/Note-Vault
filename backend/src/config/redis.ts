@@ -6,6 +6,12 @@ const redisUrl =
   `redis://${config.REDIS.HOST}:${String(config.REDIS.PORT)}`;
 export const redisClient = createClient({
   url: redisUrl,
+  socket: {
+    reconnectStrategy: (retries) => {
+      if (retries > 3) return new Error("Redis connection exhausted");
+      return Math.min(retries * 500, 2000);
+    },
+  },
 });
 
 redisClient.on("error", (err) => {

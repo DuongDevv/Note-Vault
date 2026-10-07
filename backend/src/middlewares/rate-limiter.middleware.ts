@@ -16,6 +16,8 @@ export const rateLimiter = (maxRequests: number, windowInSeconds: number) => {
     const ip = req.ip ?? req.socket.remoteAddress ?? "unknown_ip";
     const key = `rate_limit:${req.path}:${ip}`;
 
+    if (!redisClient.isOpen) return next();
+
     try {
       const currentRequests = await redisClient.incr(key);
 

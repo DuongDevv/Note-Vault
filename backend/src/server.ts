@@ -7,14 +7,19 @@ const PORT = config.PORT;
 const startServer = async () => {
   try {
     // Kết nối Redis
-    await connectRedis();
+    try {
+      await connectRedis();
+    } catch (redisErr) {
+      console.warn(
+        "⚠️ [REDIS] Không thể kết nối Redis Cache, hệ thống chuyển sang chế độ Standalone:",
+        redisErr,
+      );
+    }
 
     // Khởi động HTTP Server
     app.listen(PORT, () => {
-      console.log(`================================================`);
       console.log(`Server Note-Vault Enterprise running on Port: ${PORT}`);
       console.log(`Healthcheck: http://localhost:${PORT}/health`);
-      console.log(`================================================`);
     });
   } catch (error) {
     console.error("Thất bại khi khởi động hệ thống:", error);
