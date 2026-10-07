@@ -16,13 +16,24 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
+
+      - name: Setup Bun Environment
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
 
       - name: Install Dependencies
-        run: npm install
+        run: bun install --frozen-lockfile
+
+      - name: Emit Prisma Contract
+        run: bun run contract:emit
 
       - name: Check TypeScript Compilation
-        run: npx tsc --noEmit
+        run: bun run check-types
+
+      - name: Lint Codebase
+        run: bun run lint
 
       - name: Build Docker Image Test
         run: docker build -t note-vault-backend:test .
