@@ -20,6 +20,39 @@
 
 NoteVault là hệ thống ghi chú bảo mật cá nhân theo phong cách Notion. Ứng dụng kết hợp trình soạn thảo TipTap (JSON AST) với mô hình **Enveloped Encryption (ADR 0003)**: mỗi ghi chú khóa bằng một DEK riêng biệt (AES-256-GCM), DEK được bọc bằng KEK phái sinh từ Master PIN (Argon2id), cho phép đổi Master PIN tức thì mà không cần giải mã lại nội dung ghi chú.
 
+### System Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    subgraph Client ["Client (React 19 / Vite 8)"]
+        Canvas["TipTap Document Canvas<br/>(Autosave JSON AST)"]
+        PINModal["Master PIN Dialog<br/>(Zero-Knowledge Auth)"]
+    end
+
+    subgraph Gateway ["Gateway & Security (Express 5)"]
+        RateLimiter["Redis Sliding-Window<br/>Rate Limiter"]
+        AuthGuard["JWT Authentication Guard"]
+    end
+
+    subgraph Crypto ["Domain Services & Cryptography"]
+        CryptoSvc["CryptoService (Argon2id + AES-256-GCM)<br/>DEK Encapsulation & KEK Derivation"]
+        NoteCtrl["Note & Topic Controllers"]
+    end
+
+    subgraph Storage ["Storage & Cache"]
+        Postgres[("PostgreSQL 18<br/>Encrypted Notes & Encapsulated DEKs")]
+        Redis[("Redis 8<br/>Brute-Force Guard & Cache")]
+    end
+
+    Canvas -->|"REST API / Bearer JWT"| RateLimiter
+    PINModal -->|"Verify / Rotate PIN"| RateLimiter
+    RateLimiter --> AuthGuard
+    RateLimiter -.-> Redis
+    AuthGuard --> NoteCtrl
+    NoteCtrl --> CryptoSvc
+    NoteCtrl --> Postgres
+```
+
 ---
 
 ## Services & Ports
