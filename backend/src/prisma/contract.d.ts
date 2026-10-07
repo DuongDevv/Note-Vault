@@ -250,6 +250,7 @@ export type FieldOutputTypes = {
       readonly content: CodecTypes['pg/text@1']['output'] | null;
       readonly tags: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
       readonly isLocked: CodecTypes['pg/bool@1']['output'];
+      readonly isPinned: CodecTypes['pg/bool@1']['output'];
       readonly encryptedKey: CodecTypes['pg/text@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -405,6 +406,7 @@ export namespace Models {
     content: CodecTypes['pg/text@1']['output'] | null;
     tags: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
     isLocked: CodecTypes['pg/bool@1']['output'];
+    isPinned: CodecTypes['pg/bool@1']['output'];
     encryptedKey: CodecTypes['pg/text@1']['output'] | null;
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];

@@ -6,6 +6,7 @@ export type NoteResponse = Omit<
   Models.public_Note,
   "createdAt" | "updatedAt" | "topic" | "user"
 > & {
+  isPinned: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -30,6 +31,7 @@ export const createNoteSchema = z.object({
   content: noteContentSchema.optional().default(""),
   tags: z.array(z.string()).optional().default([]),
   isLocked: z.boolean().optional().default(false),
+  isPinned: z.boolean().optional().default(false),
   pin: z.string().optional(), // Optional PIN when creating locked note directly
 });
 
@@ -41,6 +43,7 @@ export const updateNoteSchema = z.object({
   content: noteContentSchema.optional(),
   tags: z.array(z.string()).optional(),
   isLocked: z.boolean().optional(),
+  isPinned: z.boolean().optional(),
   pin: z.string().optional(),
 });
 

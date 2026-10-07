@@ -11,6 +11,7 @@ import {
   deleteTopic as apiDeleteTopic,
   updateNote as apiUpdateNote,
   toggleNoteLock as apiToggleNoteLock,
+  toggleNotePin as apiToggleNotePin,
 } from "@/services/api";
 interface WorkspaceState {
   notes: Note[];
@@ -40,6 +41,7 @@ interface WorkspaceState {
     currentNoteTopicId?: string | null,
   ) => Promise<string | undefined>;
   toggleNoteLock: (noteId: string, pin: string) => Promise<void>;
+  toggleNotePin: (noteId: string) => Promise<void>;
   unlockNoteWithPin: (noteId: string, pin: string) => Promise<boolean>;
   setSavingStatus: (isSaving: boolean) => void;
   setUnlockedNoteId: (noteId: string | null) => void;
@@ -215,6 +217,27 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       unlockedNoteId: noteId,
     }));
     return true;
+  },
+
+  toggleNotePin: async (noteId: string) => {
+    set((state) => ({
+      notes: state.notes.map((n) =>
+        n.id === noteId ? { ...n, isPinned: !n.isPinned } : n,
+      ),
+    }));
+    try {
+      const updated = await apiToggleNotePin(noteId);
+      set((state) => ({
+        notes: state.notes.map((n) => (n.id === noteId ? updated : n)),
+      }));
+    } catch (err) {
+      set((state) => ({
+        notes: state.notes.map((n) =>
+          n.id === noteId ? { ...n, isPinned: !n.isPinned } : n,
+        ),
+      }));
+      throw err;
+    }
   },
 
   setSavingStatus: (isSaving) => set({ isSaving }),

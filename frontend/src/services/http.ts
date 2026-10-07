@@ -10,7 +10,7 @@ export class HttpError extends Error {
   }
 }
 
-const API_BASE_URL = (import.meta.env["VITE_API_URL"] as string | undefined)?.replace(/\/+$/, "") ?? "";
+const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/+$/, "") ?? "";
 
 /**
  * Robust fetch wrapper that gracefully handles server offline,

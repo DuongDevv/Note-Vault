@@ -32,11 +32,11 @@ export const connectRedis = async (): Promise<void> => {
   // Nếu ở môi trường Cloud Production mà không truyền REDIS_URL hoặc REDIS_HOST riêng -> Tự bỏ qua Redis để ứng dụng chạy Standalone mượt mà
   const isCloudWithoutRedis =
     config.NODE_ENV === "production" &&
-    !process.env["REDIS_URL"] &&
-    (!process.env["REDIS_HOST"] ||
-      process.env["REDIS_HOST"] === "localhost" ||
-      process.env["REDIS_HOST"] === "127.0.0.1" ||
-      process.env["REDIS_HOST"] === "redis");
+    !process.env.REDIS_URL &&
+    (!process.env.REDIS_HOST ||
+      process.env.REDIS_HOST === "localhost" ||
+      process.env.REDIS_HOST === "127.0.0.1" ||
+      process.env.REDIS_HOST === "redis");
 
   if (isCloudWithoutRedis) {
     console.log(
