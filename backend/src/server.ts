@@ -23,13 +23,11 @@ async function ensureTablesExist() {
         id TEXT PRIMARY KEY,
         user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         name TEXT NOT NULL,
-        slug TEXT NOT NULL,
-        icon TEXT NOT NULL DEFAULT 'folder',
-        color TEXT NOT NULL DEFAULT '#000000',
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        CONSTRAINT topics_user_id_slug_key UNIQUE (user_id, slug)
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS topics_user_id_name_idx ON topics (user_id, name);
 
       CREATE TABLE IF NOT EXISTS notes (
         id TEXT PRIMARY KEY,
@@ -37,12 +35,19 @@ async function ensureTablesExist() {
         topic_id TEXT REFERENCES topics(id) ON DELETE SET NULL,
         title TEXT NOT NULL,
         content TEXT,
-        is_locked BOOLEAN NOT NULL DEFAULT FALSE,
-        is_pinned BOOLEAN NOT NULL DEFAULT FALSE,
         tags TEXT[] NOT NULL DEFAULT '{}',
+        is_locked BOOLEAN NOT NULL DEFAULT FALSE,
+        encrypted_key TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+
+      -- Auto-migration for existing databases:
+      ALTER TABLE notes ADD COLUMN IF NOT EXISTS encrypted_key TEXT;
+      ALTER TABLE notes DROP COLUMN IF EXISTS is_pinned;
+      ALTER TABLE topics DROP COLUMN IF EXISTS slug CASCADE;
+      ALTER TABLE topics DROP COLUMN IF EXISTS icon CASCADE;
+      ALTER TABLE topics DROP COLUMN IF EXISTS color CASCADE;
     `);
     await dbPool.query(`
       ALTER TABLE notes ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN NOT NULL DEFAULT FALSE;
