@@ -37,6 +37,7 @@ async function ensureTablesExist() {
         content TEXT,
         tags TEXT[] NOT NULL DEFAULT '{}',
         is_locked BOOLEAN NOT NULL DEFAULT FALSE,
+        is_pinned BOOLEAN NOT NULL DEFAULT FALSE,
         encrypted_key TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -44,16 +45,12 @@ async function ensureTablesExist() {
 
       -- Auto-migration for existing databases:
       ALTER TABLE notes ADD COLUMN IF NOT EXISTS encrypted_key TEXT;
-      ALTER TABLE notes DROP COLUMN IF EXISTS is_pinned;
+      ALTER TABLE notes ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN NOT NULL DEFAULT FALSE;
       ALTER TABLE topics DROP COLUMN IF EXISTS slug CASCADE;
       ALTER TABLE topics DROP COLUMN IF EXISTS icon CASCADE;
       ALTER TABLE topics DROP COLUMN IF EXISTS color CASCADE;
     `);
-    await dbPool.query(`
-      ALTER TABLE notes ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN NOT NULL DEFAULT FALSE;
-      ALTER TABLE notes ADD COLUMN IF NOT EXISTS encrypted_key TEXT;
-    `);
-    console.log(" [DATABASE] Schema tables verified and ready!");
+    console.log("✅ [DATABASE] Schema tables verified and ready!");
   } catch (err) {
     console.error("⚠️ [DATABASE] Table verification error:", err);
   }
