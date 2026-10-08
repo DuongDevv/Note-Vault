@@ -35,6 +35,7 @@ model Note {
   content   String?
   tags         String[] @default([])
   isLocked     Boolean  @default(false) @map("is_locked")
+  isPinned     Boolean  @default(false) @map("is_pinned")
   encryptedKey String?  @map("encrypted_key")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
@@ -43,6 +44,7 @@ model Note {
   topic Topic? @relation(fields: [topicId], references: [id], onDelete: SetNull)
 
   @@index([userId, topicId])
+  @@index([userId, isPinned, createdAt])
   @@index([userId, createdAt])
   @@map("notes")
 }

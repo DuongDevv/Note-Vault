@@ -141,6 +141,7 @@ export function WorkspaceLayout({
         />
 
         <PinSettingsDialog
+          key={isPinSettingsOpen ? "pin-settings-open" : "pin-settings-closed"}
           open={isPinSettingsOpen}
           onOpenChange={setPinSettingsOpen}
           hasExistingPin={Boolean(currentUser?.hasPrivatePin)}
@@ -178,6 +179,11 @@ export function WorkspaceLayout({
         />
 
         <LockPinDialog
+          key={
+            lockTargetNote
+              ? `${lockTargetNote.id}-${lockTargetNote.mode}`
+              : "lock-dialog-closed"
+          }
           open={Boolean(lockTargetNote)}
           onOpenChange={(open) => {
             if (!open) closeLockDialog();

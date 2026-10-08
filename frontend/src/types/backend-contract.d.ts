@@ -34,7 +34,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'c2a0714d56381471e73c81615bf6ab36bdaf92bb3029b15a7d96578aae1694fe'>;
+  StorageHashBase<'b4088ee91ce30a3e1f6755aec77accf6f259c1c2f31b4dc3fec64cb0fdadbbdc'>;
 export type ExecutionHash =
   ExecutionHashBase<'d38bbdd24aa362a5e2e0dc8a53099967e444ef68caaf9ed50028d7af92d66a90'>;
 export type ProfileHash =
@@ -250,6 +250,7 @@ export type FieldOutputTypes = {
       readonly content: CodecTypes['pg/text@1']['output'] | null;
       readonly tags: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
       readonly isLocked: CodecTypes['pg/bool@1']['output'];
+      readonly isPinned: CodecTypes['pg/bool@1']['output'];
       readonly encryptedKey: CodecTypes['pg/text@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -283,6 +284,7 @@ export type FieldInputTypes = {
       readonly content: CodecTypes['pg/text@1']['input'] | null;
       readonly tags: ReadonlyArray<CodecTypes['pg/text@1']['input']>;
       readonly isLocked: CodecTypes['pg/bool@1']['input'];
+      readonly isPinned: CodecTypes['pg/bool@1']['input'];
       readonly encryptedKey: CodecTypes['pg/text@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-temporal@1']['input'];
@@ -314,6 +316,7 @@ export type StorageColumnTypes = {
       readonly encrypted_key: CodecTypes['pg/text@1']['output'] | null;
       readonly id: CodecTypes['pg/text@1']['output'];
       readonly is_locked: CodecTypes['pg/bool@1']['output'];
+      readonly is_pinned: CodecTypes['pg/bool@1']['output'];
       readonly tags: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
       readonly title: CodecTypes['pg/text@1']['output'];
       readonly topic_id: CodecTypes['pg/text@1']['output'] | null;
@@ -347,6 +350,7 @@ export type StorageColumnInputTypes = {
       readonly encrypted_key: CodecTypes['pg/text@1']['input'] | null;
       readonly id: CodecTypes['pg/text@1']['input'];
       readonly is_locked: CodecTypes['pg/bool@1']['input'];
+      readonly is_pinned: CodecTypes['pg/bool@1']['input'];
       readonly tags: ReadonlyArray<CodecTypes['pg/text@1']['input']>;
       readonly title: CodecTypes['pg/text@1']['input'];
       readonly topic_id: CodecTypes['pg/text@1']['input'] | null;
@@ -405,6 +409,7 @@ export namespace Models {
     content: CodecTypes['pg/text@1']['output'] | null;
     tags: ReadonlyArray<CodecTypes['pg/text@1']['output']>;
     isLocked: CodecTypes['pg/bool@1']['output'];
+    isPinned: CodecTypes['pg/bool@1']['output'];
     encryptedKey: CodecTypes['pg/text@1']['output'] | null;
     createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
     updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
@@ -485,6 +490,15 @@ type ContractBase = Omit<
                     readonly value: DefaultLiteralValue<'pg/bool@1', false>;
                   };
                 };
+                readonly is_pinned: {
+                  readonly nativeType: 'bool';
+                  readonly codecId: 'pg/bool@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/bool@1', false>;
+                  };
+                };
                 readonly encrypted_key: {
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
@@ -510,6 +524,12 @@ type ContractBase = Omit<
                   readonly name: 'notes_user_id_topic_id_idx_46b1bc56';
                   readonly prefix: 'notes_user_id_topic_id_idx';
                   readonly columns: readonly ['user_id', 'topic_id'];
+                  readonly unique: false;
+                },
+                {
+                  readonly name: 'notes_user_id_is_pinned_created_at_idx_434db8a8';
+                  readonly prefix: 'notes_user_id_is_pinned_created_at_idx';
+                  readonly columns: readonly ['user_id', 'is_pinned', 'created_at'];
                   readonly unique: false;
                 },
                 {
@@ -720,6 +740,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
               };
+              readonly isPinned: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
+              };
               readonly encryptedKey: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
@@ -773,6 +797,7 @@ type ContractBase = Omit<
                 readonly content: { readonly column: 'content' };
                 readonly tags: { readonly column: 'tags' };
                 readonly isLocked: { readonly column: 'is_locked' };
+                readonly isPinned: { readonly column: 'is_pinned' };
                 readonly encryptedKey: { readonly column: 'encrypted_key' };
                 readonly createdAt: { readonly column: 'created_at' };
                 readonly updatedAt: { readonly column: 'updated_at' };

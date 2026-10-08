@@ -44,6 +44,8 @@ model Note {
   content   String?  @db.Text
   tags      String[] @default([])
   isLocked  Boolean  @default(false) @map("is_locked")
+  isPinned  Boolean  @default(false) @map("is_pinned")
+  encryptedKey String? @map("encrypted_key")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -51,6 +53,7 @@ model Note {
   topic Topic? @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
   @@index([userId, topicId], map: "idx_notes_user_topic")
+  @@index([userId, isPinned, createdAt], map: "idx_notes_user_pinned_created")
   @@index([userId, createdAt], map: "idx_notes_user_created")
   @@map("notes")
 }

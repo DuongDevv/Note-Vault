@@ -9,6 +9,8 @@ import {
   Clock,
   Check,
   ChevronDown,
+  Pin,
+  PinOff,
 } from "lucide-react";
 import type { Note, Topic } from "@/types/note";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
@@ -37,6 +39,7 @@ export function TopNav({
   const lastSavedAt = useWorkspaceStore((s) => s.lastSavedAt);
   const topics = useWorkspaceStore((s) => s.topics);
   const moveNoteToTopic = useWorkspaceStore((s) => s.moveNoteToTopic);
+  const toggleNotePin = useWorkspaceStore((s) => s.toggleNotePin);
   const requestLockToggle = useUIStore((s) => s.requestLockToggle);
   const setNoteToDelete = useUIStore((s) => s.setNoteToDelete);
   const formatLastEdited = () => {
@@ -161,6 +164,27 @@ export function TopNav({
             <Clock className="size-3 opacity-60" />
             {formatLastEdited()}
           </span>
+        )}
+        {/* Pin Toggle Button */}
+        {currentNote && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => void toggleNotePin(currentNote.id)}
+            title={
+              currentNote.isPinned
+                ? "Bỏ ghim trang này"
+                : "Ghim trang lên đầu danh sách"
+            }
+            className="text-muted-foreground hover:text-foreground size-7 rounded-md"
+          >
+            {currentNote.isPinned ? (
+              <Pin className="text-foreground size-3.5 fill-current" />
+            ) : (
+              <PinOff className="size-3.5 opacity-60" />
+            )}
+          </Button>
         )}
         {/* PIN Lock Toggle Button */}
         {currentNote && (

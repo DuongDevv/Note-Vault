@@ -16,6 +16,10 @@ router.put(
   "/notes/:id",
   (req, res) => void NoteController.updateNote(req, res),
 );
+router.post(
+  "/notes/:id/toggle-pin",
+  (req, res) => void NoteController.toggleNotePin(req, res),
+);
 router.delete(
   "/notes/:id",
   (req, res) => void NoteController.deleteNote(req, res),

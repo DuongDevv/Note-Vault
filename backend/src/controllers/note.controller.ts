@@ -21,13 +21,17 @@ interface NoteDbResult {
   content: string | null;
   tags: string[];
   is_locked: boolean;
+  is_pinned: boolean;
   encrypted_key: string | null;
   created_at: string;
   updated_at: string;
 }
 
 const NOTE_COLUMNS =
-  "id, user_id, topic_id, title, content, tags, is_locked, encrypted_key, created_at, updated_at";
+  "id, user_id, topic_id, title, content, tags, is_locked, is_pinned, encrypted_key, created_at, updated_at";
+
+const NOTE_METADATA_COLUMNS =
+  "id, user_id, topic_id, title, NULL AS content, tags, is_locked, is_pinned, encrypted_key, created_at, updated_at";
 /**
  * Decrypts note content safely or masks if locked without credentials.
  */
@@ -81,6 +85,7 @@ function formatNoteResponse(
           : JSON.stringify(decryptedContent),
     tags: row.tags,
     isLocked: row.is_locked,
+    isPinned: row.is_pinned,
     encryptedKey: row.encrypted_key,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -101,7 +106,7 @@ export async function getNotes(
 
   try {
     let sql = `
-      SELECT ${NOTE_COLUMNS}
+      SELECT ${NOTE_METADATA_COLUMNS}
       FROM notes
       WHERE user_id = $1
     `;
@@ -116,7 +121,7 @@ export async function getNotes(
       params.push(`%${search.trim()}%`);
       sql += ` AND (title ILIKE $${params.length} OR tags::text ILIKE $${params.length})`;
     }
-    sql += ` ORDER BY created_at DESC`;
+    sql += ` ORDER BY is_pinned DESC, created_at DESC`;
     const result = await dbPool.query<NoteDbResult>(sql, params);
     const formattedNotes = result.rows.map((row) =>
       formatNoteResponse(row, userId),
@@ -236,7 +241,8 @@ export async function createNote(
     return;
   }
 
-  const { topicId, title, content, tags, isLocked, pin } = parsed.data;
+  const { topicId, title, content, tags, isLocked, isPinned, pin } =
+    parsed.data;
 
   try {
     let encryptedPacked: string;
@@ -252,8 +258,8 @@ export async function createNote(
 
     const noteId = randomUUID();
     const result = await dbPool.query<NoteDbResult>(
-      `INSERT INTO notes (id, user_id, topic_id, title, content, tags, is_locked, encrypted_key)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO notes (id, user_id, topic_id, title, content, tags, is_locked, is_pinned, encrypted_key)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING ${NOTE_COLUMNS}`,
       [
         noteId,
@@ -263,6 +269,7 @@ export async function createNote(
         encryptedPacked,
         tags,
         isLocked,
+        isPinned,
         encryptedKey,
       ],
     );
@@ -348,12 +355,13 @@ export async function updateNote(
     content,
     tags,
     isLocked,
+    isPinned,
     pin: rawPin,
   } = parsedBody.data;
   const pin = typeof rawPin === "string" ? rawPin.trim() : undefined;
   try {
     const existing = await dbPool.query<NoteDbResult>(
-      "SELECT id, topic_id, title, content, tags, is_locked, encrypted_key FROM notes WHERE id = $1 AND user_id = $2",
+      "SELECT id, topic_id, title, content, tags, is_locked, is_pinned, encrypted_key FROM notes WHERE id = $1 AND user_id = $2",
       [id, userId],
     );
 
@@ -372,6 +380,7 @@ export async function updateNote(
     const newTitle = title ?? current.title;
     const newTags = tags ?? current.tags;
     const newIsLocked = isLocked ?? current.is_locked;
+    const newIsPinned = isPinned ?? current.is_pinned;
     if (newIsLocked !== current.is_locked) {
       if (!pin) {
         ApiResponse.error(
@@ -463,8 +472,8 @@ export async function updateNote(
 
     const result = await dbPool.query<NoteDbResult>(
       `UPDATE notes
-       SET topic_id = $1, title = $2, content = $3, tags = $4, is_locked = $5, encrypted_key = $6, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $7 AND user_id = $8
+       SET topic_id = $1, title = $2, content = $3, tags = $4, is_locked = $5, is_pinned = $6, encrypted_key = $7, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $8 AND user_id = $9
        RETURNING ${NOTE_COLUMNS}`,
       [
         newTopicId,
@@ -472,6 +481,7 @@ export async function updateNote(
         encryptedContent,
         newTags,
         newIsLocked,
+        newIsPinned,
         encryptedKey,
         id,
         userId,
@@ -490,10 +500,60 @@ export async function updateNote(
   }
 }
 
+// Toggle trạng thái ghim ghi chú (POST /api/v1/notes/:id/toggle-pin)
+export async function toggleNotePin(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<void> {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+
+  const parsedParam = noteIdParamSchema.safeParse(req.params);
+  if (!parsedParam.success) {
+    ApiResponse.error(res, 400, "BAD_REQUEST", "ID ghi chú không hợp lệ");
+    return;
+  }
+  const { id } = parsedParam.data;
+
+  try {
+    const result = await dbPool.query<NoteDbResult>(
+      `UPDATE notes
+       SET is_pinned = NOT is_pinned, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1 AND user_id = $2
+       RETURNING ${NOTE_COLUMNS}`,
+      [id, userId],
+    );
+
+    const updatedNote = result.rows[0];
+    if (!updatedNote) {
+      ApiResponse.error(
+        res,
+        404,
+        "NOT_FOUND",
+        "Không tìm thấy ghi chú hoặc không có quyền chỉnh sửa",
+      );
+      return;
+    }
+
+    const formatted = formatNoteResponse(updatedNote, userId);
+    ApiResponse.success(
+      res,
+      200,
+      updatedNote.is_pinned
+        ? "Ghim ghi chú thành công"
+        : "Bỏ ghim ghi chú thành công",
+      formatted,
+    );
+  } catch (error: unknown) {
+    ApiResponse.serverError(res, error);
+  }
+}
+
 export const NoteController = {
   getNotes,
   getNoteById,
   createNote,
   deleteNote,
   updateNote,
+  toggleNotePin,
 };
