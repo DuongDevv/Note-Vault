@@ -180,7 +180,7 @@ export function TopNav({
             className="text-muted-foreground hover:text-foreground size-7 rounded-md"
           >
             {currentNote.isPinned ? (
-              <Pin className="text-foreground size-3.5" />
+              <Pin className="text-foreground size-3.5 fill-current" />
             ) : (
               <PinOff className="size-3.5 opacity-60" />
             )}

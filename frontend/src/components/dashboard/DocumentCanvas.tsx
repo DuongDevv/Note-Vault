@@ -12,7 +12,7 @@ interface DocumentCanvasProps {
 
 export function DocumentCanvas({ note }: DocumentCanvasProps) {
   const navigate = useNavigate();
-  const isLoading = useWorkspaceStore((s) => s.isLoading);
+  const isNoteLoading = useWorkspaceStore((s) => s.isNoteLoading);
   const updateNoteContent = useWorkspaceStore((s) => s.updateNoteContent);
   const setSavingStatus = useWorkspaceStore((s) => s.setSavingStatus);
   const unlockNoteWithPin = useWorkspaceStore((s) => s.unlockNoteWithPin);
@@ -31,7 +31,8 @@ export function DocumentCanvas({ note }: DocumentCanvasProps) {
     }
   };
 
-  if (isLoading) {
+  // If note is loading full content
+  if (note && isNoteLoading && note.content === null && !note.isLocked) {
     return (
       <div className="flex h-[calc(100vh-8rem)] w-full items-center justify-center">
         <Loader2 className="text-muted-foreground size-6 animate-spin opacity-50" />

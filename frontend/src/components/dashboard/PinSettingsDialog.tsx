@@ -53,6 +53,7 @@ export function PinSettingsDialog({
   const currentPin = currentDigits.join("");
   const pin = pinDigits.join("");
   const confirmPin = confirmDigits.join("");
+
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);

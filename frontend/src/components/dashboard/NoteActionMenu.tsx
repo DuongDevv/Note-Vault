@@ -40,7 +40,6 @@ export function NoteActionMenu({ note, hasPrivatePin }: NoteActionMenuProps) {
   const topics = useWorkspaceStore((s) => s.topics);
   const moveNoteToTopic = useWorkspaceStore((s) => s.moveNoteToTopic);
   const toggleNotePin = useWorkspaceStore((s) => s.toggleNotePin);
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger

@@ -131,9 +131,10 @@ export function AppSidebar({
         return dateB - dateA;
       });
   }, [notes]);
-  
+
+  // Recents (Top 6 most recent notes, excluding pinned notes)
   const recentNotes = notes
-    .filter((n) => !n.isPinned) //lọc đã ghim và gần đây
+    .filter((n) => !n.isPinned)
     .toSorted((a, b) => {
       const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
       const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
@@ -193,7 +194,7 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-1">
-        {/* Section: Đã ghim — chỉ hiện khi có ít nhất 1 note được ghim */}
+        {/* Section: Pinned Notes */}
         {pinnedNotes.length > 0 && (
           <SidebarGroup className="py-1">
             <div className="group/pinned-header hover:bg-sidebar-accent/50 flex h-7 items-center justify-between rounded-md px-2 transition-colors">

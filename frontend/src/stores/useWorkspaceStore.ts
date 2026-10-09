@@ -13,14 +13,15 @@ import {
   toggleNoteLock as apiToggleNoteLock,
   toggleNotePin as apiToggleNotePin,
 } from "@/services/api";
+
 interface WorkspaceState {
   notes: Note[];
   topics: Topic[];
   isLoading: boolean;
   isSaving: boolean;
+  isNoteLoading: boolean;
   lastSavedAt: Date | undefined;
   unlockedNoteId: string | null;
-
   // Actions
   fetchWorkspaceData: () => Promise<void>;
   ensureNoteLoaded: (noteId: string) => Promise<Note | undefined>;
@@ -52,6 +53,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   topics: [],
   isLoading: true,
   isSaving: false,
+  isNoteLoading: false,
   lastSavedAt: undefined,
   unlockedNoteId: null,
 
@@ -76,17 +78,27 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   ensureNoteLoaded: async (noteId: string) => {
     const { notes } = get();
     const existing = notes.find((n) => n.id === noteId);
-    if (existing) return existing;
+    // Nếu note đã có content (không phải undefined và nếu có dữ liệu đã được fetch)
+    if (existing?.content !== undefined && existing.content !== null) {
+      return existing;
+    }
 
+    set({ isNoteLoading: true });
     try {
       const single = await fetchNoteById(noteId);
       set((state) => ({
-        notes: [single, ...state.notes.filter((n) => n.id !== single.id)],
+        notes: state.notes.some((n) => n.id === single.id)
+          ? state.notes.map((n) =>
+              n.id === single.id ? { ...n, ...single } : n,
+            )
+          : [single, ...state.notes],
+        isNoteLoading: false,
       }));
       return single;
     } catch (err) {
       console.error("Failed to fetch note by id:", err);
-      return undefined;
+      set({ isNoteLoading: false });
+      return existing;
     }
   },
 
@@ -220,6 +232,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
 
   toggleNotePin: async (noteId: string) => {
+    // Optimistic update
     set((state) => ({
       notes: state.notes.map((n) =>
         n.id === noteId ? { ...n, isPinned: !n.isPinned } : n,
@@ -231,6 +244,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         notes: state.notes.map((n) => (n.id === noteId ? updated : n)),
       }));
     } catch (err) {
+      // Rollback on error
       set((state) => ({
         notes: state.notes.map((n) =>
           n.id === noteId ? { ...n, isPinned: !n.isPinned } : n,

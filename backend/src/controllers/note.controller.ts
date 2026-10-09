@@ -29,6 +29,9 @@ interface NoteDbResult {
 
 const NOTE_COLUMNS =
   "id, user_id, topic_id, title, content, tags, is_locked, is_pinned, encrypted_key, created_at, updated_at";
+
+const NOTE_METADATA_COLUMNS =
+  "id, user_id, topic_id, title, NULL AS content, tags, is_locked, is_pinned, encrypted_key, created_at, updated_at";
 /**
  * Decrypts note content safely or masks if locked without credentials.
  */
@@ -103,7 +106,7 @@ export async function getNotes(
 
   try {
     let sql = `
-      SELECT ${NOTE_COLUMNS}
+      SELECT ${NOTE_METADATA_COLUMNS}
       FROM notes
       WHERE user_id = $1
     `;
@@ -118,7 +121,7 @@ export async function getNotes(
       params.push(`%${search.trim()}%`);
       sql += ` AND (title ILIKE $${params.length} OR tags::text ILIKE $${params.length})`;
     }
-    sql += ` ORDER BY is_pinned DESC, created_at DESC`; //note ghim luôn ở trên đầu
+    sql += ` ORDER BY is_pinned DESC, created_at DESC`;
     const result = await dbPool.query<NoteDbResult>(sql, params);
     const formattedNotes = result.rows.map((row) =>
       formatNoteResponse(row, userId),
@@ -238,7 +241,8 @@ export async function createNote(
     return;
   }
 
-  const { topicId, title, content, tags, isLocked, isPinned, pin } = parsed.data;
+  const { topicId, title, content, tags, isLocked, isPinned, pin } =
+    parsed.data;
 
   try {
     let encryptedPacked: string;
@@ -496,7 +500,7 @@ export async function updateNote(
   }
 }
 
-// Toggle trạng thái Ghim ghi chú (POST /api/v1/notes/:id/toggle-pin)
+// Toggle trạng thái ghim ghi chú (POST /api/v1/notes/:id/toggle-pin)
 export async function toggleNotePin(
   req: AuthenticatedRequest,
   res: Response,
@@ -535,7 +539,9 @@ export async function toggleNotePin(
     ApiResponse.success(
       res,
       200,
-      updatedNote.is_pinned ? "Ghim ghi chú thành công" : "Bỏ ghim ghi chú thành công",
+      updatedNote.is_pinned
+        ? "Ghim ghi chú thành công"
+        : "Bỏ ghim ghi chú thành công",
       formatted,
     );
   } catch (error: unknown) {
