@@ -38,17 +38,17 @@
 ## Quickstart
 
 ```bash
-# 1. Cấu hình môi trường
+# Cấu hình môi trường
 cp .env.example .env
 
-# 2. Khởi chạy DB & Redis
+# Khởi chạy DB & Redis
 docker compose up -d
 
-# 3. Đồng bộ contract & migrate
+# Đồng bộ contract & migrate
 bun run contract:emit
 bun run db:migrate
 
-# 4. Chạy development server
+# Chạy development server
 bun run dev
 ```
 

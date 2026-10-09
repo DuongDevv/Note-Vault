@@ -15,23 +15,23 @@
 
 ## Tính năng giao diện chính
 
-1. **Notion-Style Canvas**: Trình soạn thảo văn bản TipTap tối giản căn giữa (`max-w-3xl`), hỗ trợ code highlighting, định dạng và autosave dưới dạng JSON AST.
+1. **Notion-Style Canvas**: Trình soạn thảo văn bản TipTap tối giản, hỗ trợ code highlighting, định dạng và autosave dưới dạng JSON AST.
 2. **Master PIN Modal**: Giao diện khóa bảo mật, hiển thị modal nhập mã PIN khi xem ghi chú nhạy cảm, hỗ trợ đổi mã PIN trực tiếp.
 3. **Phân loại & Tagging**: Quản lý chủ đề (Topics), gắn thẻ (Tags) với bảng màu trực quan và tìm kiếm nhanh.
-4. **Theme Tự Động**: Hỗ trợ Dark Mode / Light Mode mượt mà dựa trên class `.dark` của Tailwind CSS v4.
+4. **Theme Tự Động**: Hỗ trợ Dark Mode / Light Mode.
 
 ---
 
 ## Quickstart
 
 ```bash
-# 1. Cài đặt dependencies
+# Cài đặt dependencies
 bun install
 
-# 2. Đồng bộ types từ backend
+# Đồng bộ types từ backend
 bun run --cwd .. sync:types
 
-# 3. Khởi động Vite dev server
+# Khởi động Vite dev server
 bun run dev
 ```
 
