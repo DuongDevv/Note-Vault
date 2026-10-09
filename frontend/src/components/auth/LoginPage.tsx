@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { z } from "zod";
 import { User, KeyRound, ArrowRight } from "lucide-react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
+import { ModalAlertBanner } from "@/components/common/ModalLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,11 +73,7 @@ export function LoginPage({ onAuthSuccess }: LoginPageProps) {
         onSubmit={(e) => void handleLogin(e)}
         className="flex flex-col gap-4"
       >
-        {error && (
-          <div className="bg-destructive/10 border-destructive/30 text-destructive rounded-lg border p-3 text-xs font-medium">
-            {error}
-          </div>
-        )}
+        <ModalAlertBanner message={error} />
 
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="login-username">Tên đăng nhập</Label>
