@@ -1,6 +1,11 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { useShallow } from "zustand/react/shallow";
+import {
+  SidebarProvider,
+  SidebarInset,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/dashboard/Sidebar";
 import { TopNav } from "@/components/dashboard/TopNav";
 import { DocumentCanvas } from "@/components/dashboard/DocumentCanvas";
@@ -12,6 +17,7 @@ import { LockPinDialog } from "@/components/dashboard/LockPinDialog";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useUIStore } from "@/stores/useUIStore";
 import { fetchUserProfile, type AuthUser } from "@/services/auth";
+import type { Note, Topic } from "@/types/note";
 
 interface WorkspaceLayoutProps {
   currentUser: AuthUser | null;
@@ -32,26 +38,15 @@ export function WorkspaceLayout({
   const location = useLocation();
 
   // Workspace Store
-  const notes = useWorkspaceStore((s) => s.notes);
-  const topics = useWorkspaceStore((s) => s.topics);
-  const fetchWorkspaceData = useWorkspaceStore((s) => s.fetchWorkspaceData);
-  const ensureNoteLoaded = useWorkspaceStore((s) => s.ensureNoteLoaded);
-  const createTopic = useWorkspaceStore((s) => s.createTopic);
-  const deleteNote = useWorkspaceStore((s) => s.deleteNote);
-  const toggleNoteLock = useWorkspaceStore((s) => s.toggleNoteLock);
-
-  // UI Store
-  const isSearchOpen = useUIStore((s) => s.isSearchOpen);
-  const searchInitialQuery = useUIStore((s) => s.searchInitialQuery);
-  const isNewTopicOpen = useUIStore((s) => s.isNewTopicOpen);
-  const isPinSettingsOpen = useUIStore((s) => s.isPinSettingsOpen);
-  const lockTargetNote = useUIStore((s) => s.lockTargetNote);
-  const noteToDelete = useUIStore((s) => s.noteToDelete);
-  const setSearchOpen = useUIStore((s) => s.setSearchOpen);
-  const setNewTopicOpen = useUIStore((s) => s.setNewTopicOpen);
-  const setPinSettingsOpen = useUIStore((s) => s.setPinSettingsOpen);
-  const closeDeleteDialog = useUIStore((s) => s.closeDeleteDialog);
-  const closeLockDialog = useUIStore((s) => s.closeLockDialog);
+  const { notes, topics, fetchWorkspaceData, ensureNoteLoaded } =
+    useWorkspaceStore(
+      useShallow((s) => ({
+        notes: s.notes,
+        topics: s.topics,
+        fetchWorkspaceData: s.fetchWorkspaceData,
+        ensureNoteLoaded: s.ensureNoteLoaded,
+      })),
+    );
   // Derive Active Topic & Note from current URL
   const activeTopicId = useMemo(() => {
     const match = /^\/topics\/([^/]+)/.exec(location.pathname);
@@ -100,103 +95,188 @@ export function WorkspaceLayout({
       defaultOpen={true}
       className="h-svh max-h-svh overflow-hidden"
     >
-      <div className="bg-background text-foreground flex h-svh max-h-svh w-full overflow-hidden antialiased">
-        <AppSidebar
-          currentUser={currentUser}
-          onLogout={onLogout}
-          isDark={isDark}
-          onToggleTheme={onToggleTheme}
-        />
-
-        <SidebarInset className="bg-background flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-          <TopNav
-            currentNote={currentNote}
-            currentTopic={currentTopic}
-            hasPrivatePin={currentUser?.hasPrivatePin}
-          />
-
-          <main className="flex min-h-0 flex-1 overflow-y-auto">
-            <DocumentCanvas note={currentNote} />
-          </main>
-        </SidebarInset>
-
-        {/* Global Dialogs & Modals */}
-        <SearchModal
-          open={isSearchOpen}
-          onOpenChange={setSearchOpen}
-          initialQuery={searchInitialQuery}
-          notes={notes}
-          topics={topics}
-          onSelectNote={(id) => void navigate(`/notes/${id}`)}
-          onSelectTopic={(id) => void navigate(id ? `/topics/${id}` : "/")}
-        />
-
-        <NewTopicDialog
-          open={isNewTopicOpen}
-          onOpenChange={setNewTopicOpen}
-          onAddTopic={async (name: string) => {
-            await createTopic(name);
-            setNewTopicOpen(false);
-          }}
-        />
-
-        <PinSettingsDialog
-          key={isPinSettingsOpen ? "pin-settings-open" : "pin-settings-closed"}
-          open={isPinSettingsOpen}
-          onOpenChange={setPinSettingsOpen}
-          hasExistingPin={Boolean(currentUser?.hasPrivatePin)}
-          onPinUpdated={async () => {
-            try {
-              const profile = await fetchUserProfile();
-              onUserUpdate(profile);
-            } catch {
-              if (currentUser) {
-                onUserUpdate({ ...currentUser, hasPrivatePin: true });
-              }
-            }
-            // Khóa lại toàn bộ phiên giải mã và làm mới dữ liệu
-            useWorkspaceStore.getState().setUnlockedNoteId(null);
-            void useWorkspaceStore.getState().fetchWorkspaceData();
-          }}
-        />
-
-        <ConfirmDeleteDialog
-          open={Boolean(noteToDelete)}
-          onOpenChange={(open) => {
-            if (!open) closeDeleteDialog();
-          }}
-          noteTitle={noteToDelete?.title ?? ""}
-          onConfirm={async () => {
-            if (!noteToDelete) return;
-            const remainingId = await deleteNote(noteToDelete.id);
-            closeDeleteDialog();
-            if (remainingId) {
-              void navigate(`/notes/${remainingId}`);
-            } else {
-              void navigate("/");
-            }
-          }}
-        />
-
-        <LockPinDialog
-          key={
-            lockTargetNote
-              ? `${lockTargetNote.id}-${lockTargetNote.mode}`
-              : "lock-dialog-closed"
-          }
-          open={Boolean(lockTargetNote)}
-          onOpenChange={(open) => {
-            if (!open) closeLockDialog();
-          }}
-          mode={lockTargetNote?.mode ?? "lock"}
-          noteTitle={lockTargetNote?.title}
-          onConfirm={async (pin) => {
-            if (!lockTargetNote) return;
-            await toggleNoteLock(lockTargetNote.id, pin);
-            closeLockDialog();
-          }}
-        />
-      </div>
+      <WorkspaceLayoutContent
+        currentUser={currentUser}
+        onLogout={onLogout}
+        isDark={isDark}
+        onToggleTheme={onToggleTheme}
+        onUserUpdate={onUserUpdate}
+        currentNote={currentNote}
+        currentTopic={currentTopic}
+      />
     </SidebarProvider>
+  );
+}
+
+interface WorkspaceLayoutContentProps extends WorkspaceLayoutProps {
+  currentNote: Note | undefined;
+  currentTopic: Topic | undefined;
+}
+
+function WorkspaceLayoutContent({
+  currentUser,
+  onLogout,
+  isDark,
+  onToggleTheme,
+  onUserUpdate,
+  currentNote,
+  currentTopic,
+}: WorkspaceLayoutContentProps) {
+  const navigate = useNavigate();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  // Workspace Store (reactive state & actions via useShallow)
+  const { notes, topics, createTopic, deleteNote, toggleNoteLock } =
+    useWorkspaceStore(
+      useShallow((s) => ({
+        notes: s.notes,
+        topics: s.topics,
+        createTopic: s.createTopic,
+        deleteNote: s.deleteNote,
+        toggleNoteLock: s.toggleNoteLock,
+      })),
+    );
+
+  // UI Store (reactive state & actions via useShallow)
+  const {
+    isSearchOpen,
+    searchInitialQuery,
+    isNewTopicOpen,
+    isPinSettingsOpen,
+    lockTargetNote,
+    noteToDelete,
+    setSearchOpen,
+    setNewTopicOpen,
+    setPinSettingsOpen,
+    closeDeleteDialog,
+    closeLockDialog,
+  } = useUIStore(
+    useShallow((s) => ({
+      isSearchOpen: s.isSearchOpen,
+      searchInitialQuery: s.searchInitialQuery,
+      isNewTopicOpen: s.isNewTopicOpen,
+      isPinSettingsOpen: s.isPinSettingsOpen,
+      lockTargetNote: s.lockTargetNote,
+      noteToDelete: s.noteToDelete,
+      setSearchOpen: s.setSearchOpen,
+      setNewTopicOpen: s.setNewTopicOpen,
+      setPinSettingsOpen: s.setPinSettingsOpen,
+      closeDeleteDialog: s.closeDeleteDialog,
+      closeLockDialog: s.closeLockDialog,
+    })),
+  );
+
+  const handleSelectNoteFromSearch = (id: string) => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+    void navigate(`/notes/${id}`);
+  };
+
+  const handleSelectTopicFromSearch = (id?: string) => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+    void navigate(id ? `/topics/${id}` : "/");
+  };
+
+  return (
+    <div className="bg-background text-foreground flex h-svh max-h-svh w-full overflow-hidden antialiased">
+      <AppSidebar
+        currentUser={currentUser}
+        onLogout={onLogout}
+        isDark={isDark}
+        onToggleTheme={onToggleTheme}
+      />
+
+      <SidebarInset className="bg-background flex h-full min-w-0 flex-1 flex-col overflow-hidden">
+        <TopNav
+          currentNote={currentNote}
+          currentTopic={currentTopic}
+          hasPrivatePin={currentUser?.hasPrivatePin}
+        />
+
+        <main className="flex min-h-0 flex-1 overflow-y-auto">
+          <DocumentCanvas note={currentNote} />
+        </main>
+      </SidebarInset>
+
+      {/* Global Dialogs & Modals */}
+      <SearchModal
+        open={isSearchOpen}
+        onOpenChange={setSearchOpen}
+        initialQuery={searchInitialQuery}
+        notes={notes}
+        topics={topics}
+        onSelectNote={handleSelectNoteFromSearch}
+        onSelectTopic={handleSelectTopicFromSearch}
+      />
+
+      <NewTopicDialog
+        open={isNewTopicOpen}
+        onOpenChange={setNewTopicOpen}
+        onAddTopic={async (name: string) => {
+          await createTopic(name);
+          setNewTopicOpen(false);
+        }}
+      />
+
+      <PinSettingsDialog
+        key={isPinSettingsOpen ? "pin-settings-open" : "pin-settings-closed"}
+        open={isPinSettingsOpen}
+        onOpenChange={setPinSettingsOpen}
+        hasExistingPin={Boolean(currentUser?.hasPrivatePin)}
+        onPinUpdated={async () => {
+          try {
+            const profile = await fetchUserProfile();
+            onUserUpdate(profile);
+          } catch {
+            if (currentUser) {
+              onUserUpdate({ ...currentUser, hasPrivatePin: true });
+            }
+          }
+          // Khóa lại toàn bộ phiên giải mã và làm mới dữ liệu
+          useWorkspaceStore.getState().setUnlockedNoteId(null);
+          void useWorkspaceStore.getState().fetchWorkspaceData();
+        }}
+      />
+
+      <ConfirmDeleteDialog
+        open={Boolean(noteToDelete)}
+        onOpenChange={(open) => {
+          if (!open) closeDeleteDialog();
+        }}
+        noteTitle={noteToDelete?.title ?? ""}
+        onConfirm={async () => {
+          if (!noteToDelete) return;
+          const remainingId = await deleteNote(noteToDelete.id);
+          closeDeleteDialog();
+          if (remainingId) {
+            void navigate(`/notes/${remainingId}`);
+          } else {
+            void navigate("/");
+          }
+        }}
+      />
+
+      <LockPinDialog
+        key={
+          lockTargetNote
+            ? `${lockTargetNote.id}-${lockTargetNote.mode}`
+            : "lock-dialog-closed"
+        }
+        open={Boolean(lockTargetNote)}
+        onOpenChange={(open) => {
+          if (!open) closeLockDialog();
+        }}
+        mode={lockTargetNote?.mode ?? "lock"}
+        noteTitle={lockTargetNote?.title}
+        onConfirm={async (pin) => {
+          if (!lockTargetNote) return;
+          await toggleNoteLock(lockTargetNote.id, pin);
+          closeLockDialog();
+        }}
+      />
+    </div>
   );
 }

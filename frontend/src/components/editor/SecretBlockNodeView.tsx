@@ -302,7 +302,7 @@ export function SecretBlockNodeView({
           </div>
         ) : (
           <div className="p-3.5">
-            <div className="border-border/60 bg-muted/20 flex flex-wrap items-start justify-between gap-2 rounded-lg border p-2.5">
+            <div className="border-border/60 bg-muted/20 flex flex-col gap-2 rounded-lg border p-2.5 sm:flex-row sm:items-start sm:justify-between">
               {/* Secret Value or Masked State */}
               <div className="flex min-w-0 flex-1 items-start gap-2 pt-0.5">
                 <span className="text-muted-foreground/60 mt-0.5 shrink-0 select-none">
@@ -311,7 +311,7 @@ export function SecretBlockNodeView({
 
                 {isMasked ? (
                   <div className="text-muted-foreground font-mono text-xs tracking-widest select-none">
-                    ••••••••••••••••••••••••••••••••••••••••
+                    ••••••••••••••••
                   </div>
                 ) : (
                   <div className="text-foreground selection:text-foreground cursor-text font-mono text-[12px] leading-relaxed break-all whitespace-pre-wrap select-text selection:bg-blue-500/35">
@@ -321,7 +321,7 @@ export function SecretBlockNodeView({
               </div>
 
               {/* Action Controls */}
-              <div className="flex shrink-0 items-center gap-1.5">
+              <div className="flex shrink-0 items-center justify-end gap-1.5 self-end sm:self-auto">
                 {/* Toggle Eye */}
                 <Button
                   type="button"

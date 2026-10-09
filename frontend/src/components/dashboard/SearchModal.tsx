@@ -75,7 +75,7 @@ export function SearchModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="border-border/80 max-w-lg gap-0 overflow-hidden p-0 shadow-lg">
+      <DialogContent className="border-border/80 gap-0 overflow-hidden p-0 shadow-lg sm:max-w-lg">
         <DialogHeader className="sr-only">
           <DialogTitle>Tìm kiếm nhanh</DialogTitle>
         </DialogHeader>
