@@ -21,55 +21,54 @@
 
 ## Overview
 
-NoteVault là hệ thống ghi chú bảo mật cá nhân theo phong cách Notion. Ứng dụng kết hợp trình soạn thảo TipTap (JSON AST) với mô hình Enveloped Encryption: mỗi ghi chú khóa bằng một DEK riêng biệt (AES-256-GCM), DEK được bọc bằng KEK phái sinh từ Master PIN (Argon2id), cho phép đổi Master PIN tức thì mà không cần giải mã lại nội dung ghi chú.
+NoteVault là hệ thống ghi chú bảo mật cá nhân theo phong cách Notion. Ứng dụng kết hợp trình soạn thảo TipTap với mô hình Enveloped Encryption: mỗi ghi chú khóa bằng một DEK riêng biệt (AES-256-GCM), DEK được bọc bằng KEK phái sinh từ Master PIN (Argon2id), cho phép đổi Master PIN tức thì mà không cần giải mã lại nội dung ghi chú.
 
 ---
 
 ## Thành viên nhóm thực hiện
 
-| STT | Họ và tên              |     MSSV     | Vai trò / Phụ trách                          |
-| :-: | :--------------------- | :----------: | :------------------------------------------- |
-|  1  | Đặng Duy Lam           | `0306241125` | Trưởng nhóm, Fullstack & Kiến trúc hệ thống  |
-|  2  | Trần Văn Ngọc          | `0306241131` | Frontend UI/UX, TipTap Canvas & State        |
-|  3  | Nguyễn Quốc Đương      | `0306241102` | Backend API, Enveloped Encryption & Database |
-|  4  | Nguyễn Trần Ngọc Duyên | `0306241187` | Testing, Quality Gates & Tài liệu dự án      |
+| STT | Họ và tên              |     MSSV     | Vai trò                                                                                                                     |
+| :-: | :--------------------- | :----------: | :-------------------------------------------------------------------------------------------------------------------------- |
+|  1  | Đặng Duy Lam           | `0306241125` | Trưởng nhóm, Kiến trúc Frontend & Quản lý State<br>• Luồng dữ liệu Zustand Stores<br>• Autosave Debounce pipeline           |
+|  2  | Trần Văn Ngọc          | `0306241131` | Phát triển Trình soạn thảo & Custom Blocks<br>• Tích hợp TipTap, xây dựng Menu gõ lệnh Slash Command & Floating Bubble Menu |
+|  3  | Nguyễn Quốc Đương      | `0306241102` | Giao diện Bảo mật & Xử lý mã PIN<br>• Luồng mở khoá, bảo mật ghi chú                                                        |
+|  4  | Nguyễn Trần Ngọc Duyên | `0306241187` | Design System, Điều hướng & Tìm kiếm<br>• Cây thư mục Sidebar, Gắn thẻ & Tìm kiếm nhanh                                     |
 
 ---
 
-### System Architecture & Data Flow
+## Sơ đồ Kiến trúc Giao diện
 
 ```mermaid
-flowchart TD
-    subgraph Client ["Client (React 19 / Vite 8)"]
-        Canvas["TipTap Document Canvas"]
-        PINModal["Master PIN Dialog"]
-    end
+graph TD
+    Layout[Workspace Layout]
+    Sidebar[Sidebar: Cây chủ đề & Ghi chú gần đây]
+    Canvas[Document Canvas: TipTap Editor & Custom Blocks]
+    Modals[Hộp thoại: Tìm kiếm ⌘K & Master PIN]
+    State[(Zustand State: Workspace & UI)]
 
-    subgraph Gateway ["Gateway & Security (Express 5)"]
-        RateLimiter["Redis Sliding-Window<br/>Rate Limiter"]
-        AuthGuard["JWT Authentication Guard"]
-    end
+    Layout --> Sidebar
+    Layout --> Canvas
+    Layout --> Modals
 
-    subgraph Crypto ["Domain Services & Cryptography"]
-        CryptoSvc["CryptoService (Argon2id + AES-256-GCM)<br/>DEK Encapsulation & KEK Derivation"]
-        NoteCtrl["Note & Topic Controllers"]
-    end
-
-    subgraph Storage ["Storage & Cache"]
-        Postgres[("PostgreSQL 18<br/>Encrypted Notes & Encapsulated DEKs")]
-        Redis[("Redis 8<br/>Brute-Force Guard & Cache")]
-    end
-
-    Canvas -->|"REST API / Bearer JWT"| RateLimiter
-    PINModal -->|"Verify / Rotate PIN"| RateLimiter
-    RateLimiter --> AuthGuard
-    RateLimiter -.-> Redis
-    AuthGuard --> NoteCtrl
-    NoteCtrl --> CryptoSvc
-    NoteCtrl --> Postgres
+    Sidebar <--> State
+    Canvas <--> State
+    Modals <--> State
 ```
 
 ---
+
+## Sơ đồ Luồng Dữ liệu
+
+```mermaid
+flowchart LR
+    User([Người dùng]) -->|Soạn thảo| Editor[TipTap Editor]
+    Editor -->|Debounce 800ms| AST[JSON AST]
+    AST -->|Optimistic Update| State[(Zustand Store)]
+    State -->|REST API| Backend[Express Backend]
+    Backend -->|Mã hóa AES-256| DB[(PostgreSQL)]
+
+    User -.->|Khóa PIN| Purge[In-Memory Purge] -.-> State
+```
 
 ## Services & Ports
 
