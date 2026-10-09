@@ -26,9 +26,6 @@ jobs:
       - name: Install Dependencies
         run: bun install --frozen-lockfile
 
-      - name: Emit Prisma Contract
-        run: bun run contract:emit
-
       - name: Check TypeScript Compilation
         run: bun run check-types
 
