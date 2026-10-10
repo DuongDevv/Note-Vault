@@ -152,5 +152,5 @@ bun run lint         # Lint code bằng Oxlint
 .
 ├── backend/          # REST API Server (Express 5, Prisma 8, Argon2id)
 ├── frontend/         # Web Client (React 19, TipTap, Tailwind v4, Zustand)
-└── docs/             # ADRs (0001 - 0003) & 11 Operational Standards
+└── docs/             # ADRs, Dataflow, Figma
 ```
