@@ -1,36 +1,39 @@
-# 1. Default Encryption at Rest, Structured JSON-AST Content, and Prisma Contract Architecture
+# 1. Mã hóa mặc định khi lưu trữ (Encryption at Rest), Cấu trúc nội dung JSON-AST và Kiến trúc Prisma Contract
 
+Status: Accepted
 Date: 2026-09-25
-
-## Status
-
-Accepted
+Deciders: ngxc
 
 ## Context
 
-NoteVault is designed as a security-first personal knowledge base and encrypted vault. Prior implementations had several structural deficiencies:
+NoteVault được thiết kế với mục tiêu bảo mật tối đa cho cơ sở tri thức cá nhân và kho lưu trữ ghi chú. Các thiết kế cũ có một số nhược điểm nghiêm trọng:
 
-1. **Partial / Optional Encryption**: Encryption was only applied to a separate `private_notes` table, leaving standard notes unencrypted in plaintext in the database.
-2. **Raw HTML Storage**: Content was stored as raw HTML strings, which creates XSS vulnerability risks, breaks structured AST traversal, and prevents reliable CRDT/real-time collaboration.
-3. **Dual Schema Sources**: The database definition was split between raw SQL DDL in `init-db.ts` and Prisma schema definitions, causing drift and duplicate manual TypeScript type interfaces (`NoteDbRow`, `TopicDbRow`).
+1. **Mã hóa không đồng bộ**: Chỉ mã hóa riêng bảng `private_notes`, khiến các ghi chú thông thường bị lưu trữ dưới dạng văn bản thô (plaintext) trong database.
+2. **Lưu trữ HTML thô**: Dữ liệu HTML thô làm tăng rủi ro tấn công XSS, khó duyệt cây cú pháp AST và cản trở khả năng mở rộng.
+3. **Phân mảnh định nghĩa Database Schema**: Vừa dùng migration DDL thô vừa dùng Prisma schema, dẫn đến lệch pha schema và phải định nghĩa thủ công các interface TypeScript.
 
 ## Decision
 
-We adopt uniform default encryption at rest using AES-256-GCM across all notes, structured ProseMirror JSON AST serialization, and Prisma 8 Data Contract as the Single Source of Truth:
+Áp dụng mã hóa mặc định khi lưu trữ bằng thuật toán AES-256-GCM cho toàn bộ ghi chú, tuần tự hóa nội dung qua ProseMirror JSON AST, và sử dụng Prisma 8 Contract làm nguồn sự thật duy nhất (Single Source of Truth):
 
-1. **Default Encryption Model**: All note records store ciphertext inside `content` using the standardized payload envelope containing `ciphertext`, `iv`, and `authTag`. Standard notes use the user account encryption key; PIN-protected notes (`is_locked: true`) use the Master PIN derived key.
-2. **Content Format**: Plaintext payload before encryption MUST be a valid Tiptap / ProseMirror JSON AST object (`editor.getJSON()`).
-3. **Database & Type Generation**: Prisma 8 contract (`backend/src/prisma/contract.prisma`) manages the schema and emits compiled contract artifacts (`contract.json`, `contract.d.ts`).
+1. **Mô hình mã hóa mặc định**: Toàn bộ ghi chú được lưu trữ dưới dạng ciphertext trong cột `content` gồm `encryptedContent`, `iv`, và `authTag`. Ghi chú thông thường dùng khóa mã hóa dẫn xuất từ tài khoản người dùng (`userKey`); ghi chú có khóa (`is_locked: true`) dùng khóa dẫn xuất từ Master PIN (`vaultKey`).
+2. **Định dạng nội dung**: Nội dung trước khi mã hóa bắt buộc là đối tượng ProseMirror / Tiptap JSON AST (`editor.getJSON()`).
+3. **Quản trị cơ sở dữ liệu**: Sử dụng Prisma 8 Data Contract (`backend/src/prisma/contract.prisma`) để quản lý schema và tự động biên dịch sang contract types (`contract.json`, `contract.d.ts`).
 
-## Consequences
+## Positive Consequences
 
-- Database breach exposes zero plaintext note data.
-- XSS injection vector eliminated via JSON AST.
-- Eliminated boilerplate manual database row types in TypeScript.
-- Simplified CRUD logic around a single consolidated `notes` table.
+- Ngăn chặn hoàn toàn việc rò rỉ dữ liệu plaintext khi database bị tấn công hoặc lộ dữ liệu.
+- Loại bỏ hoàn toàn nguy cơ tấn công XSS nhờ cấu trúc JSON AST.
+- Loại bỏ hoàn toàn boilerplate khai báo thủ công các kiểu dữ liệu database rows trong TypeScript.
+- Đơn giản hóa các thao tác CRUD xung quanh một bảng `notes` duy nhất.
 
-### Explicit Tradeoffs
+## Negative Consequences / Risks
 
-- **Zero-Knowledge Security vs Server-Side Full-Text Search**: Accept client-side search execution in memory to prevent exposing plaintext indexing vectors to the database engine.
-- **Structured JSON AST vs Raw HTML Simplicity**: Accept ProseMirror document tree schema validation overhead to guarantee XSS immunity and rich-text block extensibility.
-- **Contract Compilation Step vs Traditional Schema Files**: Accept running `prisma contract emit` during type-check pipeline to maintain single-source typing across frontend and backend.
+- Không thể thực hiện tìm kiếm toàn văn (Full-Text Search) trực tiếp bằng câu lệnh SQL thông thường mà phải giải mã trên bộ nhớ client.
+- Dung lượng lưu trữ tăng thêm do overhead của định dạng JSON AST và mã hóa base64.
+
+## Explicit Tradeoffs
+
+- **Bảo mật Zero-Knowledge vs Tìm kiếm phía Server**: Chấp nhận tìm kiếm trên bộ nhớ client để tránh lộ thông tin và chỉ mục tìm kiếm văn bản thô trên database engine.
+- **Cấu trúc JSON AST vs Đơn giản hóa HTML**: Chấp nhận overhead xác thực schema cây tài liệu ProseMirror để đổi lấy tính an toàn XSS và khả năng mở rộng block ghi chú.
+- **Quy trình biên dịch Contract vs Schema truyền thống**: Chấp nhận bước chạy `prisma contract emit` trong pipeline kiểm tra kiểu để đảm bảo đồng bộ contract types giữa frontend và backend.

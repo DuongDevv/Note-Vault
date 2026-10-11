@@ -48,7 +48,7 @@ MUST read the corresponding standard file under `docs/standards/` before modifyi
 - `frontend/` — React 19 Single Page Dashboard (`src/components/`, `src/services/`, `src/types/`, `src/mocks/`)
 - `docs/standards/` — 11 Engineering Standard documents
 - `docs/adr/` — Architectural Decision Records
-- `docs/dataflow/` — 6 End-to-End System Dataflow documents
+- `docs/design/` — 6 End-to-End System Design & Workflow documents
 - `docker-compose.yml` — Local PostgreSQL & Redis infrastructure
 
 ---
