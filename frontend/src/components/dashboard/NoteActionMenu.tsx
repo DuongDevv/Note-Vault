@@ -83,12 +83,12 @@ export function NoteActionMenu({ note, hasPrivatePin }: NoteActionMenuProps) {
         >
           {note.isLocked ? (
             <>
-              <Unlock className="size-3.5" />
+              <Unlock className="text-muted-foreground size-3.5" />
               <span>Bỏ khóa PIN</span>
             </>
           ) : (
             <>
-              <Lock className="size-3.5" />
+              <Lock className="text-muted-foreground size-3.5" />
               <span>Khóa bằng mã PIN</span>
             </>
           )}
