@@ -7,14 +7,6 @@
 
 ---
 
-## AI-Human Collaboration Protocol
-
-- **Boilerplate Scaffolding**: AI scaffolds boilerplate code only (Zod schemas, database schemas/services, route handlers, UI components, test harness).
-- **Core Business Logic**: AI MUST NEVER write core business logic, domain calculations, cryptographic algorithms, or database transactions directly without review.
-- **Structured TODO Guiding**: For all core logic, AI provides structured step-by-step `// TODO:` guidance and architectural review; human writes the implementation directly.
-
----
-
 ## Engineering Standards
 
 MUST read the corresponding standard file under `docs/standards/` before modifying related code or tests:
