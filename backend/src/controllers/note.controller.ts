@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/response.util";
 import { requireUserId } from "../utils/auth.util";
 import type { AuthenticatedRequest } from "../middlewares/auth.middleware";
 import { CryptoService } from "../services/crypto.service";
+import { VaultSessionService } from "../services/vault-session.service";
 import {
   getNotesQuerySchema,
   createNoteSchema,
@@ -39,14 +40,24 @@ function formatNoteResponse(
   row: NoteDbResult,
   userId: string,
   vaultPin?: string,
+  vaultKek?: Buffer,
 ): NoteResponse {
   let decryptedContent: unknown = null;
 
   if (row.content) {
     if (row.is_locked) {
-      if (vaultPin) {
-        // Nếu note có encrypted_key -> dùng Enveloped Decryption
-        if (row.encrypted_key) {
+      if (vaultKek || vaultPin) {
+        if (vaultKek) {
+          // Fast path: Enveloped Decryption with cached KEK from Redis Vault Session
+          decryptedContent = row.encrypted_key
+            ? CryptoService.decryptEnvelopedWithKek(
+                row.content,
+                row.encrypted_key,
+                userId,
+                vaultKek,
+              )
+            : CryptoService.decryptNoteContent(row.content, userId);
+        } else if (row.encrypted_key) {
           decryptedContent = CryptoService.decryptEnveloped(
             row.content,
             row.encrypted_key,
@@ -156,7 +167,12 @@ export async function getNoteById(
   const rawPinHeader = req.headers["x-private-pin"];
   const vaultPin =
     typeof rawPinHeader === "string" ? rawPinHeader.trim() : undefined;
-
+  const rawVaultTokenHeader =
+    req.headers["x-vault-token"] ?? req.headers["x-private-token"];
+  const vaultToken =
+    typeof rawVaultTokenHeader === "string"
+      ? rawVaultTokenHeader.trim()
+      : undefined;
   try {
     const result = await dbPool.query<NoteDbResult>(
       `SELECT ${NOTE_COLUMNS}
@@ -171,7 +187,21 @@ export async function getNoteById(
       return;
     }
 
-    if (vaultPin && note.is_locked) {
+    let vaultKek: Buffer | undefined;
+
+    // 1. Check Redis Vault Session Token first (Fast path, avoids scrypt/argon2 compute)
+    if (vaultToken && note.is_locked) {
+      const cachedKekHex = await VaultSessionService.getSessionKek(
+        userId,
+        vaultToken,
+      );
+      if (cachedKekHex) {
+        vaultKek = Buffer.from(cachedKekHex, "hex");
+      }
+    }
+
+    // 2. Fallback to raw PIN if vault token is absent or expired
+    if (!vaultKek && vaultPin && note.is_locked) {
       const userRes = await dbPool.query<{ private_pin_hash: string | null }>(
         "SELECT private_pin_hash FROM users WHERE id = $1",
         [userId],
@@ -194,14 +224,18 @@ export async function getNoteById(
       }
     }
 
+    const hasCredentials = Boolean(vaultKek ?? vaultPin);
     const formattedNote = formatNoteResponse(
       note,
       userId,
-      vaultPin && note.is_locked ? vaultPin : undefined,
+      hasCredentials && note.is_locked
+        ? (vaultPin ?? "session_unlocked")
+        : undefined,
+      vaultKek,
     );
 
     if (
-      vaultPin &&
+      hasCredentials &&
       note.is_locked &&
       formattedNote.content === null &&
       note.content !== null

@@ -35,5 +35,10 @@ router.post(
   rateLimiter(5, 60),
   (req, res) => void AuthController.verifyPin(req, res),
 );
+router.post(
+  "/profile/lock-vault",
+  authenticateJWT,
+  (req, res) => void AuthController.lockVault(req, res),
+);
 
 export default router;

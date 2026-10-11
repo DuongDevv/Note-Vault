@@ -156,6 +156,40 @@ export function decryptEnveloped(
 }
 
 /**
+ * Decrypts note content using Enveloped Encryption with pre-derived vaultKey (KEK Buffer).
+ * Used in Redis Vault Session caching to bypass repeatedly recalculating scryptSync(pin, salt).
+ */
+export function decryptEnvelopedWithKek(
+  packedContent: string,
+  packedKey: string,
+  userId: string,
+  vaultKey: Buffer,
+): unknown {
+  try {
+    const keyPayload = JSON.parse(packedKey) as unknown;
+    if (!isEncryptedPayload(keyPayload)) return null;
+
+    let dataKeyBase64: unknown = null;
+    try {
+      dataKeyBase64 = decryptPayload(keyPayload, vaultKey);
+    } catch {
+      const userKey = deriveUserKey(userId);
+      dataKeyBase64 = decryptPayload(keyPayload, userKey);
+    }
+
+    if (typeof dataKeyBase64 !== "string") return null;
+    const dataKey = Buffer.from(dataKeyBase64, "base64");
+
+    const contentPayload = JSON.parse(packedContent) as unknown;
+    if (!isEncryptedPayload(contentPayload)) return packedContent;
+
+    return decryptPayload(contentPayload, dataKey);
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Rotates the KEK wrapping a DEK (from old PIN to new PIN) without touching content.
  */
 export function rewrapDataKey(
@@ -255,4 +289,5 @@ export const CryptoService = {
   encryptEnveloped,
   decryptEnveloped,
   rewrapDataKey,
+  decryptEnvelopedWithKek,
 };

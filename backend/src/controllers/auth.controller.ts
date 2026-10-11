@@ -14,6 +14,7 @@ import {
   verifyPinSchema,
   type UserProfileResponse,
 } from "../schemas/auth.schema";
+import { VaultSessionService } from "../services/vault-session.service";
 
 interface UserRow {
   id: string;
@@ -369,12 +370,42 @@ export async function verifyPin(
       return;
     }
 
+    // Derive the Vault KEK from PIN and cache it in Redis with 15-minute TTL
+    const vaultKey = CryptoService.deriveVaultKey(userId, pin);
+    const vaultToken = await VaultSessionService.createSession(
+      userId,
+      vaultKey.toString("hex"),
+    );
+
     ApiResponse.success(res, 200, "Xác thực mã PIN thành công", {
       verified: true,
+      vaultToken,
     });
   } catch (error: unknown) {
     ApiResponse.serverError(res, error);
   }
+}
+
+// Khóa Vault ngay lập tức và thu hồi Vault Session (POST /api/v1/profile/lock-vault)
+export async function lockVault(
+  req: AuthenticatedRequest,
+  res: Response,
+): Promise<void> {
+  const userId = requireUserId(req, res);
+  if (!userId) return;
+
+  const rawTokenHeader =
+    req.headers["x-vault-token"] ?? req.headers["x-private-token"];
+  const vaultToken =
+    typeof rawTokenHeader === "string" ? rawTokenHeader.trim() : undefined;
+
+  if (vaultToken) {
+    await VaultSessionService.revokeSession(userId, vaultToken);
+  }
+
+  ApiResponse.success(res, 200, "Đã khóa Private Vault thành công", {
+    locked: true,
+  });
 }
 
 export const AuthController = {
@@ -383,4 +414,5 @@ export const AuthController = {
   getProfile,
   setPrivatePin,
   verifyPin,
+  lockVault,
 };

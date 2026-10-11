@@ -5,6 +5,7 @@
     "**/dist/**",
     "**/migrations/**",
     ".*/**",
+    "tests/**",
     "src/prisma/contract.d.ts",
     "src/prisma/contract.prisma"
   ],
@@ -27,15 +28,25 @@
     "typescript/no-explicit-any": "warn",
     "typescript/no-unused-vars": [
       "error",
-      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
     ],
     "typescript/consistent-type-imports": [
       "error",
-      { "prefer": "type-imports", "fixStyle": "separate-type-imports" }
+      {
+        "prefer": "type-imports",
+        "fixStyle": "separate-type-imports"
+      }
     ],
     "typescript/no-misused-promises": [
       "error",
-      { "checksVoidReturn": { "attributes": false } }
+      {
+        "checksVoidReturn": {
+          "attributes": false
+        }
+      }
     ],
     "typescript/no-deprecated": "error",
     "typescript/no-unnecessary-condition": "warn",
