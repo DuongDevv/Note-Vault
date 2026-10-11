@@ -1,10 +1,6 @@
 import { useState, useMemo, type KeyboardEvent } from "react";
 import { Plus, Tag as TagIcon } from "lucide-react";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { normalizeTag } from "@/utils/tag";
@@ -88,11 +84,7 @@ export function TagInputPopover({
         <span>Thêm thẻ</span>
       </PopoverTrigger>
 
-      <PopoverContent
-        align="start"
-        sideOffset={6}
-        className="w-56 p-1.5 text-xs"
-      >
+      <PopoverContent align="start" sideOffset={6} className="w-56 p-1.5 text-xs">
         <div className="flex flex-col gap-1.5">
           <Input
             value={inputValue}
@@ -115,8 +107,7 @@ export function TagInputPopover({
               >
                 <Plus className="text-muted-foreground size-3 shrink-0" />
                 <span className="truncate">
-                  Tạo thẻ{" "}
-                  <strong className="font-semibold">#{normalizedInput}</strong>
+                  Tạo thẻ <strong className="font-semibold">#{normalizedInput}</strong>
                 </span>
               </Button>
             )}
@@ -140,9 +131,7 @@ export function TagInputPopover({
 
             {!canCreateNew && suggestions.length === 0 && (
               <div className="text-muted-foreground py-2 text-center text-[11px]">
-                {normalizedInput
-                  ? "Thẻ này đã được thêm"
-                  : "Chưa có thẻ nào được tạo"}
+                {normalizedInput ? "Thẻ này đã được thêm" : "Chưa có thẻ nào được tạo"}
               </div>
             )}
           </div>

@@ -28,24 +28,14 @@ export function RegisterPage({ onAuthSuccess }: RegisterPageProps) {
     setIsLoading(true);
 
     try {
-      if (
-        !displayName.trim() ||
-        !username.trim() ||
-        !email.trim() ||
-        !password
-      ) {
+      if (!displayName.trim() || !username.trim() || !email.trim() || !password) {
         throw new Error("Vui lòng điền đầy đủ các trường thông tin");
       }
       if (password.length < 6) {
         throw new Error("Mật khẩu phải có ít nhất 6 ký tự");
       }
 
-      const data = await registerUser(
-        username.trim(),
-        email.trim(),
-        password,
-        displayName.trim(),
-      );
+      const data = await registerUser(username.trim(), email.trim(), password, displayName.trim());
       onAuthSuccess(data.user);
       void navigate("/", { replace: true });
     } catch (err) {
@@ -73,10 +63,7 @@ export function RegisterPage({ onAuthSuccess }: RegisterPageProps) {
         </p>
       }
     >
-      <form
-        onSubmit={(e) => void handleRegister(e)}
-        className="flex flex-col gap-4"
-      >
+      <form onSubmit={(e) => void handleRegister(e)} className="flex flex-col gap-4">
         <ModalAlertBanner message={error} />
 
         <div className="flex flex-col gap-1.5">

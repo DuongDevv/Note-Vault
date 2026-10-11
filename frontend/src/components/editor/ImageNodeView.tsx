@@ -1,9 +1,4 @@
-import {
-  useState,
-  useRef,
-  useEffect,
-  type MouseEvent as ReactMouseEvent,
-} from "react";
+import { useState, useRef, useEffect, type MouseEvent as ReactMouseEvent } from "react";
 import { NodeViewWrapper, type NodeViewProps } from "@tiptap/react";
 import { AlignLeft, AlignCenter, AlignRight, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -101,10 +96,7 @@ export function ImageNodeView({
   }, [selected, editor, getPos]);
 
   const showToolbar = (selected && !isDismissed) || isResizing;
-  const handleResizeStart = (
-    e: ReactMouseEvent<HTMLDivElement>,
-    direction: "left" | "right",
-  ) => {
+  const handleResizeStart = (e: ReactMouseEvent<HTMLDivElement>, direction: "left" | "right") => {
     e.preventDefault();
     e.stopPropagation();
     setIsResizing(true);
@@ -112,20 +104,13 @@ export function ImageNodeView({
     const startX = e.clientX;
     const parentContainer = containerRef.current?.parentElement;
     const parentWidth = parentContainer ? parentContainer.clientWidth : 800;
-    const initialWidthPx = containerRef.current
-      ? containerRef.current.clientWidth
-      : parentWidth;
+    const initialWidthPx = containerRef.current ? containerRef.current.clientWidth : parentWidth;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX =
-        direction === "right"
-          ? moveEvent.clientX - startX
-          : startX - moveEvent.clientX;
+        direction === "right" ? moveEvent.clientX - startX : startX - moveEvent.clientX;
 
-      const newWidthPx = Math.min(
-        parentWidth,
-        Math.max(160, initialWidthPx + deltaX),
-      );
+      const newWidthPx = Math.min(parentWidth, Math.max(160, initialWidthPx + deltaX));
       const newWidthPercent = Math.round((newWidthPx / parentWidth) * 100);
       const clampedPercent = Math.min(100, Math.max(20, newWidthPercent));
 
@@ -156,9 +141,7 @@ export function ImageNodeView({
       >
         <div
           className={`border-border/80 bg-popover/95 text-popover-foreground absolute -top-11 left-1/2 z-20 flex -translate-x-1/2 items-center gap-0.5 rounded-lg border p-1 shadow-xl backdrop-blur-md transition-opacity duration-150 ${
-            showToolbar
-              ? "pointer-events-auto opacity-100"
-              : "pointer-events-none opacity-0"
+            showToolbar ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
           }`}
         >
           {/* Alignment controls */}
@@ -249,9 +232,7 @@ export function ImageNodeView({
             src={src}
             alt={alt}
             className={`border-border/70 block h-auto w-full rounded-lg border object-cover shadow-xs transition-all ${
-              selected
-                ? "ring-primary ring-offset-background ring-2 ring-offset-2"
-                : ""
+              selected ? "ring-primary ring-offset-background ring-2 ring-offset-2" : ""
             }`}
             draggable={false}
           />

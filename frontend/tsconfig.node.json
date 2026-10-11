@@ -26,7 +26,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "incremental": true
-
   },
   "include": ["vite.config.ts"],
   "exclude": ["node_modules"]

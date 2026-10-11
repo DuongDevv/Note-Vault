@@ -21,9 +21,7 @@ export const setPrivatePinSchema = z.object({
     .string()
     .regex(/^\d{6}$/, "Mã PIN hiện tại bắt buộc phải gồm đúng 6 chữ số")
     .optional(),
-  newPin: z
-    .string()
-    .regex(/^\d{6}$/, "Mã PIN mới bắt buộc phải gồm đúng 6 chữ số"),
+  newPin: z.string().regex(/^\d{6}$/, "Mã PIN mới bắt buộc phải gồm đúng 6 chữ số"),
 });
 
 export type SetPrivatePinInput = z.infer<typeof setPrivatePinSchema>;

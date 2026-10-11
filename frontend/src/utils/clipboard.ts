@@ -7,10 +7,7 @@
 let activeClearTimer: number | null = null;
 let lastCopiedSecret: string | null = null;
 
-export async function copySecretWithAutoClear(
-  secret: string,
-  timeoutMs = 30000,
-): Promise<boolean> {
+export async function copySecretWithAutoClear(secret: string, timeoutMs = 30000): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(secret);
     lastCopiedSecret = secret;
@@ -22,9 +19,7 @@ export async function copySecretWithAutoClear(
 
     activeClearTimer = window.setTimeout(async () => {
       try {
-        const currentContent = await navigator.clipboard
-          .readText()
-          .catch(() => null);
+        const currentContent = await navigator.clipboard.readText().catch(() => null);
         if (currentContent === null || currentContent === lastCopiedSecret) {
           await navigator.clipboard.writeText("");
         }

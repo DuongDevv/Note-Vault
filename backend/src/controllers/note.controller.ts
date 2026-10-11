@@ -48,21 +48,11 @@ function formatNoteResponse(
     if (row.is_locked) {
       if (vaultKek) {
         decryptedContent = row.encrypted_key
-          ? CryptoService.decryptEnvelopedWithKek(
-              row.content,
-              row.encrypted_key,
-              userId,
-              vaultKek,
-            )
+          ? CryptoService.decryptEnvelopedWithKek(row.content, row.encrypted_key, userId, vaultKek)
           : CryptoService.decryptNoteContent(row.content, userId);
       } else if (vaultPin) {
         decryptedContent = row.encrypted_key
-          ? CryptoService.decryptEnveloped(
-              row.content,
-              row.encrypted_key,
-              userId,
-              vaultPin,
-            )
+          ? CryptoService.decryptEnveloped(row.content, row.encrypted_key, userId, vaultPin)
           : CryptoService.decryptNoteContent(row.content, userId, vaultPin);
       } else {
         // Masked content for locked notes when not unlocked
@@ -96,10 +86,7 @@ function formatNoteResponse(
 }
 
 // Lấy danh sách Ghi chú từ Database (GET /api/v1/notes)
-export async function getNotes(
-  req: AuthenticatedRequest,
-  res: Response,
-): Promise<void> {
+export async function getNotes(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
@@ -126,26 +113,16 @@ export async function getNotes(
     }
     sql += ` ORDER BY is_pinned DESC, created_at DESC`;
     const result = await dbPool.query<NoteDbResult>(sql, params);
-    const formattedNotes = result.rows.map((row) =>
-      formatNoteResponse(row, userId),
-    );
+    const formattedNotes = result.rows.map((row) => formatNoteResponse(row, userId));
 
-    ApiResponse.success(
-      res,
-      200,
-      "Lấy danh sách ghi chú thành công",
-      formattedNotes,
-    );
+    ApiResponse.success(res, 200, "Lấy danh sách ghi chú thành công", formattedNotes);
   } catch (error: unknown) {
     ApiResponse.serverError(res, error);
   }
 }
 
 // Lấy chi tiết một Ghi chú theo ID (GET /api/v1/notes/:id)
-export async function getNoteById(
-  req: AuthenticatedRequest,
-  res: Response,
-): Promise<void> {
+export async function getNoteById(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
@@ -157,14 +134,10 @@ export async function getNoteById(
 
   const { id } = parsedParam.data;
   const rawPinHeader = req.headers["x-private-pin"];
-  const vaultPin =
-    typeof rawPinHeader === "string" ? rawPinHeader.trim() : undefined;
-  const rawVaultTokenHeader =
-    req.headers["x-vault-token"] ?? req.headers["x-private-token"];
+  const vaultPin = typeof rawPinHeader === "string" ? rawPinHeader.trim() : undefined;
+  const rawVaultTokenHeader = req.headers["x-vault-token"] ?? req.headers["x-private-token"];
   const vaultToken =
-    typeof rawVaultTokenHeader === "string"
-      ? rawVaultTokenHeader.trim()
-      : undefined;
+    typeof rawVaultTokenHeader === "string" ? rawVaultTokenHeader.trim() : undefined;
   try {
     const result = await dbPool.query<NoteDbResult>(
       `SELECT ${NOTE_COLUMNS}
@@ -183,10 +156,7 @@ export async function getNoteById(
 
     // 1. Check Redis Vault Session Token first (Fast path, avoids scrypt/argon2 compute)
     if (vaultToken && note.is_locked) {
-      const cachedKekHex = await VaultSessionService.getSessionKek(
-        userId,
-        vaultToken,
-      );
+      const cachedKekHex = await VaultSessionService.getSessionKek(userId, vaultToken);
       if (cachedKekHex) {
         vaultKek = Buffer.from(cachedKekHex, "hex");
       }
@@ -225,43 +195,28 @@ export async function getNoteById(
       formattedNote.content === null &&
       note.content !== null
     ) {
-      ApiResponse.error(
-        res,
-        403,
-        "FORBIDDEN",
-        "Không thể giải mã nội dung với mã PIN này",
-      );
+      ApiResponse.error(res, 403, "FORBIDDEN", "Không thể giải mã nội dung với mã PIN này");
       return;
     }
-    ApiResponse.success(
-      res,
-      200,
-      "Lấy chi tiết ghi chú thành công",
-      formattedNote,
-    );
+    ApiResponse.success(res, 200, "Lấy chi tiết ghi chú thành công", formattedNote);
   } catch (error: unknown) {
     ApiResponse.serverError(res, error);
   }
 }
 
 // Tạo Ghi chú mới lưu vào Database (POST /api/v1/notes)
-export async function createNote(
-  req: AuthenticatedRequest,
-  res: Response,
-): Promise<void> {
+export async function createNote(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
   const parsed = createNoteSchema.safeParse(req.body);
   if (!parsed.success) {
-    const errorMsg =
-      parsed.error.issues[0]?.message ?? "Tiêu đề ghi chú là bắt buộc";
+    const errorMsg = parsed.error.issues[0]?.message ?? "Tiêu đề ghi chú là bắt buộc";
     ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
     return;
   }
 
-  const { topicId, title, content, tags, isLocked, isPinned, pin } =
-    parsed.data;
+  const { topicId, title, content, tags, isLocked, isPinned, pin } = parsed.data;
 
   try {
     let encryptedPacked: string;
@@ -306,17 +261,13 @@ export async function createNote(
 }
 
 // Xóa Ghi chú khỏi Database (DELETE /api/v1/notes/:id)
-export async function deleteNote(
-  req: AuthenticatedRequest,
-  res: Response,
-): Promise<void> {
+export async function deleteNote(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
   const parsedParam = noteIdParamSchema.safeParse(req.params);
   if (!parsedParam.success) {
-    const errorMsg =
-      parsedParam.error.issues[0]?.message ?? "ID ghi chú không hợp lệ";
+    const errorMsg = parsedParam.error.issues[0]?.message ?? "ID ghi chú không hợp lệ";
     ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
     return;
   }
@@ -329,12 +280,7 @@ export async function deleteNote(
     );
 
     if (result.rows.length === 0) {
-      ApiResponse.error(
-        res,
-        404,
-        "NOT_FOUND",
-        "Không tìm thấy ghi chú hoặc không có quyền xóa",
-      );
+      ApiResponse.error(res, 404, "NOT_FOUND", "Không tìm thấy ghi chú hoặc không có quyền xóa");
       return;
     }
 
@@ -345,38 +291,25 @@ export async function deleteNote(
 }
 
 // Cập nhật Ghi chú trong Database (PUT /api/v1/notes/:id)
-export async function updateNote(
-  req: AuthenticatedRequest,
-  res: Response,
-): Promise<void> {
+export async function updateNote(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
   const parsedParam = noteIdParamSchema.safeParse(req.params);
   if (!parsedParam.success) {
-    const errorMsg =
-      parsedParam.error.issues[0]?.message ?? "ID ghi chú không hợp lệ";
+    const errorMsg = parsedParam.error.issues[0]?.message ?? "ID ghi chú không hợp lệ";
     ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
     return;
   }
 
   const parsedBody = updateNoteSchema.safeParse(req.body);
   if (!parsedBody.success) {
-    const errorMsg =
-      parsedBody.error.issues[0]?.message ?? "Dữ liệu cập nhật không hợp lệ";
+    const errorMsg = parsedBody.error.issues[0]?.message ?? "Dữ liệu cập nhật không hợp lệ";
     ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
     return;
   }
   const { id } = parsedParam.data;
-  const {
-    topicId,
-    title,
-    content,
-    tags,
-    isLocked,
-    isPinned,
-    pin: rawPin,
-  } = parsedBody.data;
+  const { topicId, title, content, tags, isLocked, isPinned, pin: rawPin } = parsedBody.data;
   const pin = typeof rawPin === "string" ? rawPin.trim() : undefined;
   try {
     const existing = await dbPool.query<NoteDbResult>(
@@ -386,12 +319,7 @@ export async function updateNote(
 
     const current = existing.rows[0];
     if (!current) {
-      ApiResponse.error(
-        res,
-        404,
-        "NOT_FOUND",
-        "Không tìm thấy ghi chú để cập nhật",
-      );
+      ApiResponse.error(res, 404, "NOT_FOUND", "Không tìm thấy ghi chú để cập nhật");
       return;
     }
 
@@ -439,11 +367,7 @@ export async function updateNote(
     if (content !== undefined) {
       if (newIsLocked) {
         if (pin) {
-          const enveloped = CryptoService.encryptEnveloped(
-            content,
-            userId,
-            pin,
-          );
+          const enveloped = CryptoService.encryptEnveloped(content, userId, pin);
           encryptedContent = enveloped.encryptedContent;
           encryptedKey = enveloped.encryptedKey;
         } else if (current.encrypted_key) {
@@ -466,11 +390,7 @@ export async function updateNote(
       if (newIsLocked) {
         // Chuyển từ unlock sang lock: giải mã content cũ rồi bọc thành Enveloped Encryption
         const plain = current.encrypted_key
-          ? CryptoService.decryptEnveloped(
-              current.content,
-              current.encrypted_key,
-              userId,
-            )
+          ? CryptoService.decryptEnveloped(current.content, current.encrypted_key, userId)
           : CryptoService.decryptNoteContent(current.content, userId);
         if (plain !== null && pin) {
           const enveloped = CryptoService.encryptEnveloped(plain, userId, pin);
@@ -480,12 +400,7 @@ export async function updateNote(
       } else {
         // Chuyển từ lock sang unlock: giải mã bằng pin rồi mã hóa lại bằng userKey bình thường
         const plain = current.encrypted_key
-          ? CryptoService.decryptEnveloped(
-              current.content,
-              current.encrypted_key,
-              userId,
-              pin,
-            )
+          ? CryptoService.decryptEnveloped(current.content, current.encrypted_key, userId, pin)
           : CryptoService.decryptNoteContent(current.content, userId, pin);
         if (plain !== null) {
           encryptedContent = CryptoService.encryptNoteContent(plain, userId);
@@ -525,10 +440,7 @@ export async function updateNote(
 }
 
 // Toggle trạng thái ghim ghi chú (POST /api/v1/notes/:id/toggle-pin)
-export async function toggleNotePin(
-  req: AuthenticatedRequest,
-  res: Response,
-): Promise<void> {
+export async function toggleNotePin(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
@@ -563,9 +475,7 @@ export async function toggleNotePin(
     ApiResponse.success(
       res,
       200,
-      updatedNote.is_pinned
-        ? "Ghim ghi chú thành công"
-        : "Bỏ ghim ghi chú thành công",
+      updatedNote.is_pinned ? "Ghim ghi chú thành công" : "Bỏ ghim ghi chú thành công",
       formatted,
     );
   } catch (error: unknown) {

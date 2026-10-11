@@ -3,7 +3,13 @@ import { ReactNodeViewRenderer } from "@tiptap/react";
 import { SecretBlockNodeView } from "../SecretBlockNodeView";
 
 export type SecretCategory =
-  "api_key" | "password" | "note" | "database" | "card" | "seed" | "other";
+  | "api_key"
+  | "password"
+  | "note"
+  | "database"
+  | "card"
+  | "seed"
+  | "other";
 export interface SecretBlockAttrs {
   title: string;
   value: string;
@@ -56,10 +62,7 @@ export const SecretBlock = Node.create({
   },
 
   renderHTML({ HTMLAttributes }) {
-    return [
-      "div",
-      mergeAttributes(HTMLAttributes, { "data-type": "secret-block" }),
-    ];
+    return ["div", mergeAttributes(HTMLAttributes, { "data-type": "secret-block" })];
   },
 
   addCommands() {

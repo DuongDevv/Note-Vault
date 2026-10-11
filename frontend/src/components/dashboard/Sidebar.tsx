@@ -44,10 +44,7 @@ interface SidebarProps {
   currentUser?: AuthUser | null;
   onLogout?: () => void;
 }
-function sortByUpdatedAtDesc(
-  a: { updatedAt?: string },
-  b: { updatedAt?: string },
-): number {
+function sortByUpdatedAtDesc(a: { updatedAt?: string }, b: { updatedAt?: string }): number {
   const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
   const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
   return dateB - dateA;
@@ -72,8 +69,7 @@ export function AppSidebar({ currentUser, onLogout }: SidebarProps) {
   };
   const handleNewNote = async (topicId?: string | null) => {
     try {
-      const targetTopicId =
-        topicId === null ? undefined : (topicId ?? activeTopicId);
+      const targetTopicId = topicId === null ? undefined : (topicId ?? activeTopicId);
       const created = await createNote(targetTopicId);
       void navigate(`/notes/${created.id}`);
     } catch (err) {
@@ -107,11 +103,8 @@ export function AppSidebar({ currentUser, onLogout }: SidebarProps) {
   const [isPinnedCollapsed, setIsPinnedCollapsed] = useState(false);
   const [isRecentsCollapsed, setIsRecentsCollapsed] = useState(false);
   const [isUnclassifiedCollapsed, setIsUnclassifiedCollapsed] = useState(false);
-  const [isTopicsSectionCollapsed, setIsTopicsSectionCollapsed] =
-    useState(false);
-  const [collapsedTopics, setCollapsedTopics] = useState<
-    Record<string, boolean>
-  >({});
+  const [isTopicsSectionCollapsed, setIsTopicsSectionCollapsed] = useState(false);
+  const [collapsedTopics, setCollapsedTopics] = useState<Record<string, boolean>>({});
   // Pinned notes (sorted by most recently updated)
 
   const pinnedNotes = useMemo(() => {
@@ -351,9 +344,7 @@ export function AppSidebar({ currentUser, onLogout }: SidebarProps) {
                 {topics.map((topic) => {
                   const isTopicActive = activeTopicId === topic.id;
                   const isCollapsed = collapsedTopics[topic.id];
-                  const topicNotes = notes.filter(
-                    (n) => n.topicId === topic.id,
-                  );
+                  const topicNotes = notes.filter((n) => n.topicId === topic.id);
                   return (
                     <div key={topic.id} className="flex flex-col">
                       <SidebarMenuItem>
@@ -374,9 +365,7 @@ export function AppSidebar({ currentUser, onLogout }: SidebarProps) {
                           {/* Folder Icon, Title & Hover Arrow Behind */}
                           <div className="flex min-w-0 items-center gap-2 truncate">
                             <Folder className="size-3.5 shrink-0 opacity-70" />
-                            <span className="truncate text-[13px] font-medium">
-                              {topic.name}
-                            </span>
+                            <span className="truncate text-[13px] font-medium">{topic.name}</span>
                             <span className="opacity-0 transition-opacity group-hover/topic-item:opacity-100">
                               {isCollapsed ? (
                                 <ChevronRight className="text-muted-foreground size-3.5 shrink-0" />

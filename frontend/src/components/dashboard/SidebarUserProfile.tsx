@@ -16,10 +16,7 @@ export interface SidebarUserProfileProps {
   onLogout?: () => void;
 }
 
-export function SidebarUserProfile({
-  currentUser,
-  onLogout,
-}: SidebarUserProfileProps) {
+export function SidebarUserProfile({ currentUser, onLogout }: SidebarUserProfileProps) {
   const setPinSettingsOpen = useUIStore((s) => s.setPinSettingsOpen);
   const isDark = useUIStore((s) => s.isDark);
   const toggleTheme = useUIStore((s) => s.toggleTheme);

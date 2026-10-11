@@ -19,16 +19,11 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 // Healthcheck Endpoint
 app.get("/health", (_req: Request, res: Response) => {
-  return ApiResponse.success(
-    res,
-    200,
-    "Server Note-Vault Enterprise đang chạy ngon lành!",
-    {
-      environment: config.NODE_ENV,
-      uptime: `${String(Math.floor(process.uptime()))} seconds`,
-      timestamp: new Date().toISOString(),
-    },
-  );
+  return ApiResponse.success(res, 200, "Server Note-Vault Enterprise đang chạy ngon lành!", {
+    environment: config.NODE_ENV,
+    uptime: `${String(Math.floor(process.uptime()))} seconds`,
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Mount Master API v1 Routes

@@ -3,16 +3,12 @@ import { redisClient } from "../config/redis";
 import { ApiResponse } from "../utils/response.util";
 
 /**
- * Middleware giới hạn số lượng Request tới API nhạy cảm (vd: Auth/PIN)  
- * @param maxRequests Số lượt tối đa  
- * @param windowInSeconds Thời gian cửa sổ (giây)  
+ * Middleware giới hạn số lượng Request tới API nhạy cảm (vd: Auth/PIN)
+ * @param maxRequests Số lượt tối đa
+ * @param windowInSeconds Thời gian cửa sổ (giây)
  */
 export const rateLimiter = (maxRequests: number, windowInSeconds: number) => {
-  return async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const ip = req.ip ?? req.socket.remoteAddress ?? "unknown_ip";
     const key = `rate_limit:${req.path}:${ip}`;
 

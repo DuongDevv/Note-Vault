@@ -14,8 +14,6 @@ export const globalErrorHandler = (
     500,
     "INTERNAL_SERVER_ERROR",
     err.message || "Lỗi server nội bộ ngắt đột ngột",
-    process.env["NODE_ENV"] === "development"
-      ? { stack: err.stack }
-      : undefined,
+    process.env["NODE_ENV"] === "development" ? { stack: err.stack } : undefined,
   );
 };

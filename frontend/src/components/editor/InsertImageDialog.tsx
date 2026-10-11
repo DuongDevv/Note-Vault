@@ -17,11 +17,7 @@ interface InsertImageDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function InsertImageDialog({
-  editor,
-  open,
-  onOpenChange,
-}: InsertImageDialogProps) {
+export function InsertImageDialog({ editor, open, onOpenChange }: InsertImageDialogProps) {
   const [imageUrl, setImageUrl] = useState<string>("");
   const [previewSrc, setPreviewSrc] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
@@ -101,9 +97,7 @@ export function InsertImageDialog({
             <div className="bg-primary/10 text-primary border-primary/20 flex size-7 shrink-0 items-center justify-center rounded-lg border">
               <ImageIcon className="size-4" />
             </div>
-            <DialogTitle className="text-sm font-semibold">
-              Chèn hình ảnh
-            </DialogTitle>
+            <DialogTitle className="text-sm font-semibold">Chèn hình ảnh</DialogTitle>
           </div>
           <DialogDescription className="text-muted-foreground text-xs">
             Tải ảnh từ máy tính hoặc dán liên kết URL hình ảnh vào ghi chú.
@@ -150,11 +144,7 @@ export function InsertImageDialog({
               </span>
               <input
                 type="url"
-                value={
-                  imageUrl.startsWith("data:")
-                    ? "(Ảnh đã chọn từ tệp thiết bị)"
-                    : imageUrl
-                }
+                value={imageUrl.startsWith("data:") ? "(Ảnh đã chọn từ tệp thiết bị)" : imageUrl}
                 disabled={imageUrl.startsWith("data:")}
                 onChange={(e) => handleUrlChange(e.target.value)}
                 placeholder="https://example.com/image.png"
@@ -169,9 +159,7 @@ export function InsertImageDialog({
           {/* Preview Box */}
           {previewSrc && (
             <div className="border-border/70 bg-muted/20 overflow-hidden rounded-lg border p-2">
-              <p className="text-muted-foreground mb-1.5 text-[11px] font-medium">
-                Xem trước:
-              </p>
+              <p className="text-muted-foreground mb-1.5 text-[11px] font-medium">Xem trước:</p>
               <div className="flex max-h-44 items-center justify-center overflow-hidden rounded bg-black/10 dark:bg-black/30">
                 <img
                   src={previewSrc}

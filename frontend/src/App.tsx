@@ -1,11 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppRoutes } from "@/routes/AppRoutes";
-import {
-  fetchUserProfile,
-  clearAuthToken,
-  type AuthUser,
-} from "@/services/auth";
+import { fetchUserProfile, clearAuthToken, type AuthUser } from "@/services/auth";
 import { useUIStore } from "@/stores/useUIStore";
 
 export default function App() {

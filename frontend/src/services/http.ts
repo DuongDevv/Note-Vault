@@ -59,9 +59,7 @@ export async function safeFetchJson(
       // Non-JSON response (e.g. HTML error page or plain text)
       if (!res.ok) {
         throw new HttpError(
-          rawText.length < 100
-            ? rawText
-            : `Yêu cầu thất bại với mã lỗi HTTP ${String(res.status)}`,
+          rawText.length < 100 ? rawText : `Yêu cầu thất bại với mã lỗi HTTP ${String(res.status)}`,
           res.status,
           "HTTP_ERROR",
         );

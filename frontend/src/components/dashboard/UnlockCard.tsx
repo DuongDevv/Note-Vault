@@ -15,11 +15,7 @@ export interface UnlockCardProps {
   onSuccess: (noteId: string) => void;
 }
 
-export function UnlockCard({
-  noteId,
-  onUnlockWithPin,
-  onSuccess,
-}: UnlockCardProps) {
+export function UnlockCard({ noteId, onUnlockWithPin, onSuccess }: UnlockCardProps) {
   const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [pinError, setPinError] = useState<string | null>(null);
   const [isUnlocking, setIsUnlocking] = useState(false);
@@ -61,18 +57,10 @@ export function UnlockCard({
           description="Nhập mã Master PIN 6 số để giải mã nội dung tài liệu."
         />
         <CardContent className="p-0">
-          <form
-            onSubmit={(e) => void handleUnlock(e)}
-            className="mt-2 flex flex-col gap-4"
-          >
+          <form onSubmit={(e) => void handleUnlock(e)} className="mt-2 flex flex-col gap-4">
             <ModalAlertBanner message={pinError} />
 
-            <PinInputGroup
-              key={errorKey}
-              value={digits}
-              onChange={setDigits}
-              autoFocus={true}
-            />
+            <PinInputGroup key={errorKey} value={digits} onChange={setDigits} autoFocus={true} />
 
             <Button
               type="submit"

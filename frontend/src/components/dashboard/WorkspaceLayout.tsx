@@ -2,11 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActiveRouteIds } from "@/hooks/useActiveRouteIds";
 import { useShallow } from "zustand/react/shallow";
-import {
-  SidebarProvider,
-  SidebarInset,
-  useSidebar,
-} from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/dashboard/Sidebar";
 import { TopNav } from "@/components/dashboard/TopNav";
 import { DocumentCanvas } from "@/components/dashboard/DocumentCanvas";
@@ -26,23 +22,18 @@ interface WorkspaceLayoutProps {
   onUserUpdate: (user: AuthUser) => void;
 }
 
-export function WorkspaceLayout({
-  currentUser,
-  onLogout,
-  onUserUpdate,
-}: WorkspaceLayoutProps) {
+export function WorkspaceLayout({ currentUser, onLogout, onUserUpdate }: WorkspaceLayoutProps) {
   const navigate = useNavigate();
 
   // Workspace Store
-  const { notes, topics, fetchWorkspaceData, ensureNoteLoaded } =
-    useWorkspaceStore(
-      useShallow((s) => ({
-        notes: s.notes,
-        topics: s.topics,
-        fetchWorkspaceData: s.fetchWorkspaceData,
-        ensureNoteLoaded: s.ensureNoteLoaded,
-      })),
-    );
+  const { notes, topics, fetchWorkspaceData, ensureNoteLoaded } = useWorkspaceStore(
+    useShallow((s) => ({
+      notes: s.notes,
+      topics: s.topics,
+      fetchWorkspaceData: s.fetchWorkspaceData,
+      ensureNoteLoaded: s.ensureNoteLoaded,
+    })),
+  );
   const { activeTopicId, activeNoteId } = useActiveRouteIds();
 
   // Load Initial Topics & Notes
@@ -78,10 +69,7 @@ export function WorkspaceLayout({
   }, [topics, currentNote, activeTopicId]);
 
   return (
-    <SidebarProvider
-      defaultOpen={true}
-      className="h-svh max-h-svh overflow-hidden"
-    >
+    <SidebarProvider defaultOpen={true} className="h-svh max-h-svh overflow-hidden">
       <WorkspaceLayoutContent
         currentUser={currentUser}
         onLogout={onLogout}
@@ -109,16 +97,15 @@ function WorkspaceLayoutContent({
   const { isMobile, setOpenMobile } = useSidebar();
 
   // Workspace Store (reactive state & actions via useShallow)
-  const { notes, topics, createTopic, deleteNote, toggleNoteLock } =
-    useWorkspaceStore(
-      useShallow((s) => ({
-        notes: s.notes,
-        topics: s.topics,
-        createTopic: s.createTopic,
-        deleteNote: s.deleteNote,
-        toggleNoteLock: s.toggleNoteLock,
-      })),
-    );
+  const { notes, topics, createTopic, deleteNote, toggleNoteLock } = useWorkspaceStore(
+    useShallow((s) => ({
+      notes: s.notes,
+      topics: s.topics,
+      createTopic: s.createTopic,
+      deleteNote: s.deleteNote,
+      toggleNoteLock: s.toggleNoteLock,
+    })),
+  );
 
   // UI Store (reactive state & actions via useShallow)
   const {
@@ -238,11 +225,7 @@ function WorkspaceLayoutContent({
       />
 
       <LockPinDialog
-        key={
-          lockTargetNote
-            ? `${lockTargetNote.id}-${lockTargetNote.mode}`
-            : "lock-dialog-closed"
-        }
+        key={lockTargetNote ? `${lockTargetNote.id}-${lockTargetNote.mode}` : "lock-dialog-closed"}
         open={Boolean(lockTargetNote)}
         onOpenChange={(open) => {
           if (!open) closeLockDialog();

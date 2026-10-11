@@ -16,11 +16,7 @@ interface NewTopicDialogProps {
   onAddTopic: (name: string) => Promise<void> | void;
 }
 
-export function NewTopicDialog({
-  open,
-  onOpenChange,
-  onAddTopic,
-}: NewTopicDialogProps) {
+export function NewTopicDialog({ open, onOpenChange, onAddTopic }: NewTopicDialogProps) {
   const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -46,10 +42,7 @@ export function NewTopicDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 py-2">
           <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="topic-name"
-              className="text-muted-foreground text-xs font-medium"
-            >
+            <label htmlFor="topic-name" className="text-muted-foreground text-xs font-medium">
               Tên chủ đề
             </label>
             <Input
@@ -63,11 +56,7 @@ export function NewTopicDialog({
           </div>
 
           <DialogFooter className="pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
             <Button type="submit" disabled={isSubmitting}>

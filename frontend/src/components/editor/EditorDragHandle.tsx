@@ -8,13 +8,8 @@ interface EditorDragHandleProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export function EditorDragHandle({
-  editor,
-  containerRef,
-}: EditorDragHandleProps) {
-  const [coords, setCoords] = useState<{ top: number; left: number } | null>(
-    null,
-  );
+export function EditorDragHandle({ editor, containerRef }: EditorDragHandleProps) {
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dropLineTop, setDropLineTop] = useState<number | null>(null);
@@ -75,10 +70,7 @@ export function EditorDragHandle({
       }
 
       const target = e.target;
-      if (
-        target instanceof HTMLElement &&
-        target.closest(".editor-drag-handle-root")
-      ) {
+      if (target instanceof HTMLElement && target.closest(".editor-drag-handle-root")) {
         return;
       }
 
@@ -88,10 +80,7 @@ export function EditorDragHandle({
         elementToInspect = target instanceof Element ? target : null;
       } else {
         // Horizontally sample into the editor at current vertical mouse position
-        elementToInspect = document.elementFromPoint(
-          editorRect.left + 24,
-          e.clientY,
-        );
+        elementToInspect = document.elementFromPoint(editorRect.left + 24, e.clientY);
       }
 
       if (!elementToInspect || !editorDom.contains(elementToInspect)) {
@@ -169,10 +158,7 @@ export function EditorDragHandle({
       const containerRect = container.getBoundingClientRect();
 
       // Sample horizontally inside editor at clientY
-      const sampleX = Math.min(
-        Math.max(e.clientX, editorRect.left + 24),
-        editorRect.right - 24,
-      );
+      const sampleX = Math.min(Math.max(e.clientX, editorRect.left + 24), editorRect.right - 24);
       const elementAtPoint = document.elementFromPoint(sampleX, e.clientY);
       if (!elementAtPoint || !editorDom.contains(elementAtPoint)) {
         return;
@@ -206,9 +192,7 @@ export function EditorDragHandle({
           : blockRect.top - containerRect.top;
 
         setDropLineTop(calculatedTop);
-        targetDropPosRef.current = isBelow
-          ? blockPos + blockNode.nodeSize
-          : blockPos;
+        targetDropPosRef.current = isBelow ? blockPos + blockNode.nodeSize : blockPos;
       } catch {
         // Ignore resolution error during high-frequency drag events
       }
@@ -219,12 +203,7 @@ export function EditorDragHandle({
       const source = activeBlockRef.current;
       const targetPos = targetDropPosRef.current;
 
-      if (
-        currentEditor &&
-        source &&
-        targetPos !== null &&
-        targetPos !== source.pos
-      ) {
+      if (currentEditor && source && targetPos !== null && targetPos !== source.pos) {
         e.preventDefault();
         try {
           const { pos: fromPos, nodeSize } = source;

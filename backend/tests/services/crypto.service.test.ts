@@ -4,7 +4,10 @@ import { CryptoService } from "../../src/services/crypto.service";
 describe("CryptoService - Vault Key & Decryption with KEK", () => {
   const userId = "test-user-123";
   const pin = "123456";
-  const sampleContent = { type: "doc", content: [{ type: "paragraph", text: "Secret Vault Content" }] };
+  const sampleContent = {
+    type: "doc",
+    content: [{ type: "paragraph", text: "Secret Vault Content" }],
+  };
 
   it("should encrypt and decrypt enveloped note using derived vaultKey (KEK)", () => {
     // 1. Derive vault key (KEK) directly from PIN

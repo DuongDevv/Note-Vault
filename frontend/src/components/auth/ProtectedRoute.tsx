@@ -7,11 +7,7 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-export function ProtectedRoute({
-  user,
-  isLoading,
-  children,
-}: ProtectedRouteProps) {
+export function ProtectedRoute({ user, isLoading, children }: ProtectedRouteProps) {
   const location = useLocation();
 
   if (isLoading) {

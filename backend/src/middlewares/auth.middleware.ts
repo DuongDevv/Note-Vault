@@ -51,12 +51,7 @@ export const authenticateJWT = (
     req.user = parsed.data; // Gán thông tin user vào Request object
     next(); // Cho phép đi tiếp vào Controller
   } catch {
-    ApiResponse.error(
-      res,
-      401,
-      "UNAUTHORIZED",
-      "JWT Token đã hết hạn hoặc không hợp lệ",
-    );
+    ApiResponse.error(res, 401, "UNAUTHORIZED", "JWT Token đã hết hạn hoặc không hợp lệ");
     return;
   }
 };

@@ -39,10 +39,7 @@ export function PinInputGroup({
     inputsRef.current[focusIndex]?.focus();
   };
 
-  const handleChange = (
-    index: number,
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.replace(/\D/g, "");
     const next = [...value];
 
@@ -62,10 +59,7 @@ export function PinInputGroup({
       inputsRef.current[index + 1]?.focus();
     }
   };
-  const handleKeyDown = (
-    index: number,
-    e: React.KeyboardEvent<HTMLInputElement>,
-  ) => {
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Backspace") {
       if (value[index] === "" && index > 0) {
         inputsRef.current[index - 1]?.focus();
@@ -88,9 +82,7 @@ export function PinInputGroup({
       {value.map((digit, idx) => (
         <span key={idx} className="contents">
           {idx === 3 && (
-            <span className="text-muted-foreground/40 px-0.5 text-xs select-none">
-              •
-            </span>
+            <span className="text-muted-foreground/40 px-0.5 text-xs select-none">•</span>
           )}
           <input
             ref={(el) => {

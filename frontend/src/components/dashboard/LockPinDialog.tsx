@@ -76,10 +76,7 @@ export function LockPinDialog({
           }
         />
 
-        <form
-          onSubmit={(e) => void handleSubmit(e)}
-          className="mt-2 flex flex-col gap-4"
-        >
+        <form onSubmit={(e) => void handleSubmit(e)} className="mt-2 flex flex-col gap-4">
           <ModalAlertBanner message={error} />
 
           <PinInputGroup
@@ -99,9 +96,7 @@ export function LockPinDialog({
             ) : (
               <span className="flex items-center gap-1.5">
                 <KeyRound className="size-3.5" />
-                <span>
-                  {mode === "lock" ? "Khóa ghi chú" : "Mở và gỡ khóa"}
-                </span>
+                <span>{mode === "lock" ? "Khóa ghi chú" : "Mở và gỡ khóa"}</span>
               </span>
             )}
           </Button>

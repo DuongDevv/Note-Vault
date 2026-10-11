@@ -1,11 +1,11 @@
-import noteVaultIcon from '@/assets/notevault-icon.svg'
+import noteVaultIcon from "@/assets/notevault-icon.svg";
 
 interface NoteVaultLogoProps {
-  className?: string
-  size?: number
+  className?: string;
+  size?: number;
 }
 
-export function NoteVaultLogo({ className = '', size = 32 }: NoteVaultLogoProps) {
+export function NoteVaultLogo({ className = "", size = 32 }: NoteVaultLogoProps) {
   return (
     <img
       src={noteVaultIcon}
@@ -16,5 +16,5 @@ export function NoteVaultLogo({ className = '', size = 32 }: NoteVaultLogoProps)
       loading="eager"
       decoding="async"
     />
-  )
+  );
 }

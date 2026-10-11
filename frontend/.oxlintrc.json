@@ -34,10 +34,7 @@
       "error",
       { "prefer": "type-imports", "fixStyle": "separate-type-imports" }
     ],
-    "typescript/no-misused-promises": [
-      "error",
-      { "checksVoidReturn": { "attributes": false } }
-    ],
+    "typescript/no-misused-promises": ["error", { "checksVoidReturn": { "attributes": false } }],
     "typescript/no-deprecated": "error",
     "typescript/no-unnecessary-condition": "error",
     "typescript/no-empty-object-type": "error",

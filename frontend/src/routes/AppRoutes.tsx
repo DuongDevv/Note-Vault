@@ -26,21 +26,13 @@ export function AppRoutes({
       <Route
         path="/login"
         element={
-          currentUser ? (
-            <Navigate to="/" replace />
-          ) : (
-            <LoginPage onAuthSuccess={onAuthSuccess} />
-          )
+          currentUser ? <Navigate to="/" replace /> : <LoginPage onAuthSuccess={onAuthSuccess} />
         }
       />
       <Route
         path="/register"
         element={
-          currentUser ? (
-            <Navigate to="/" replace />
-          ) : (
-            <RegisterPage onAuthSuccess={onAuthSuccess} />
-          )
+          currentUser ? <Navigate to="/" replace /> : <RegisterPage onAuthSuccess={onAuthSuccess} />
         }
       />
 

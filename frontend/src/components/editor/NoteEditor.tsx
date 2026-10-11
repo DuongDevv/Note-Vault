@@ -49,11 +49,7 @@ interface NoteEditorProps {
   onSavingStatusChange?: (isSaving: boolean) => void;
 }
 
-export function NoteEditor({
-  note,
-  onSave,
-  onSavingStatusChange,
-}: NoteEditorProps) {
+export function NoteEditor({ note, onSave, onSavingStatusChange }: NoteEditorProps) {
   const [title, setTitle] = useState(note.title);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState<boolean>(false);
   const saveTimeoutRef = useRef<number | undefined>(undefined);
@@ -106,10 +102,7 @@ export function NoteEditor({
   const handleTagClick = (tag: string) => {
     setSearchOpen(true, `#${tag}`);
   };
-  const scheduleAutoSave = (
-    targetTitle: string,
-    targetEditor: Editor | null,
-  ) => {
+  const scheduleAutoSave = (targetTitle: string, targetEditor: Editor | null) => {
     if (!targetEditor || !onSave) return;
     onSavingStatusChange?.(true);
     clearTimeout(saveTimeoutRef.current);
@@ -234,15 +227,9 @@ export function NoteEditor({
 
   useEffect(() => {
     const handleOpenImageDialog = () => setIsImageDialogOpen(true);
-    window.addEventListener(
-      "notevault:open-image-dialog",
-      handleOpenImageDialog,
-    );
+    window.addEventListener("notevault:open-image-dialog", handleOpenImageDialog);
     return () => {
-      window.removeEventListener(
-        "notevault:open-image-dialog",
-        handleOpenImageDialog,
-      );
+      window.removeEventListener("notevault:open-image-dialog", handleOpenImageDialog);
       clearTimeout(saveTimeoutRef.current);
     };
   }, []);

@@ -54,12 +54,7 @@ export function NoteActionMenu({ note, hasPrivatePin }: NoteActionMenuProps) {
       >
         <MoreHorizontal className="size-3.5" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        side="right"
-        align="start"
-        sideOffset={8}
-        className="w-48 text-xs"
-      >
+      <DropdownMenuContent side="right" align="start" sideOffset={8} className="w-48 text-xs">
         <DropdownMenuItem
           onClick={() => void toggleNotePin(note.id)}
           className="flex cursor-pointer items-center gap-2"
@@ -133,9 +128,7 @@ export function NoteActionMenu({ note, hasPrivatePin }: NoteActionMenuProps) {
                   <Folder className="text-muted-foreground size-3.5 shrink-0" />
                   <span className="truncate">{t.name}</span>
                 </span>
-                {note.topicId === t.id && (
-                  <Check className="text-primary size-3.5 shrink-0" />
-                )}
+                {note.topicId === t.id && <Check className="text-primary size-3.5 shrink-0" />}
               </DropdownMenuItem>
             ))}
           </DropdownMenuSubContent>

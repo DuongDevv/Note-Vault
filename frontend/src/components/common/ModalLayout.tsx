@@ -1,9 +1,5 @@
 import type { ReactNode } from "react";
-import {
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 /**
@@ -22,12 +18,7 @@ export interface ModalIconHeaderProps {
 /**
  * Standard centered icon header for DialogContent modals.
  */
-export function ModalIconHeader({
-  icon,
-  title,
-  description,
-  className,
-}: ModalIconHeaderProps) {
+export function ModalIconHeader({ icon, title, description, className }: ModalIconHeaderProps) {
   return (
     <DialogHeader className={className ?? "pb-2 text-center"}>
       <div className="bg-muted/60 text-foreground mx-auto mb-2.5 flex size-11 items-center justify-center rounded-2xl">
@@ -48,12 +39,7 @@ export function ModalIconHeader({
 /**
  * Standard centered icon header for Card containers (e.g. inline unlock canvas).
  */
-export function CardIconHeader({
-  icon,
-  title,
-  description,
-  className,
-}: ModalIconHeaderProps) {
+export function CardIconHeader({ icon, title, description, className }: ModalIconHeaderProps) {
   return (
     <CardHeader className={className ?? "p-0 pb-3 text-center"}>
       <div className="bg-muted/60 text-foreground mx-auto mb-2.5 flex size-11 items-center justify-center rounded-2xl">

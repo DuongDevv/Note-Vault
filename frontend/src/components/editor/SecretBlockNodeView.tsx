@@ -82,11 +82,7 @@ function parseCategory(val: string): SecretCategory {
   return "note";
 }
 
-export function SecretBlockNodeView({
-  node,
-  updateAttributes,
-  deleteNode,
-}: NodeViewProps) {
+export function SecretBlockNodeView({ node, updateAttributes, deleteNode }: NodeViewProps) {
   // Support both unified secretBlock attrs and legacy apiKeyBlock attrs
   const rawAttrs = node.attrs as {
     title?: string;
@@ -329,15 +325,9 @@ export function SecretBlockNodeView({
                   size="icon-xs"
                   onClick={() => setIsMasked(!isMasked)}
                   className="text-muted-foreground hover:text-foreground size-6.5 cursor-pointer rounded"
-                  title={
-                    isMasked ? "Hiện nội dung bí mật" : "Ẩn nội dung bí mật"
-                  }
+                  title={isMasked ? "Hiện nội dung bí mật" : "Ẩn nội dung bí mật"}
                 >
-                  {isMasked ? (
-                    <Eye className="size-3.5" />
-                  ) : (
-                    <EyeOff className="size-3.5" />
-                  )}
+                  {isMasked ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
                 </Button>
 
                 {/* Quick Copy with Ephemeral Purge */}

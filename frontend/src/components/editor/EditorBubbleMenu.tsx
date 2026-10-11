@@ -3,13 +3,7 @@ import { useEditorState, type Editor } from "@tiptap/react";
 import { NodeSelection } from "@tiptap/pm/state";
 import { Link as _Link } from "@tiptap/extension-link";
 import { Image as _Image } from "@tiptap/extension-image";
-import {
-  List,
-  ListOrdered,
-  Link2,
-  Image as ImageIcon,
-  Lock,
-} from "lucide-react";
+import { List, ListOrdered, Link2, Image as ImageIcon, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface EditorBubbleMenuProps {
@@ -66,8 +60,7 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
 
   const setLink = () => {
     const rawAttrs: Record<string, unknown> = editor.getAttributes("link");
-    const previousUrl =
-      typeof rawAttrs.href === "string" ? rawAttrs.href : undefined;
+    const previousUrl = typeof rawAttrs.href === "string" ? rawAttrs.href : undefined;
     const url = window.prompt("Nhập địa chỉ URL:", previousUrl);
     if (url === null) return;
     if (url === "") {
@@ -207,12 +200,8 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
           type="button"
           variant="ghost"
           size="icon-sm"
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 1 }).run()
-          }
-          className={`text-[11px] font-semibold tracking-wider ${getButtonClass(
-            editorState.isH1,
-          )}`}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          className={`text-[11px] font-semibold tracking-wider ${getButtonClass(editorState.isH1)}`}
           title="Tiêu đề 1"
         >
           H1
@@ -223,12 +212,8 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
           type="button"
           variant="ghost"
           size="icon-sm"
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 2 }).run()
-          }
-          className={`text-[11px] font-semibold tracking-wider ${getButtonClass(
-            editorState.isH2,
-          )}`}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          className={`text-[11px] font-semibold tracking-wider ${getButtonClass(editorState.isH2)}`}
           title="Tiêu đề 2"
         >
           H2
@@ -239,12 +224,8 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
           type="button"
           variant="ghost"
           size="icon-sm"
-          onClick={() =>
-            editor.chain().focus().toggleHeading({ level: 3 }).run()
-          }
-          className={`text-[11px] font-semibold tracking-wider ${getButtonClass(
-            editorState.isH3,
-          )}`}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          className={`text-[11px] font-semibold tracking-wider ${getButtonClass(editorState.isH3)}`}
           title="Tiêu đề 3"
         >
           H3

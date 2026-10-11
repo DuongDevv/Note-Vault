@@ -35,11 +35,7 @@ export function ConfirmDeleteDialog({
         </p>
 
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
             Hủy
           </Button>
           <Button type="button" variant="destructive" onClick={onConfirm}>

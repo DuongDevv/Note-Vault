@@ -56,8 +56,7 @@ function mapAuthUser(user: {
 export async function register(req: Request, res: Response): Promise<void> {
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) {
-    const errorMsg =
-      parsed.error.issues[0]?.message ?? "Thông tin đăng ký không hợp lệ";
+    const errorMsg = parsed.error.issues[0]?.message ?? "Thông tin đăng ký không hợp lệ";
     ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
     return;
   }
@@ -71,12 +70,7 @@ export async function register(req: Request, res: Response): Promise<void> {
     );
 
     if (checkUser.rows.length > 0) {
-      ApiResponse.error(
-        res,
-        409,
-        "CONFLICT",
-        "Username hoặc Email đã được sử dụng",
-      );
+      ApiResponse.error(res, 409, "CONFLICT", "Username hoặc Email đã được sử dụng");
       return;
     }
 
@@ -112,8 +106,7 @@ export async function register(req: Request, res: Response): Promise<void> {
 export async function login(req: Request, res: Response): Promise<void> {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
-    const errorMsg =
-      parsed.error.issues[0]?.message ?? "Vui lòng nhập username và password";
+    const errorMsg = parsed.error.issues[0]?.message ?? "Vui lòng nhập username và password";
     ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
     return;
   }
@@ -130,26 +123,13 @@ export async function login(req: Request, res: Response): Promise<void> {
     );
     const user = result.rows[0];
     if (!user) {
-      ApiResponse.error(
-        res,
-        401,
-        "UNAUTHORIZED",
-        "Username hoặc mật khẩu không chính xác",
-      );
+      ApiResponse.error(res, 401, "UNAUTHORIZED", "Username hoặc mật khẩu không chính xác");
       return;
     }
-    const isValidPassword = await CryptoService.verifyHash(
-      user.password_hash,
-      password,
-    );
+    const isValidPassword = await CryptoService.verifyHash(user.password_hash, password);
 
     if (!isValidPassword) {
-      ApiResponse.error(
-        res,
-        401,
-        "UNAUTHORIZED",
-        "Username hoặc mật khẩu không chính xác",
-      );
+      ApiResponse.error(res, 401, "UNAUTHORIZED", "Username hoặc mật khẩu không chính xác");
       return;
     }
 
@@ -166,10 +146,7 @@ export async function login(req: Request, res: Response): Promise<void> {
 }
 
 // Lấy thông tin Profile (GET /api/v1/profile)
-export async function getProfile(
-  req: AuthenticatedRequest,
-  res: Response,
-): Promise<void> {
+export async function getProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
@@ -199,30 +176,20 @@ export async function getProfile(
       updatedAt: user.updated_at,
     };
 
-    ApiResponse.success(
-      res,
-      200,
-      "Lấy thông tin Profile thành công",
-      profileResponse,
-    );
+    ApiResponse.success(res, 200, "Lấy thông tin Profile thành công", profileResponse);
   } catch (error: unknown) {
     ApiResponse.serverError(res, error);
   }
 }
 
 // Đặt / Đổi Private PIN (POST /api/v1/profile/private-pin)
-export async function setPrivatePin(
-  req: AuthenticatedRequest,
-  res: Response,
-): Promise<void> {
+export async function setPrivatePin(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
   const parsed = setPrivatePinSchema.safeParse(req.body);
   if (!parsed.success) {
-    const errorMsg =
-      parsed.error.issues[0]?.message ??
-      "Mã PIN bắt buộc phải gồm đúng 6 chữ số";
+    const errorMsg = parsed.error.issues[0]?.message ?? "Mã PIN bắt buộc phải gồm đúng 6 chữ số";
     ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
     return;
   }
@@ -254,18 +221,10 @@ export async function setPrivatePin(
         return;
       }
 
-      const isCurrentPinValid = await CryptoService.verifyHash(
-        existingPinHash,
-        currentPin.trim(),
-      );
+      const isCurrentPinValid = await CryptoService.verifyHash(existingPinHash, currentPin.trim());
       if (!isCurrentPinValid) {
         await client.query("ROLLBACK");
-        ApiResponse.error(
-          res,
-          403,
-          "FORBIDDEN",
-          "Mã PIN hiện tại không chính xác",
-        );
+        ApiResponse.error(res, 403, "FORBIDDEN", "Mã PIN hiện tại không chính xác");
         return;
       }
 
@@ -294,17 +253,9 @@ export async function setPrivatePin(
           );
         } else if (note.content) {
           // Note cũ chưa có DEK (mã hóa trực tiếp bằng PIN cũ): giải mã rồi bọc Enveloped mới
-          const plain = CryptoService.decryptNoteContent(
-            note.content,
-            userId,
-            currentPin.trim(),
-          );
+          const plain = CryptoService.decryptNoteContent(note.content, userId, currentPin.trim());
           if (plain !== null) {
-            const enveloped = CryptoService.encryptEnveloped(
-              plain,
-              userId,
-              newPin.trim(),
-            );
+            const enveloped = CryptoService.encryptEnveloped(plain, userId, newPin.trim());
             await client.query(
               "UPDATE notes SET content = $1, encrypted_key = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3",
               [enveloped.encryptedContent, enveloped.encryptedKey, note.id],
@@ -332,17 +283,13 @@ export async function setPrivatePin(
 }
 
 // Xác thực PIN bảo vệ (POST /api/v1/profile/verify-pin)
-export async function verifyPin(
-  req: AuthenticatedRequest,
-  res: Response,
-): Promise<void> {
+export async function verifyPin(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
   const parsed = verifyPinSchema.safeParse(req.body);
   if (!parsed.success) {
-    const errorMsg =
-      parsed.error.issues[0]?.message ?? "Vui lòng nhập mã PIN hợp lệ";
+    const errorMsg = parsed.error.issues[0]?.message ?? "Vui lòng nhập mã PIN hợp lệ";
     ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
     return;
   }
@@ -357,12 +304,7 @@ export async function verifyPin(
 
     const pinHash = result.rows[0]?.private_pin_hash;
     if (!pinHash) {
-      ApiResponse.error(
-        res,
-        400,
-        "BAD_REQUEST",
-        "Bạn chưa thiết lập mã PIN bảo vệ.",
-      );
+      ApiResponse.error(res, 400, "BAD_REQUEST", "Bạn chưa thiết lập mã PIN bảo vệ.");
       return;
     }
 
@@ -374,10 +316,7 @@ export async function verifyPin(
 
     // Derive the Vault KEK from PIN and cache it in Redis with 15-minute TTL
     const vaultKey = CryptoService.deriveVaultKey(userId, pin);
-    const vaultToken = await VaultSessionService.createSession(
-      userId,
-      vaultKey.toString("hex"),
-    );
+    const vaultToken = await VaultSessionService.createSession(userId, vaultKey.toString("hex"));
 
     ApiResponse.success(res, 200, "Xác thực mã PIN thành công", {
       verified: true,
@@ -389,17 +328,12 @@ export async function verifyPin(
 }
 
 // Khóa Vault ngay lập tức và thu hồi Vault Session (POST /api/v1/profile/lock-vault)
-export async function lockVault(
-  req: AuthenticatedRequest,
-  res: Response,
-): Promise<void> {
+export async function lockVault(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
-  const rawTokenHeader =
-    req.headers["x-vault-token"] ?? req.headers["x-private-token"];
-  const vaultToken =
-    typeof rawTokenHeader === "string" ? rawTokenHeader.trim() : undefined;
+  const rawTokenHeader = req.headers["x-vault-token"] ?? req.headers["x-private-token"];
+  const vaultToken = typeof rawTokenHeader === "string" ? rawTokenHeader.trim() : undefined;
 
   if (vaultToken) {
     await VaultSessionService.revokeSession(userId, vaultToken);

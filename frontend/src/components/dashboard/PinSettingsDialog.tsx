@@ -38,10 +38,7 @@ export function PinSettingsDialog({
     e.preventDefault();
     setError(null);
 
-    if (
-      hasExistingPin &&
-      (currentPin.length !== 6 || !/^\d{6}$/.test(currentPin))
-    ) {
+    if (hasExistingPin && (currentPin.length !== 6 || !/^\d{6}$/.test(currentPin))) {
       setError("Vui lòng nhập đủ 6 chữ số mã PIN hiện tại");
       return;
     }
@@ -87,25 +84,18 @@ export function PinSettingsDialog({
   };
 
   const isFormComplete =
-    (!hasExistingPin || currentPin.length === 6) &&
-    pin.length === 6 &&
-    confirmPin.length === 6;
+    (!hasExistingPin || currentPin.length === 6) && pin.length === 6 && confirmPin.length === 6;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className={`${MODAL_BASE_CLASS} max-w-95`}>
         <ModalIconHeader
           icon={<Lock className="size-5 opacity-80" />}
-          title={
-            hasExistingPin ? "Đổi mã Master PIN" : "Thiết lập mã Master PIN"
-          }
+          title={hasExistingPin ? "Đổi mã Master PIN" : "Thiết lập mã Master PIN"}
           description="Mã PIN 6 số dùng để giải mã và bảo vệ ghi chú riêng tư."
         />
 
-        <form
-          onSubmit={(e) => void handleSubmit(e)}
-          className="mt-2 flex flex-col gap-4"
-        >
+        <form onSubmit={(e) => void handleSubmit(e)} className="mt-2 flex flex-col gap-4">
           <ModalAlertBanner message={error} />
           {/* Current PIN Row (chỉ hiển thị khi đã có PIN) */}
           {hasExistingPin && (
@@ -113,11 +103,7 @@ export function PinSettingsDialog({
               <span className="text-muted-foreground text-[11px] font-medium">
                 Nhập mã PIN hiện tại
               </span>
-              <PinInputGroup
-                value={currentDigits}
-                onChange={setCurrentDigits}
-                autoFocus={true}
-              />
+              <PinInputGroup value={currentDigits} onChange={setCurrentDigits} autoFocus={true} />
             </div>
           )}
 
@@ -126,11 +112,7 @@ export function PinSettingsDialog({
             <span className="text-muted-foreground text-[11px] font-medium">
               {hasExistingPin ? "Nhập mã PIN mới" : "Nhập mã PIN"}
             </span>
-            <PinInputGroup
-              value={pinDigits}
-              onChange={setPinDigits}
-              autoFocus={!hasExistingPin}
-            />
+            <PinInputGroup value={pinDigits} onChange={setPinDigits} autoFocus={!hasExistingPin} />
           </div>
           {/* PIN Row 2 */}
           <div className="flex flex-col items-center gap-2 pt-1">

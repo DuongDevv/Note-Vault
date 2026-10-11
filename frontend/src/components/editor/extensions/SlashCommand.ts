@@ -40,9 +40,7 @@ export const SlashCommand = Extension.create({
           if (!normalized) return SLASH_COMMAND_ITEMS;
           return SLASH_COMMAND_ITEMS.filter((item) => {
             if (item.title.toLowerCase().includes(normalized)) return true;
-            if (
-              item.keywords?.some((k) => k.toLowerCase().includes(normalized))
-            ) {
+            if (item.keywords?.some((k) => k.toLowerCase().includes(normalized))) {
               return true;
             }
             return false;
@@ -112,11 +110,7 @@ export const SlashCommand = Extension.create({
               });
 
               const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
-                if (
-                  popupEl &&
-                  e.target instanceof Node &&
-                  !popupEl.contains(e.target)
-                ) {
+                if (popupEl && e.target instanceof Node && !popupEl.contains(e.target)) {
                   destroyPopup();
                 }
               };
@@ -124,16 +118,8 @@ export const SlashCommand = Extension.create({
               window.addEventListener("mousedown", handleOutsideClick, true);
               window.addEventListener("touchstart", handleOutsideClick, true);
               removeClickListener = () => {
-                window.removeEventListener(
-                  "mousedown",
-                  handleOutsideClick,
-                  true,
-                );
-                window.removeEventListener(
-                  "touchstart",
-                  handleOutsideClick,
-                  true,
-                );
+                window.removeEventListener("mousedown", handleOutsideClick, true);
+                window.removeEventListener("touchstart", handleOutsideClick, true);
               };
             },
 

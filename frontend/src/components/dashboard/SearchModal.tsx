@@ -1,12 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Search, FileText, Folder, Lock, X } from "lucide-react";
 import type { Note, Topic } from "@/types/note";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
 interface SearchModalProps {

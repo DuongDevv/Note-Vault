@@ -69,10 +69,7 @@ export function LoginPage({ onAuthSuccess }: LoginPageProps) {
         </p>
       }
     >
-      <form
-        onSubmit={(e) => void handleLogin(e)}
-        className="flex flex-col gap-4"
-      >
+      <form onSubmit={(e) => void handleLogin(e)} className="flex flex-col gap-4">
         <ModalAlertBanner message={error} />
 
         <div className="flex flex-col gap-1.5">

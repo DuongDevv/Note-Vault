@@ -26,11 +26,9 @@ export const config = {
   },
   // Security Secrets
   SECURITY: {
-    JWT_SECRET:
-      process.env["JWT_SECRET"] ?? "super_secret_jwt_access_key_default",
+    JWT_SECRET: process.env["JWT_SECRET"] ?? "super_secret_jwt_access_key_default",
     JWT_EXPIRES_IN: 86400, // 24h in seconds
     PRIVATE_NOTE_MASTER_KEY:
-      process.env["PRIVATE_NOTE_MASTER_KEY"] ??
-      "default_32_bytes_key_for_aes_256",
+      process.env["PRIVATE_NOTE_MASTER_KEY"] ?? "default_32_bytes_key_for_aes_256",
   },
 };

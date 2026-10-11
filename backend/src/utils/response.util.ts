@@ -26,12 +26,8 @@ export function sendError(
   details?: unknown,
 ) {
   const isMachineCode = /^[A-Z0-9_]+$/.test(errorCodeOrMessage);
-  const error = isMachineCode
-    ? errorCodeOrMessage
-    : (messageOrError ?? "ERROR");
-  const message = isMachineCode
-    ? (messageOrError ?? errorCodeOrMessage)
-    : errorCodeOrMessage;
+  const error = isMachineCode ? errorCodeOrMessage : (messageOrError ?? "ERROR");
+  const message = isMachineCode ? (messageOrError ?? errorCodeOrMessage) : errorCodeOrMessage;
 
   return res.status(statusCode).json({
     success: false,

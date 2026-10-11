@@ -1,9 +1,7 @@
 import { createClient } from "redis";
 import { config } from "./env";
 
-const redisUrl =
-  config.REDIS.URL ??
-  `redis://${config.REDIS.HOST}:${String(config.REDIS.PORT)}`;
+const redisUrl = config.REDIS.URL ?? `redis://${config.REDIS.HOST}:${String(config.REDIS.PORT)}`;
 export const redisClient = createClient({
   url: redisUrl,
   socket: {

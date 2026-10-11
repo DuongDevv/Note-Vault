@@ -56,9 +56,7 @@ export function clearVaultToken(): void {
   sessionStorage.removeItem(VAULT_TOKEN_STORAGE_KEY);
 }
 
-export function getAuthHeaders(
-  customHeaders?: Record<string, string>,
-): Record<string, string> {
+export function getAuthHeaders(customHeaders?: Record<string, string>): Record<string, string> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...customHeaders,
@@ -98,10 +96,7 @@ async function authRequest(
   return envelope.data;
 }
 
-export async function loginUser(
-  username: string,
-  password: string,
-): Promise<AuthResponseData> {
+export async function loginUser(username: string, password: string): Promise<AuthResponseData> {
   return await authRequest(
     "/api/v1/auth/login",
     { username, password },
@@ -141,10 +136,7 @@ export async function fetchUserProfile(): Promise<AuthUser> {
   return payload.data;
 }
 
-export async function updatePrivatePin(
-  newPin: string,
-  currentPin?: string,
-): Promise<void> {
+export async function updatePrivatePin(newPin: string, currentPin?: string): Promise<void> {
   const { ok, data } = await safeFetchJson("/api/v1/profile/private-pin", {
     method: "POST",
     headers: getAuthHeaders(),

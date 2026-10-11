@@ -18,12 +18,7 @@ interface RenameTopicDialogProps {
   onRename: (topicId: string, newName: string) => Promise<void> | void;
 }
 
-export function RenameTopicDialog({
-  topic,
-  open,
-  onOpenChange,
-  onRename,
-}: RenameTopicDialogProps) {
+export function RenameTopicDialog({ topic, open, onOpenChange, onRename }: RenameTopicDialogProps) {
   if (!topic || !open) return null;
 
   return (
@@ -90,18 +85,12 @@ function RenameTopicForm({
           </div>
 
           <DialogFooter className="pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Hủy
             </Button>
             <Button
               type="submit"
-              disabled={
-                isSubmitting || !name.trim() || name.trim() === topic.name
-              }
+              disabled={isSubmitting || !name.trim() || name.trim() === topic.name}
             >
               {isSubmitting ? "Đang lưu…" : "Lưu thay đổi"}
             </Button>

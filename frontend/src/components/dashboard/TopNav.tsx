@@ -30,11 +30,7 @@ interface TopNavProps {
   hasPrivatePin?: boolean;
 }
 
-export function TopNav({
-  currentNote,
-  currentTopic,
-  hasPrivatePin,
-}: TopNavProps) {
+export function TopNav({ currentNote, currentTopic, hasPrivatePin }: TopNavProps) {
   const isSaving = useWorkspaceStore((s) => s.isSaving);
   const lastSavedAt = useWorkspaceStore((s) => s.lastSavedAt);
   const topics = useWorkspaceStore((s) => s.topics);
@@ -84,9 +80,7 @@ export function TopNav({
                 {currentTopic ? (
                   <>
                     <Folder className="size-3.5 shrink-0 opacity-70" />
-                    <span className="truncate font-medium">
-                      {currentTopic.name}
-                    </span>
+                    <span className="truncate font-medium">{currentTopic.name}</span>
                   </>
                 ) : (
                   <>
@@ -109,9 +103,7 @@ export function TopNav({
                     <FileText className="text-muted-foreground size-3.5" />
                     <span>Chưa phân loại</span>
                   </span>
-                  {!currentNote.topicId && (
-                    <Check className="text-primary size-3.5" />
-                  )}
+                  {!currentNote.topicId && <Check className="text-primary size-3.5" />}
                 </DropdownMenuItem>
                 {topics.length > 0 && <DropdownMenuSeparator />}
                 {topics.map((t) => (
@@ -145,9 +137,7 @@ export function TopNav({
 
           {currentNote && (
             <>
-              <span className="text-muted-foreground/40 font-mono text-[11px]">
-                /
-              </span>
+              <span className="text-muted-foreground/40 font-mono text-[11px]">/</span>
               <span className="text-foreground truncate font-medium">
                 {currentNote.title || "Trang chưa có tiêu đề"}
               </span>

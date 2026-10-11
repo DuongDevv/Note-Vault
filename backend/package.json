@@ -10,7 +10,7 @@
     "check": "bun run check-types && bun run lint",
     "check-types": "tsc --noEmit",
     "lint": "oxlint --type-aware --fix",
-    "format": "prettier --write \"src/**/*.ts\" \"prisma.config.ts\"",
+    "format": "oxfmt --write",
     "contract:emit": "prisma contract emit",
     "db:init": "prisma db init",
     "db:update": "prisma db update",

@@ -38,10 +38,7 @@ interface WorkspaceState {
   updateTopic: (id: string, name: string) => Promise<Topic>;
   moveNoteToTopic: (noteId: string, topicId: string | null) => Promise<void>;
   deleteNote: (noteId: string) => Promise<string | undefined>;
-  deleteTopic: (
-    topicId: string,
-    currentNoteTopicId?: string | null,
-  ) => Promise<string | undefined>;
+  deleteTopic: (topicId: string, currentNoteTopicId?: string | null) => Promise<string | undefined>;
   toggleNoteLock: (noteId: string, pin: string) => Promise<void>;
   toggleNotePin: (noteId: string) => Promise<void>;
   unlockNoteWithPin: (noteId: string, pin: string) => Promise<boolean>;
@@ -62,10 +59,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   fetchWorkspaceData: async () => {
     set({ isLoading: true });
     try {
-      const [fetchedTopics, fetchedNotes] = await Promise.all([
-        fetchTopics(),
-        fetchNotes(),
-      ]);
+      const [fetchedTopics, fetchedNotes] = await Promise.all([fetchTopics(), fetchNotes()]);
       set({
         topics: fetchedTopics,
         notes: fetchedNotes,
@@ -90,9 +84,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       const single = await fetchNoteById(noteId);
       set((state) => ({
         notes: state.notes.some((n) => n.id === single.id)
-          ? state.notes.map((n) =>
-              n.id === single.id ? { ...n, ...single } : n,
-            )
+          ? state.notes.map((n) => (n.id === single.id ? { ...n, ...single } : n))
           : [single, ...state.notes],
         isNoteLoading: false,
       }));
@@ -251,9 +243,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   toggleNotePin: async (noteId: string) => {
     // Optimistic update
     set((state) => ({
-      notes: state.notes.map((n) =>
-        n.id === noteId ? { ...n, isPinned: !n.isPinned } : n,
-      ),
+      notes: state.notes.map((n) => (n.id === noteId ? { ...n, isPinned: !n.isPinned } : n)),
     }));
     try {
       const updated = await apiToggleNotePin(noteId);
@@ -263,9 +253,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     } catch (err) {
       // Rollback on error
       set((state) => ({
-        notes: state.notes.map((n) =>
-          n.id === noteId ? { ...n, isPinned: !n.isPinned } : n,
-        ),
+        notes: state.notes.map((n) => (n.id === noteId ? { ...n, isPinned: !n.isPinned } : n)),
       }));
       throw err;
     }

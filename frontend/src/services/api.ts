@@ -34,10 +34,7 @@ async function fetchAndParse<T>(
   });
   if (!ok) {
     const serverMessage =
-      data &&
-      typeof data === "object" &&
-      "message" in data &&
-      typeof data.message === "string"
+      data && typeof data === "object" && "message" in data && typeof data.message === "string"
         ? data.message
         : errorMessage;
     throw new Error(serverMessage);
@@ -113,10 +110,7 @@ export async function updateTopic(
   );
 }
 
-export async function fetchNotes(
-  topicId?: string,
-  query?: string,
-): Promise<Note[]> {
+export async function fetchNotes(topicId?: string, query?: string): Promise<Note[]> {
   const params = new URLSearchParams();
   if (topicId && topicId !== "locked") params.set("topicId", topicId);
   if (query) params.set("search", query);
@@ -132,11 +126,7 @@ export async function fetchNotes(
   return parsed.map((n) => normalizeNote(n));
 }
 
-export async function fetchNoteById(
-  id: string,
-  pin?: string,
-  vaultToken?: string,
-): Promise<Note> {
+export async function fetchNoteById(id: string, pin?: string, vaultToken?: string): Promise<Note> {
   const headers: Record<string, string> = {};
   if (pin) {
     headers["x-private-pin"] = pin;
@@ -177,10 +167,7 @@ export async function createNote(note: Partial<Note>): Promise<Note> {
   return normalizeNote(parsed);
 }
 
-export async function updateNote(
-  id: string,
-  note: Partial<Note>,
-): Promise<Note> {
+export async function updateNote(id: string, note: Partial<Note>): Promise<Note> {
   const parsed = await fetchAndParse(
     `/api/v1/notes/${id}`,
     NoteSchema,
@@ -193,11 +180,7 @@ export async function updateNote(
   return normalizeNote(parsed);
 }
 
-export function toggleNoteLock(
-  id: string,
-  isLocked: boolean,
-  pin?: string,
-): Promise<Note> {
+export function toggleNoteLock(id: string, isLocked: boolean, pin?: string): Promise<Note> {
   return updateNote(id, { isLocked: !isLocked, pin });
 }
 

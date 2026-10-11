@@ -32,9 +32,7 @@ export const ApiKeyBlock = Node.create({
       title: {
         default: "API Key",
         parseHTML: (element) =>
-          element.getAttribute("data-title") ??
-          element.getAttribute("data-name") ??
-          "API Key",
+          element.getAttribute("data-title") ?? element.getAttribute("data-name") ?? "API Key",
       },
       name: {
         default: "API Key",
@@ -42,9 +40,7 @@ export const ApiKeyBlock = Node.create({
       value: {
         default: "",
         parseHTML: (element) =>
-          element.getAttribute("data-value") ??
-          element.getAttribute("data-key") ??
-          "",
+          element.getAttribute("data-value") ?? element.getAttribute("data-key") ?? "",
       },
       key: {
         default: "",

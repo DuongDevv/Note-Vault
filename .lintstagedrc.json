@@ -1,11 +1,8 @@
 {
-  "backend/src/**/!(*.d).ts": [
-    "prettier --write",
-    "oxlint --config backend/.oxlintrc.json --fix"
-  ],
+  "backend/src/**/!(*.d).ts": ["oxfmt --write", "oxlint --config backend/.oxlintrc.json --fix"],
   "frontend/src/**/!(*.d).{ts,tsx}": [
-    "prettier --write",
+    "oxfmt --write",
     "oxlint --config frontend/.oxlintrc.json --fix"
   ],
-  "*.{json,yml,yaml,md}": ["prettier --write"]
+  "*.{json,yml,yaml,md}": ["oxfmt --write"]
 }

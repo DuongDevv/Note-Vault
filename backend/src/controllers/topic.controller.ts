@@ -12,10 +12,7 @@ import {
 } from "../schemas/topic.schema";
 
 // Lấy danh sách Chủ đề của User (GET /api/v1/topics)
-export async function getTopics(
-  req: AuthenticatedRequest,
-  res: Response,
-): Promise<void> {
+export async function getTopics(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
@@ -27,29 +24,20 @@ export async function getTopics(
        ORDER BY name ASC`,
       [userId],
     );
-    ApiResponse.success(
-      res,
-      200,
-      "Lấy danh sách chủ đề thành công",
-      result.rows,
-    );
+    ApiResponse.success(res, 200, "Lấy danh sách chủ đề thành công", result.rows);
   } catch (error: unknown) {
     ApiResponse.serverError(res, error);
   }
 }
 
 // Tạo Chủ đề mới (POST /api/v1/topics)
-export async function createTopic(
-  req: AuthenticatedRequest,
-  res: Response,
-): Promise<void> {
+export async function createTopic(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
   const parsed = createTopicSchema.safeParse(req.body);
   if (!parsed.success) {
-    const errorMsg =
-      parsed.error.issues[0]?.message ?? "Tên chủ đề không được để rỗng";
+    const errorMsg = parsed.error.issues[0]?.message ?? "Tên chủ đề không được để rỗng";
     ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
     return;
   }
@@ -71,12 +59,7 @@ export async function createTopic(
     }
     ApiResponse.success(res, 201, "Tạo chủ đề thành công", newTopic);
   } catch (error: unknown) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      error.code === "23505"
-    ) {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "23505") {
       // Postgres Unique Constraint Violation
       ApiResponse.error(res, 409, "CONFLICT", "Chủ đề này đã tồn tại");
       return;
@@ -85,17 +68,13 @@ export async function createTopic(
   }
 }
 
-export async function updateTopic(
-  req: AuthenticatedRequest,
-  res: Response,
-): Promise<void> {
+export async function updateTopic(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
   const parsedParam = topicIdParamSchema.safeParse(req.params);
   if (!parsedParam.success) {
-    const errorMsg =
-      parsedParam.error.issues[0]?.message ?? "ID chủ đề không hợp lệ";
+    const errorMsg = parsedParam.error.issues[0]?.message ?? "ID chủ đề không hợp lệ";
     ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
     return;
   }
@@ -103,8 +82,7 @@ export async function updateTopic(
 
   const parsedBody = updateTopicSchema.safeParse(req.body);
   if (!parsedBody.success) {
-    const errorMsg =
-      parsedBody.error.issues[0]?.message ?? "Dữ liệu không hợp lệ";
+    const errorMsg = parsedBody.error.issues[0]?.message ?? "Dữ liệu không hợp lệ";
     ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
     return;
   }
@@ -120,12 +98,7 @@ export async function updateTopic(
   }
 
   if (updates.length === 0) {
-    ApiResponse.error(
-      res,
-      400,
-      "BAD_REQUEST",
-      "Không có trường nào để cập nhật",
-    );
+    ApiResponse.error(res, 400, "BAD_REQUEST", "Không có trường nào để cập nhật");
     return;
   }
 
@@ -142,23 +115,13 @@ export async function updateTopic(
     );
 
     if (result.rows.length === 0) {
-      ApiResponse.error(
-        res,
-        404,
-        "NOT_FOUND",
-        "Không tìm thấy chủ đề hoặc không có quyền",
-      );
+      ApiResponse.error(res, 404, "NOT_FOUND", "Không tìm thấy chủ đề hoặc không có quyền");
       return;
     }
 
     ApiResponse.success(res, 200, "Cập nhật chủ đề thành công", result.rows[0]);
   } catch (error: unknown) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      error.code === "23505"
-    ) {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "23505") {
       ApiResponse.error(res, 409, "CONFLICT", "Tên chủ đề này đã tồn tại");
       return;
     }
@@ -166,17 +129,13 @@ export async function updateTopic(
   }
 }
 
-export async function deleteTopic(
-  req: AuthenticatedRequest,
-  res: Response,
-): Promise<void> {
+export async function deleteTopic(req: AuthenticatedRequest, res: Response): Promise<void> {
   const userId = requireUserId(req, res);
   if (!userId) return;
 
   const parsedParam = topicIdParamSchema.safeParse(req.params);
   if (!parsedParam.success) {
-    const errorMsg =
-      parsedParam.error.issues[0]?.message ?? "ID chủ đề không hợp lệ";
+    const errorMsg = parsedParam.error.issues[0]?.message ?? "ID chủ đề không hợp lệ";
     ApiResponse.error(res, 400, "BAD_REQUEST", errorMsg);
     return;
   }
@@ -185,22 +144,14 @@ export async function deleteTopic(
 
   try {
     // Delete all child notes belonging to this topic
-    await dbPool.query(
-      "DELETE FROM notes WHERE topic_id = $1 AND user_id = $2",
-      [id, userId],
-    );
+    await dbPool.query("DELETE FROM notes WHERE topic_id = $1 AND user_id = $2", [id, userId]);
 
     const result = await dbPool.query<{ id: string }>(
       "DELETE FROM topics WHERE id = $1 AND user_id = $2 RETURNING id",
       [id, userId],
     );
     if (result.rows.length === 0) {
-      ApiResponse.error(
-        res,
-        404,
-        "NOT_FOUND",
-        "Không tìm thấy chủ đề hoặc không có quyền xóa",
-      );
+      ApiResponse.error(res, 404, "NOT_FOUND", "Không tìm thấy chủ đề hoặc không có quyền xóa");
       return;
     }
 

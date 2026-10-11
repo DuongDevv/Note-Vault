@@ -5,11 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-    babel({ presets: [reactCompilerPreset()] }),
-    tailwindcss(),
-  ],
+  plugins: [react(), babel({ presets: [reactCompilerPreset()] }), tailwindcss()],
   resolve: {
     tsconfigPaths: true,
   },
@@ -33,11 +29,7 @@ export default defineConfig({
             if (id.includes("highlight.js") || id.includes("lowlight")) {
               return "vendor-syntax";
             }
-            if (
-              id.includes("react-router") ||
-              id.includes("react-dom") ||
-              id.includes("/react/")
-            ) {
+            if (id.includes("react-router") || id.includes("react-dom") || id.includes("/react/")) {
               return "vendor-react";
             }
             if (

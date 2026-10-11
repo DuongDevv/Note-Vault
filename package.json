@@ -9,15 +9,15 @@
     "sync:types": "bun run --cwd backend contract:emit && cp backend/src/prisma/contract.d.ts frontend/src/types/backend-contract.d.ts",
     "check-types": "bun run sync:types && bun run --cwd backend check-types && bun run --cwd frontend check-types",
     "lint": "bun run --cwd backend lint && bun run --cwd frontend lint",
-    "prepare": "husky"
+    "prepare": "husky",
+    "format": "bun run --cwd backend format && bun run --cwd frontend format"
   },
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^17.5.1",
+    "oxfmt": "^0.70.0",
     "oxlint": "^1.85.0",
     "oxlint-config-presets": "^0.1.20",
-    "oxlint-tsgolint": "^7.0.2002",
-    "prettier": "^3.9.9",
-    "prettier-plugin-tailwindcss": "^0.8.1"
+    "oxlint-tsgolint": "^7.0.2002"
   }
 }

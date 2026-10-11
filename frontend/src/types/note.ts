@@ -1,13 +1,6 @@
 import { z } from "zod";
 
-export const MetaTypeSchema = z.enum([
-  "size",
-  "words",
-  "code",
-  "formula",
-  "members",
-  "lessons",
-]);
+export const MetaTypeSchema = z.enum(["size", "words", "code", "formula", "members", "lessons"]);
 export type MetaType = z.infer<typeof MetaTypeSchema>;
 
 export const NoteSchema = z.object({
@@ -15,11 +8,7 @@ export const NoteSchema = z.object({
   userId: z.string().optional(),
   title: z.string(),
   content: z
-    .union([
-      z.string(),
-      z.record(z.string(), z.unknown()),
-      z.array(z.unknown()),
-    ])
+    .union([z.string(), z.record(z.string(), z.unknown()), z.array(z.unknown())])
     .nullable()
     .optional(),
   tags: z.array(z.string()).optional().default([]),

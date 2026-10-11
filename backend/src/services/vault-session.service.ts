@@ -31,10 +31,7 @@ export async function createSession(
 /**
  * Retrieves the cached KEK for an active vault session.
  */
-export async function getSessionKek(
-  userId: string,
-  token: string,
-): Promise<string | null> {
+export async function getSessionKek(userId: string, token: string): Promise<string | null> {
   if (!redisClient.isOpen) {
     return null;
   }
@@ -46,10 +43,7 @@ export async function getSessionKek(
 /**
  * Revokes a vault session immediately.
  */
-export async function revokeSession(
-  userId: string,
-  token: string,
-): Promise<boolean> {
+export async function revokeSession(userId: string, token: string): Promise<boolean> {
   if (!redisClient.isOpen) {
     return false;
   }

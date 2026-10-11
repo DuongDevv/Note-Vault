@@ -11,18 +11,10 @@ router.post(
   rateLimiter(10, 60),
   (req, res) => void AuthController.register(req, res),
 );
-router.post(
-  "/auth/login",
-  rateLimiter(5, 60),
-  (req, res) => void AuthController.login(req, res),
-);
+router.post("/auth/login", rateLimiter(5, 60), (req, res) => void AuthController.login(req, res));
 
 // Protected Routes (Yêu cầu JWT Token)
-router.get(
-  "/profile",
-  authenticateJWT,
-  (req, res) => void AuthController.getProfile(req, res),
-);
+router.get("/profile", authenticateJWT, (req, res) => void AuthController.getProfile(req, res));
 router.post(
   "/profile/private-pin",
   authenticateJWT,

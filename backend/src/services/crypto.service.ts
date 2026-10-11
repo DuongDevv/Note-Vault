@@ -26,10 +26,7 @@ export async function hashData(plainText: string): Promise<string> {
 /**
  * Verifies a plaintext input against an Argon2id hash.
  */
-export async function verifyHash(
-  hash: string,
-  plainText: string,
-): Promise<boolean> {
+export async function verifyHash(hash: string, plainText: string): Promise<boolean> {
   try {
     return await argon2.verify(hash, plainText);
   } catch {
@@ -74,10 +71,7 @@ export function encryptPayload(data: unknown, key: Buffer): EncryptedPayload {
 /**
  * Decrypts AES-256-GCM encrypted payload and parses JSON if possible.
  */
-export function decryptPayload(
-  payload: EncryptedPayload,
-  key: Buffer,
-): unknown {
+export function decryptPayload(payload: EncryptedPayload, key: Buffer): unknown {
   const iv = Buffer.from(payload.iv, "hex");
   const authTag = Buffer.from(payload.authTag, "hex");
 
@@ -196,11 +190,7 @@ export function rewrapDataKey(
   return JSON.stringify(newKeyPayload);
 }
 
-export function encryptNoteContent(
-  content: unknown,
-  userId: string,
-  pin?: string,
-): string {
+export function encryptNoteContent(content: unknown, userId: string, pin?: string): string {
   const key = pin ? deriveVaultKey(userId, pin) : deriveUserKey(userId);
   const payload = encryptPayload(content, key);
   return JSON.stringify(payload);
@@ -222,11 +212,7 @@ function isEncryptedPayload(data: unknown): data is EncryptedPayload {
 /**
  * Convenience helper: Decrypts a packed JSON string into structured content.
  */
-export function decryptNoteContent(
-  packedJson: string,
-  userId: string,
-  pin?: string,
-): unknown {
+export function decryptNoteContent(packedJson: string, userId: string, pin?: string): unknown {
   try {
     const parsed: unknown = JSON.parse(packedJson);
     if (!isEncryptedPayload(parsed)) {

@@ -1,13 +1,7 @@
 import type { ReactNode } from "react";
 import { ShieldCheck } from "lucide-react";
 import { NoteVaultLogo } from "@/components/common/NoteVaultLogo";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface AuthLayoutProps {
   title: string;
@@ -16,12 +10,7 @@ interface AuthLayoutProps {
   footer: ReactNode;
 }
 
-export function AuthLayout({
-  title,
-  description,
-  children,
-  footer,
-}: AuthLayoutProps) {
+export function AuthLayout({ title, description, children, footer }: AuthLayoutProps) {
   return (
     <div className="bg-background flex min-h-screen w-full items-center justify-center p-4 antialiased">
       <div className="flex w-full max-w-105 flex-col gap-6">
@@ -30,9 +19,7 @@ export function AuthLayout({
           <div className="flex items-center justify-center p-1">
             <NoteVaultLogo size={48} className="rounded-xl shadow-xs" />
           </div>
-          <h1 className="text-foreground text-2xl font-bold tracking-tight">
-            NoteVault
-          </h1>
+          <h1 className="text-foreground text-2xl font-bold tracking-tight">NoteVault</h1>
           <p className="text-muted-foreground text-xs">
             Không gian ghi chú cá nhân & bảo mật riêng tư
           </p>

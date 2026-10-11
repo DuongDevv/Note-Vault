@@ -12,10 +12,7 @@ import {
 } from "@/components/ui/select";
 export function CodeBlockNodeView({ node, updateAttributes }: NodeViewProps) {
   const [copied, setCopied] = useState<boolean>(false);
-  const language =
-    typeof node.attrs.language === "string"
-      ? node.attrs.language
-      : "typescript";
+  const language = typeof node.attrs.language === "string" ? node.attrs.language : "typescript";
 
   const handleCopy = () => {
     const text = node.textContent;

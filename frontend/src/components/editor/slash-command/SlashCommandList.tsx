@@ -136,85 +136,82 @@ export interface SlashCommandListRef {
   onKeyDown: (props: { event: KeyboardEvent }) => boolean;
 }
 
-export const SlashCommandList = forwardRef<
-  SlashCommandListRef,
-  SlashCommandListProps
->(function SlashCommandList({ items, command }, ref) {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const safeIndex = items.length > 0 ? selectedIndex % items.length : 0;
+export const SlashCommandList = forwardRef<SlashCommandListRef, SlashCommandListProps>(
+  function SlashCommandList({ items, command }, ref) {
+    const [selectedIndex, setSelectedIndex] = useState(0);
+    const safeIndex = items.length > 0 ? selectedIndex % items.length : 0;
 
-  useImperativeHandle(ref, () => ({
-    onKeyDown: ({ event }) => {
-      if (event.key === "ArrowUp") {
-        setSelectedIndex((prev) => (prev + items.length - 1) % items.length);
-        return true;
-      }
-      if (event.key === "ArrowDown") {
-        setSelectedIndex((prev) => (prev + 1) % items.length);
-        return true;
-      }
-      if (event.key === "Enter") {
-        if (items.length > 0) {
-          command(items[safeIndex]);
+    useImperativeHandle(ref, () => ({
+      onKeyDown: ({ event }) => {
+        if (event.key === "ArrowUp") {
+          setSelectedIndex((prev) => (prev + items.length - 1) % items.length);
           return true;
         }
-      }
-      return false;
-    },
-  }));
+        if (event.key === "ArrowDown") {
+          setSelectedIndex((prev) => (prev + 1) % items.length);
+          return true;
+        }
+        if (event.key === "Enter") {
+          if (items.length > 0) {
+            command(items[safeIndex]);
+            return true;
+          }
+        }
+        return false;
+      },
+    }));
 
-  if (items.length === 0) {
+    if (items.length === 0) {
+      return (
+        <div className="border-border bg-popover text-muted-foreground w-64 rounded-xl border p-3 text-center text-xs shadow-xl select-none">
+          Không tìm thấy lệnh phù hợp
+        </div>
+      );
+    }
+
     return (
-      <div className="border-border bg-popover text-muted-foreground w-64 rounded-xl border p-3 text-center text-xs shadow-xl select-none">
-        Không tìm thấy lệnh phù hợp
-      </div>
-    );
-  }
+      <div className="border-border bg-popover text-popover-foreground max-h-72 w-68 overflow-y-auto rounded-xl border p-1 shadow-2xl backdrop-blur-md select-none">
+        <div className="text-muted-foreground px-2 py-1 text-[11px] font-semibold tracking-wider uppercase">
+          Lệnh định dạng & Bảo mật
+        </div>
 
-  return (
-    <div className="border-border bg-popover text-popover-foreground max-h-72 w-68 overflow-y-auto rounded-xl border p-1 shadow-2xl backdrop-blur-md select-none">
-      <div className="text-muted-foreground px-2 py-1 text-[11px] font-semibold tracking-wider uppercase">
-        Lệnh định dạng & Bảo mật
-      </div>
-
-      <div className="space-y-0.5">
-        {items.map((item, index) => {
-          const isSelected = index === safeIndex;
-          const IconComponent = item.icon;
-          return (
-            <button
-              key={item.title}
-              type="button"
-              onClick={() => command(item)}
-              onMouseEnter={() => setSelectedIndex(index)}
-              className={`flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors ${
-                isSelected
-                  ? "bg-accent text-accent-foreground font-medium"
-                  : "text-foreground hover:bg-accent/50"
-              }`}
-            >
-              <div
-                className={`flex size-6 shrink-0 items-center justify-center rounded-md border ${
+        <div className="space-y-0.5">
+          {items.map((item, index) => {
+            const isSelected = index === safeIndex;
+            const IconComponent = item.icon;
+            return (
+              <button
+                key={item.title}
+                type="button"
+                onClick={() => command(item)}
+                onMouseEnter={() => setSelectedIndex(index)}
+                className={`flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-xs transition-colors ${
                   isSelected
-                    ? "border-primary/30 bg-primary/10 text-primary"
-                    : "border-border bg-muted/40 text-muted-foreground"
+                    ? "bg-accent text-accent-foreground font-medium"
+                    : "text-foreground hover:bg-accent/50"
                 }`}
               >
-                <IconComponent className="size-3.5" />
-              </div>
+                <div
+                  className={`flex size-6 shrink-0 items-center justify-center rounded-md border ${
+                    isSelected
+                      ? "border-primary/30 bg-primary/10 text-primary"
+                      : "border-border bg-muted/40 text-muted-foreground"
+                  }`}
+                >
+                  <IconComponent className="size-3.5" />
+                </div>
 
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[12px] leading-tight font-medium">
-                  {item.title}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[12px] leading-tight font-medium">{item.title}</div>
+                  <div className="text-muted-foreground truncate text-[11px]">
+                    {item.description}
+                  </div>
                 </div>
-                <div className="text-muted-foreground truncate text-[11px]">
-                  {item.description}
-                </div>
-              </div>
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  },
+);
