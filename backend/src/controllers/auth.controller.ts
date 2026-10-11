@@ -30,6 +30,28 @@ interface UserRow {
 interface UserProfileDbRow extends UserRow {
   has_private_pin: boolean;
 }
+function signAuthToken(userId: string, username: string): string {
+  return jwt.sign({ userId, username }, config.SECURITY.JWT_SECRET, {
+    expiresIn: config.SECURITY.JWT_EXPIRES_IN,
+  });
+}
+
+function mapAuthUser(user: {
+  id: string;
+  username: string;
+  email: string;
+  display_name: string;
+  has_private_pin?: boolean;
+}) {
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    displayName: user.display_name,
+    hasPrivatePin: user.has_private_pin ?? false,
+  };
+}
+
 // Đăng ký tài khoản mới (POST /api/v1/auth/register)
 export async function register(req: Request, res: Response): Promise<void> {
   const parsed = registerSchema.safeParse(req.body);
@@ -75,20 +97,10 @@ export async function register(req: Request, res: Response): Promise<void> {
     }
 
     // Sinh JWT Token
-    const token = jwt.sign(
-      { userId: newUser.id, username: newUser.username },
-      config.SECURITY.JWT_SECRET,
-      { expiresIn: config.SECURITY.JWT_EXPIRES_IN },
-    );
+    const token = signAuthToken(newUser.id, newUser.username);
 
     ApiResponse.success(res, 201, "Đăng ký tài khoản thành công", {
-      user: {
-        id: newUser.id,
-        username: newUser.username,
-        email: newUser.email,
-        displayName: newUser.display_name,
-        hasPrivatePin: false,
-      },
+      user: mapAuthUser(newUser),
       accessToken: token,
     });
   } catch (error: unknown) {
@@ -142,20 +154,10 @@ export async function login(req: Request, res: Response): Promise<void> {
     }
 
     // Sinh JWT Token
-    const token = jwt.sign(
-      { userId: user.id, username: user.username },
-      config.SECURITY.JWT_SECRET,
-      { expiresIn: config.SECURITY.JWT_EXPIRES_IN },
-    );
+    const token = signAuthToken(user.id, user.username);
 
     ApiResponse.success(res, 200, "Đăng nhập thành công", {
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        displayName: user.display_name,
-        hasPrivatePin: user.has_private_pin,
-      },
+      user: mapAuthUser(user),
       accessToken: token,
     });
   } catch (error: unknown) {

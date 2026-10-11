@@ -46,34 +46,26 @@ function formatNoteResponse(
 
   if (row.content) {
     if (row.is_locked) {
-      if (vaultKek || vaultPin) {
-        if (vaultKek) {
-          // Fast path: Enveloped Decryption with cached KEK from Redis Vault Session
-          decryptedContent = row.encrypted_key
-            ? CryptoService.decryptEnvelopedWithKek(
-                row.content,
-                row.encrypted_key,
-                userId,
-                vaultKek,
-              )
-            : CryptoService.decryptNoteContent(row.content, userId);
-        } else if (row.encrypted_key) {
-          decryptedContent = CryptoService.decryptEnveloped(
-            row.content,
-            row.encrypted_key,
-            userId,
-            vaultPin,
-          );
-        } else {
-          // Fallback cho note cũ tạo trước khi có Enveloped Encryption
-          decryptedContent = CryptoService.decryptNoteContent(
-            row.content,
-            userId,
-            vaultPin,
-          );
-        }
+      if (vaultKek) {
+        decryptedContent = row.encrypted_key
+          ? CryptoService.decryptEnvelopedWithKek(
+              row.content,
+              row.encrypted_key,
+              userId,
+              vaultKek,
+            )
+          : CryptoService.decryptNoteContent(row.content, userId);
+      } else if (vaultPin) {
+        decryptedContent = row.encrypted_key
+          ? CryptoService.decryptEnveloped(
+              row.content,
+              row.encrypted_key,
+              userId,
+              vaultPin,
+            )
+          : CryptoService.decryptNoteContent(row.content, userId, vaultPin);
       } else {
-        // Masked content for locked notes when not unlocked with PIN
+        // Masked content for locked notes when not unlocked
         decryptedContent = null;
       }
     } else {
@@ -225,14 +217,7 @@ export async function getNoteById(
     }
 
     const hasCredentials = Boolean(vaultKek ?? vaultPin);
-    const formattedNote = formatNoteResponse(
-      note,
-      userId,
-      hasCredentials && note.is_locked
-        ? (vaultPin ?? "session_unlocked")
-        : undefined,
-      vaultKek,
-    );
+    const formattedNote = formatNoteResponse(note, userId, vaultPin, vaultKek);
 
     if (
       hasCredentials &&
@@ -462,9 +447,14 @@ export async function updateNote(
           encryptedContent = enveloped.encryptedContent;
           encryptedKey = enveloped.encryptedKey;
         } else if (current.encrypted_key) {
-          // Giữ nguyên encryptedKey hiện tại, nhưng giải mã DEK để mã hóa lại content mới
-          // Hoặc mã hóa lại bằng userKey fallback
-          encryptedContent = CryptoService.encryptNoteContent(content, userId);
+          // Khi note đang khóa mà update content mà không truyền PIN: bắt buộc cần PIN để re-wrap DEK
+          ApiResponse.error(
+            res,
+            400,
+            "BAD_REQUEST",
+            "Vui lòng cung cấp mã PIN để cập nhật nội dung ghi chú đã khóa bảo mật",
+          );
+          return;
         } else {
           encryptedContent = CryptoService.encryptNoteContent(content, userId);
         }

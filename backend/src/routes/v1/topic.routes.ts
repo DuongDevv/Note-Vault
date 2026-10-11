@@ -15,10 +15,6 @@ router.patch(
   "/topics/:id",
   (req, res) => void TopicController.updateTopic(req, res),
 );
-router.put(
-  "/topics/:id",
-  (req, res) => void TopicController.updateTopic(req, res),
-);
 router.delete(
   "/topics/:id",
   (req, res) => void TopicController.deleteTopic(req, res),

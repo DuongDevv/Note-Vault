@@ -1,7 +1,6 @@
 import { z } from "zod";
 import type { Models } from "../prisma/contract.d.ts";
 
-export type Topic = Models.public_Topic;
 export type TopicResponse = Omit<
   Models.public_Topic,
   "createdAt" | "updatedAt" | "notes" | "user"

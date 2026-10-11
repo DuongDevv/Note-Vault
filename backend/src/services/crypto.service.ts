@@ -125,34 +125,8 @@ export function decryptEnveloped(
   userId: string,
   pin?: string,
 ): unknown {
-  try {
-    const keyPayload = JSON.parse(packedKey) as unknown;
-    if (!isEncryptedPayload(keyPayload)) return null;
-
-    let dataKeyBase64: unknown = null;
-    if (pin) {
-      const vaultKey = deriveVaultKey(userId, pin);
-      try {
-        dataKeyBase64 = decryptPayload(keyPayload, vaultKey);
-      } catch {
-        const userKey = deriveUserKey(userId);
-        dataKeyBase64 = decryptPayload(keyPayload, userKey);
-      }
-    } else {
-      const userKey = deriveUserKey(userId);
-      dataKeyBase64 = decryptPayload(keyPayload, userKey);
-    }
-
-    if (typeof dataKeyBase64 !== "string") return null;
-    const dataKey = Buffer.from(dataKeyBase64, "base64");
-
-    const contentPayload = JSON.parse(packedContent) as unknown;
-    if (!isEncryptedPayload(contentPayload)) return packedContent;
-
-    return decryptPayload(contentPayload, dataKey);
-  } catch {
-    return null;
-  }
+  const kek = pin ? deriveVaultKey(userId, pin) : deriveUserKey(userId);
+  return decryptEnvelopedWithKek(packedContent, packedKey, userId, kek);
 }
 
 /**

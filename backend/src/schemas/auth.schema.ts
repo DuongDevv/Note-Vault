@@ -1,7 +1,4 @@
 import { z } from "zod";
-import type { Models } from "../prisma/contract.d.ts";
-
-export type User = Models.public_User;
 
 export const registerSchema = z.object({
   username: z.string().trim().min(3, "Username phải có ít nhất 3 ký tự"),
