@@ -14,17 +14,15 @@ import {
 export interface SidebarUserProfileProps {
   currentUser?: AuthUser | null;
   onLogout?: () => void;
-  isDark?: boolean;
-  onToggleTheme?: () => void;
 }
 
 export function SidebarUserProfile({
   currentUser,
   onLogout,
-  isDark,
-  onToggleTheme,
 }: SidebarUserProfileProps) {
   const setPinSettingsOpen = useUIStore((s) => s.setPinSettingsOpen);
+  const isDark = useUIStore((s) => s.isDark);
+  const toggleTheme = useUIStore((s) => s.toggleTheme);
 
   return (
     <SidebarFooter className="border-sidebar-border/60 border-t p-2">
@@ -80,21 +78,19 @@ export function SidebarUserProfile({
             <span>Khóa phiên Vault</span>
           </DropdownMenuItem>
 
-          {onToggleTheme && (
-            <DropdownMenuItem
-              onClick={onToggleTheme}
-              className="flex cursor-pointer items-center justify-between px-2 py-1.5 text-xs"
-            >
-              <span className="flex items-center gap-2.5">
-                {isDark ? (
-                  <Sun className="text-muted-foreground size-3.5" />
-                ) : (
-                  <Moon className="text-muted-foreground size-3.5" />
-                )}
-                <span>{isDark ? "Giao diện: Sáng" : "Giao diện: Tối"}</span>
-              </span>
-            </DropdownMenuItem>
-          )}
+          <DropdownMenuItem
+            onClick={toggleTheme}
+            className="flex cursor-pointer items-center justify-between px-2 py-1.5 text-xs"
+          >
+            <span className="flex items-center gap-2.5">
+              {isDark ? (
+                <Sun className="text-muted-foreground size-3.5" />
+              ) : (
+                <Moon className="text-muted-foreground size-3.5" />
+              )}
+              <span>{isDark ? "Giao diện: Sáng" : "Giao diện: Tối"}</span>
+            </span>
+          </DropdownMenuItem>
 
           <DropdownMenuSeparator className="my-1" />
 

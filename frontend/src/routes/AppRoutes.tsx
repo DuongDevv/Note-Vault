@@ -10,8 +10,6 @@ interface AppRoutesProps {
   isAuthLoading: boolean;
   onAuthSuccess: (user: AuthUser) => void;
   onLogout: () => void;
-  isDark: boolean;
-  onToggleTheme: () => void;
   onUserUpdate: (user: AuthUser) => void;
 }
 
@@ -20,8 +18,6 @@ export function AppRoutes({
   isAuthLoading,
   onAuthSuccess,
   onLogout,
-  isDark,
-  onToggleTheme,
   onUserUpdate,
 }: AppRoutesProps) {
   return (
@@ -56,8 +52,6 @@ export function AppRoutes({
             <WorkspaceLayout
               currentUser={currentUser}
               onLogout={onLogout}
-              isDark={isDark}
-              onToggleTheme={onToggleTheme}
               onUserUpdate={onUserUpdate}
             />
           </ProtectedRoute>

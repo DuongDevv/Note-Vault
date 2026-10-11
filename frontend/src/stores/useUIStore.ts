@@ -8,6 +8,7 @@ export interface LockTarget {
 }
 
 interface UIState {
+  isDark: boolean;
   isSearchOpen: boolean;
   searchInitialQuery: string;
   isNewTopicOpen: boolean;
@@ -15,6 +16,7 @@ interface UIState {
   lockTargetNote: LockTarget | null;
   noteToDelete: Note | null;
 
+  toggleTheme: () => void;
   setSearchOpen: (open: boolean, initialQuery?: string) => void;
   setNewTopicOpen: (open: boolean) => void;
   setPinSettingsOpen: (open: boolean) => void;
@@ -28,7 +30,14 @@ interface UIState {
   closeLockDialog: () => void;
 }
 
+function getInitialTheme(): boolean {
+  if (typeof window === "undefined") return false;
+  const saved = localStorage.getItem("notevault-theme");
+  if (saved) return saved === "dark";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
 export const useUIStore = create<UIState>((set) => ({
+  isDark: getInitialTheme(),
   isSearchOpen: false,
   searchInitialQuery: "",
   isNewTopicOpen: false,
@@ -36,6 +45,17 @@ export const useUIStore = create<UIState>((set) => ({
   lockTargetNote: null,
   noteToDelete: null,
 
+  toggleTheme: () =>
+    set((state) => {
+      const next = !state.isDark;
+      if (typeof document !== "undefined") {
+        document.documentElement.classList.toggle("dark", next);
+      }
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem("notevault-theme", next ? "dark" : "light");
+      }
+      return { isDark: next };
+    }),
   setSearchOpen: (open, initialQuery = "") =>
     set({ isSearchOpen: open, searchInitialQuery: initialQuery }),
   setNewTopicOpen: (open) => set({ isNewTopicOpen: open }),

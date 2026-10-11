@@ -48,13 +48,3 @@ export const TopicSchema = z.object({
   updatedAt: z.string().optional(),
 });
 export type Topic = z.infer<typeof TopicSchema>;
-
-export const SortOptionSchema = z.enum([
-  "Mới nhất",
-  "Cũ nhất",
-  "Theo tên (A-Z)",
-]);
-export type SortOption = z.infer<typeof SortOptionSchema>;
-
-export const ViewModeSchema = z.enum(["grid", "list"]);
-export type ViewMode = z.infer<typeof ViewModeSchema>;

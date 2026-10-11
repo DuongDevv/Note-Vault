@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useActiveRouteIds } from "@/hooks/useActiveRouteIds";
 import { useShallow } from "zustand/react/shallow";
 import {
   SidebarProvider,
@@ -22,20 +23,15 @@ import type { Note, Topic } from "@/types/note";
 interface WorkspaceLayoutProps {
   currentUser: AuthUser | null;
   onLogout: () => void;
-  isDark: boolean;
-  onToggleTheme: () => void;
   onUserUpdate: (user: AuthUser) => void;
 }
 
 export function WorkspaceLayout({
   currentUser,
   onLogout,
-  isDark,
-  onToggleTheme,
   onUserUpdate,
 }: WorkspaceLayoutProps) {
   const navigate = useNavigate();
-  const location = useLocation();
 
   // Workspace Store
   const { notes, topics, fetchWorkspaceData, ensureNoteLoaded } =
@@ -47,16 +43,7 @@ export function WorkspaceLayout({
         ensureNoteLoaded: s.ensureNoteLoaded,
       })),
     );
-  // Derive Active Topic & Note from current URL
-  const activeTopicId = useMemo(() => {
-    const match = /^\/topics\/([^/]+)/.exec(location.pathname);
-    return match ? match[1] : undefined;
-  }, [location.pathname]);
-
-  const activeNoteId = useMemo(() => {
-    const match = /^\/notes\/([^/]+)/.exec(location.pathname);
-    return match ? match[1] : undefined;
-  }, [location.pathname]);
+  const { activeTopicId, activeNoteId } = useActiveRouteIds();
 
   // Load Initial Topics & Notes
   useEffect(() => {
@@ -98,8 +85,6 @@ export function WorkspaceLayout({
       <WorkspaceLayoutContent
         currentUser={currentUser}
         onLogout={onLogout}
-        isDark={isDark}
-        onToggleTheme={onToggleTheme}
         onUserUpdate={onUserUpdate}
         currentNote={currentNote}
         currentTopic={currentTopic}
@@ -116,8 +101,6 @@ interface WorkspaceLayoutContentProps extends WorkspaceLayoutProps {
 function WorkspaceLayoutContent({
   currentUser,
   onLogout,
-  isDark,
-  onToggleTheme,
   onUserUpdate,
   currentNote,
   currentTopic,
@@ -182,12 +165,7 @@ function WorkspaceLayoutContent({
 
   return (
     <div className="bg-background text-foreground flex h-svh max-h-svh w-full overflow-hidden antialiased">
-      <AppSidebar
-        currentUser={currentUser}
-        onLogout={onLogout}
-        isDark={isDark}
-        onToggleTheme={onToggleTheme}
-      />
+      <AppSidebar currentUser={currentUser} onLogout={onLogout} />
 
       <SidebarInset className="bg-background flex h-full min-w-0 flex-1 flex-col overflow-hidden">
         <TopNav

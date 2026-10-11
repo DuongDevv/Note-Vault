@@ -16,6 +16,7 @@ interface PinSettingsDialogProps {
   hasExistingPin?: boolean;
   onPinUpdated?: () => void;
 }
+const EMPTY_PIN = ["", "", "", "", "", ""];
 
 export function PinSettingsDialog({
   open,
@@ -23,30 +24,9 @@ export function PinSettingsDialog({
   hasExistingPin = false,
   onPinUpdated,
 }: PinSettingsDialogProps) {
-  const [currentDigits, setCurrentDigits] = useState<string[]>([
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-  ]);
-  const [pinDigits, setPinDigits] = useState<string[]>([
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-  ]);
-  const [confirmDigits, setConfirmDigits] = useState<string[]>([
-    "",
-    "",
-    "",
-    "",
-    "",
-    "",
-  ]);
+  const [currentDigits, setCurrentDigits] = useState<string[]>(EMPTY_PIN);
+  const [pinDigits, setPinDigits] = useState<string[]>(EMPTY_PIN);
+  const [confirmDigits, setConfirmDigits] = useState<string[]>(EMPTY_PIN);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -84,9 +64,9 @@ export function PinSettingsDialog({
     setIsLoading(true);
     try {
       await updatePrivatePin(pin, hasExistingPin ? currentPin : undefined);
-      setCurrentDigits(["", "", "", "", "", ""]);
-      setPinDigits(["", "", "", "", "", ""]);
-      setConfirmDigits(["", "", "", "", "", ""]);
+      setCurrentDigits(EMPTY_PIN);
+      setPinDigits(EMPTY_PIN);
+      setConfirmDigits(EMPTY_PIN);
       onOpenChange(false);
       onPinUpdated?.();
     } catch (err) {
@@ -99,9 +79,9 @@ export function PinSettingsDialog({
   const handleClose = (nextOpen: boolean) => {
     if (!nextOpen) {
       setError(null);
-      setCurrentDigits(["", "", "", "", "", ""]);
-      setPinDigits(["", "", "", "", "", ""]);
-      setConfirmDigits(["", "", "", "", "", ""]);
+      setCurrentDigits(EMPTY_PIN);
+      setPinDigits(EMPTY_PIN);
+      setConfirmDigits(EMPTY_PIN);
     }
     onOpenChange(nextOpen);
   };

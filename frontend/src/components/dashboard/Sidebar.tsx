@@ -1,10 +1,9 @@
 import { useState, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useActiveRouteIds } from "@/hooks/useActiveRouteIds";
 import {
   Search,
   Plus,
-  FileText,
-  Lock,
   ChevronDown,
   ChevronRight,
   Folder,
@@ -19,6 +18,7 @@ import type { Topic } from "@/types/note";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useUIStore } from "@/stores/useUIStore";
 import { NoteVaultLogo } from "@/components/common/NoteVaultLogo";
+import { NoteSidebarItem } from "@/components/dashboard/NoteSidebarItem";
 import {
   Sidebar,
   SidebarHeader,
@@ -38,24 +38,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { NoteActionMenu } from "./NoteActionMenu";
 import { RenameTopicDialog } from "./RenameTopicDialog";
 import { SidebarUserProfile } from "./SidebarUserProfile";
 interface SidebarProps {
   currentUser?: AuthUser | null;
   onLogout?: () => void;
-  isDark?: boolean;
-  onToggleTheme?: () => void;
+}
+function sortByUpdatedAtDesc(
+  a: { updatedAt?: string },
+  b: { updatedAt?: string },
+): number {
+  const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+  const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+  return dateB - dateA;
 }
 
-export function AppSidebar({
-  currentUser,
-  onLogout,
-  isDark,
-  onToggleTheme,
-}: SidebarProps) {
+export function AppSidebar({ currentUser, onLogout }: SidebarProps) {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const notes = useWorkspaceStore((s) => s.notes);
   const topics = useWorkspaceStore((s) => s.topics);
@@ -66,15 +65,7 @@ export function AppSidebar({
   const setSearchOpen = useUIStore((s) => s.setSearchOpen);
   const setNewTopicOpen = useUIStore((s) => s.setNewTopicOpen);
 
-  const activeTopicId = useMemo(() => {
-    const match = /^\/topics\/([^/]+)/.exec(location.pathname);
-    return match ? match[1] : undefined;
-  }, [location.pathname]);
-
-  const activeNoteId = useMemo(() => {
-    const match = /^\/notes\/([^/]+)/.exec(location.pathname);
-    return match ? match[1] : undefined;
-  }, [location.pathname]);
+  const { activeTopicId, activeNoteId } = useActiveRouteIds();
 
   const handleSelectNote = (noteId: string) => {
     void navigate(`/notes/${noteId}`);
@@ -122,35 +113,22 @@ export function AppSidebar({
     Record<string, boolean>
   >({});
   // Pinned notes (sorted by most recently updated)
+
   const pinnedNotes = useMemo(() => {
-    return notes
-      .filter((n) => n.isPinned)
-      .toSorted((a, b) => {
-        const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-        const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-        return dateB - dateA;
-      });
+    return notes.filter((n) => n.isPinned).toSorted(sortByUpdatedAtDesc);
   }, [notes]);
 
   // Recents (Top 6 most recent notes, excluding pinned notes)
-  const recentNotes = notes
-    .filter((n) => !n.isPinned)
-    .toSorted((a, b) => {
-      const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-      const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-      return dateB - dateA;
-    })
-    .slice(0, 6);
+  const recentNotes = useMemo(() => {
+    return notes
+      .filter((n) => !n.isPinned)
+      .toSorted(sortByUpdatedAtDesc)
+      .slice(0, 6);
+  }, [notes]);
 
   // Unclassified notes (notes without a topic)
   const unclassifiedNotes = useMemo(() => {
-    return notes
-      .filter((n) => !n.topicId)
-      .toSorted((a, b) => {
-        const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-        const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-        return dateB - dateA;
-      });
+    return notes.filter((n) => !n.topicId).toSorted(sortByUpdatedAtDesc);
   }, [notes]);
   return (
     <Sidebar className="border-sidebar-border bg-sidebar z-50 border-r transition-colors select-none">
@@ -223,35 +201,15 @@ export function AppSidebar({
             {!isPinnedCollapsed && (
               <SidebarGroupContent className="mt-0.5">
                 <SidebarMenu className="gap-0.5">
-                  {pinnedNotes.map((note) => {
-                    const isActive = activeNoteId === note.id;
-                    return (
-                      <SidebarMenuItem key={`pinned-${note.id}`}>
-                        <SidebarMenuButton
-                          isActive={isActive}
-                          onClick={() => handleSelectNote(note.id)}
-                          className={`h-8 w-full cursor-pointer justify-start rounded-md px-2 pr-7 text-[13px] transition-colors ${
-                            isActive
-                              ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                              : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60"
-                          }`}
-                        >
-                          {note.isLocked ? (
-                            <Lock className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
-                          ) : (
-                            <FileText className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
-                          )}
-                          <span className="truncate text-[13px]">
-                            {note.title || "Trang chưa có tiêu đề"}
-                          </span>
-                        </SidebarMenuButton>
-                        <NoteActionMenu
-                          note={note}
-                          hasPrivatePin={currentUser?.hasPrivatePin}
-                        />
-                      </SidebarMenuItem>
-                    );
-                  })}
+                  {pinnedNotes.map((note) => (
+                    <NoteSidebarItem
+                      key={`pinned-${note.id}`}
+                      note={note}
+                      isActive={activeNoteId === note.id}
+                      hasPrivatePin={currentUser?.hasPrivatePin}
+                      onSelect={handleSelectNote}
+                    />
+                  ))}
                 </SidebarMenu>
               </SidebarGroupContent>
             )}
@@ -281,35 +239,15 @@ export function AppSidebar({
             {!isRecentsCollapsed && (
               <SidebarGroupContent className="mt-0.5">
                 <SidebarMenu className="gap-0.5">
-                  {recentNotes.map((note) => {
-                    const isActive = activeNoteId === note.id;
-                    return (
-                      <SidebarMenuItem key={`recent-${note.id}`}>
-                        <SidebarMenuButton
-                          isActive={isActive}
-                          onClick={() => handleSelectNote(note.id)}
-                          className={`h-8 w-full cursor-pointer justify-start rounded-md px-2 pr-7 text-[13px] transition-colors ${
-                            isActive
-                              ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                              : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60"
-                          }`}
-                        >
-                          {note.isLocked ? (
-                            <Lock className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
-                          ) : (
-                            <FileText className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
-                          )}
-                          <span className="truncate text-[13px]">
-                            {note.title}
-                          </span>
-                        </SidebarMenuButton>
-                        <NoteActionMenu
-                          note={note}
-                          hasPrivatePin={currentUser?.hasPrivatePin}
-                        />
-                      </SidebarMenuItem>
-                    );
-                  })}
+                  {recentNotes.map((note) => (
+                    <NoteSidebarItem
+                      key={`recent-${note.id}`}
+                      note={note}
+                      isActive={activeNoteId === note.id}
+                      hasPrivatePin={currentUser?.hasPrivatePin}
+                      onSelect={handleSelectNote}
+                    />
+                  ))}
                 </SidebarMenu>
               </SidebarGroupContent>
             )}
@@ -359,35 +297,15 @@ export function AppSidebar({
             {!isUnclassifiedCollapsed && (
               <SidebarGroupContent className="mt-0.5">
                 <SidebarMenu className="gap-0.5">
-                  {unclassifiedNotes.map((note) => {
-                    const isActive = activeNoteId === note.id;
-                    return (
-                      <SidebarMenuItem key={`unclassified-${note.id}`}>
-                        <SidebarMenuButton
-                          isActive={isActive}
-                          onClick={() => handleSelectNote(note.id)}
-                          className={`h-8 w-full cursor-pointer justify-start rounded-md px-2 pr-7 text-[13px] transition-colors ${
-                            isActive
-                              ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                              : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60"
-                          }`}
-                        >
-                          {note.isLocked ? (
-                            <Lock className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
-                          ) : (
-                            <FileText className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
-                          )}
-                          <span className="truncate text-[13px]">
-                            {note.title || "Trang chưa có tiêu đề"}
-                          </span>
-                        </SidebarMenuButton>
-                        <NoteActionMenu
-                          note={note}
-                          hasPrivatePin={currentUser?.hasPrivatePin}
-                        />
-                      </SidebarMenuItem>
-                    );
-                  })}
+                  {unclassifiedNotes.map((note) => (
+                    <NoteSidebarItem
+                      key={`unclassified-${note.id}`}
+                      note={note}
+                      isActive={activeNoteId === note.id}
+                      hasPrivatePin={currentUser?.hasPrivatePin}
+                      onSelect={handleSelectNote}
+                    />
+                  ))}
                 </SidebarMenu>
               </SidebarGroupContent>
             )}
@@ -532,35 +450,15 @@ export function AppSidebar({
                       {/* Sub-items (Notes under topic with Context Menu on Right Click) */}
                       {!isCollapsed && topicNotes.length > 0 && (
                         <div className="border-sidebar-border/40 ml-3.5 flex flex-col gap-0.5 border-l py-0.5 pl-1.5">
-                          {topicNotes.map((note) => {
-                            const isNoteActive = activeNoteId === note.id;
-                            return (
-                              <SidebarMenuItem key={`ctx-topic-${note.id}`}>
-                                <SidebarMenuButton
-                                  isActive={isNoteActive}
-                                  onClick={() => handleSelectNote(note.id)}
-                                  className={`h-8 w-full cursor-pointer justify-start rounded-md px-2 pr-7 text-[13px] transition-colors ${
-                                    isNoteActive
-                                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                                      : "text-sidebar-foreground/85 hover:bg-sidebar-accent/60"
-                                  }`}
-                                >
-                                  {note.isLocked ? (
-                                    <Lock className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
-                                  ) : (
-                                    <FileText className="text-muted-foreground size-3.5 shrink-0 opacity-70" />
-                                  )}
-                                  <span className="truncate text-[13px]">
-                                    {note.title || "Trang chưa có tiêu đề"}
-                                  </span>
-                                </SidebarMenuButton>
-                                <NoteActionMenu
-                                  note={note}
-                                  hasPrivatePin={currentUser?.hasPrivatePin}
-                                />
-                              </SidebarMenuItem>
-                            );
-                          })}
+                          {topicNotes.map((note) => (
+                            <NoteSidebarItem
+                              key={`ctx-topic-${note.id}`}
+                              note={note}
+                              isActive={activeNoteId === note.id}
+                              hasPrivatePin={currentUser?.hasPrivatePin}
+                              onSelect={handleSelectNote}
+                            />
+                          ))}
                         </div>
                       )}
                     </div>
@@ -573,12 +471,7 @@ export function AppSidebar({
       </SidebarContent>
 
       {/* Bottom User Profile & Settings Footer */}
-      <SidebarUserProfile
-        currentUser={currentUser}
-        onLogout={onLogout}
-        isDark={isDark}
-        onToggleTheme={onToggleTheme}
-      />
+      <SidebarUserProfile currentUser={currentUser} onLogout={onLogout} />
 
       {/* Dialog Đổi tên chủ đề */}
       <RenameTopicDialog

@@ -6,20 +6,15 @@ import {
   clearAuthToken,
   type AuthUser,
 } from "@/services/auth";
+import { useUIStore } from "@/stores/useUIStore";
 
 export default function App() {
   const navigate = useNavigate();
 
-  // Dark/Light theme mode state
-  const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem("notevault-theme");
-    if (saved) return saved === "dark";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
-  });
+  const isDark = useUIStore((s) => s.isDark);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
-    localStorage.setItem("notevault-theme", isDark ? "dark" : "light");
   }, [isDark]);
 
   // Auth session state
@@ -57,8 +52,6 @@ export default function App() {
       isAuthLoading={isAuthLoading}
       onAuthSuccess={(user) => setCurrentUser(user)}
       onLogout={handleLogout}
-      isDark={isDark}
-      onToggleTheme={() => setIsDark((prev) => !prev)}
       onUserUpdate={(user) => setCurrentUser(user)}
     />
   );

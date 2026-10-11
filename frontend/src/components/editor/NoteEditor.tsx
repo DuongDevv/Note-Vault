@@ -39,7 +39,6 @@ const CustomCodeBlock = CodeBlockLowlight.extend({
 
 interface NoteEditorProps {
   note: Note;
-  topicName?: string;
   onSave?: (updated: {
     id: string;
     title: string;
