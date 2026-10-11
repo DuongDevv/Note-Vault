@@ -236,7 +236,7 @@ function WorkspaceLayoutContent({
             }
           }
           // Khóa lại toàn bộ phiên giải mã và làm mới dữ liệu
-          useWorkspaceStore.getState().setUnlockedNoteId(null);
+          await useWorkspaceStore.getState().lockVault();
           void useWorkspaceStore.getState().fetchWorkspaceData();
         }}
       />

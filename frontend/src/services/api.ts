@@ -132,12 +132,24 @@ export async function fetchNotes(
   return parsed.map((n) => normalizeNote(n));
 }
 
-export async function fetchNoteById(id: string, pin?: string): Promise<Note> {
+export async function fetchNoteById(
+  id: string,
+  pin?: string,
+  vaultToken?: string,
+): Promise<Note> {
+  const headers: Record<string, string> = {};
+  if (pin) {
+    headers["x-private-pin"] = pin;
+  }
+  if (vaultToken) {
+    headers["x-vault-token"] = vaultToken;
+  }
+
   const parsed = await fetchAndParse(
     `/api/v1/notes/${id}`,
     NoteSchema,
     {
-      headers: pin ? { "x-private-pin": pin } : undefined,
+      headers: Object.keys(headers).length > 0 ? headers : undefined,
     },
     "Không thể tải chi tiết ghi chú",
   );

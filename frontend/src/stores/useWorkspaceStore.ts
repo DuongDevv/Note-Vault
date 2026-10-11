@@ -13,6 +13,7 @@ import {
   toggleNoteLock as apiToggleNoteLock,
   toggleNotePin as apiToggleNotePin,
 } from "@/services/api";
+import { verifyPrivatePin, lockVaultSession } from "@/services/auth";
 
 interface WorkspaceState {
   notes: Note[];
@@ -44,6 +45,7 @@ interface WorkspaceState {
   toggleNoteLock: (noteId: string, pin: string) => Promise<void>;
   toggleNotePin: (noteId: string) => Promise<void>;
   unlockNoteWithPin: (noteId: string, pin: string) => Promise<boolean>;
+  lockVault: () => Promise<void>;
   setSavingStatus: (isSaving: boolean) => void;
   setUnlockedNoteId: (noteId: string | null) => void;
 }
@@ -220,7 +222,14 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
 
   unlockNoteWithPin: async (noteId: string, pin: string) => {
-    const unlocked = await fetchNoteById(noteId, pin);
+    // 1. Verify PIN and obtain Redis-backed Vault Session Token (15m TTL)
+    const verification = await verifyPrivatePin(pin);
+    if (!verification.verified) {
+      throw new Error("Mã PIN không chính xác");
+    }
+
+    // 2. Fetch note using the newly established vault session token (fallback with pin)
+    const unlocked = await fetchNoteById(noteId, pin, verification.vaultToken);
     if (unlocked.isLocked && unlocked.content === null) {
       throw new Error("Không thể giải mã nội dung với mã PIN này");
     }
@@ -229,6 +238,14 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       unlockedNoteId: noteId,
     }));
     return true;
+  },
+
+  lockVault: async () => {
+    await lockVaultSession();
+    set((state) => ({
+      unlockedNoteId: null,
+      notes: state.notes.map((n) => (n.isLocked ? { ...n, content: null } : n)),
+    }));
   },
 
   toggleNotePin: async (noteId: string) => {

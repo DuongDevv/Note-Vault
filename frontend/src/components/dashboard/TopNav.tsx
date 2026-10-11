@@ -165,49 +165,6 @@ export function TopNav({
             {formatLastEdited()}
           </span>
         )}
-        {/* Pin Toggle Button */}
-        {currentNote && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => void toggleNotePin(currentNote.id)}
-            title={
-              currentNote.isPinned
-                ? "Bỏ ghim trang này"
-                : "Ghim trang lên đầu danh sách"
-            }
-            className="text-muted-foreground hover:text-foreground size-7 rounded-md"
-          >
-            {currentNote.isPinned ? (
-              <Pin className="text-foreground size-3.5 fill-current" />
-            ) : (
-              <PinOff className="size-3.5 opacity-60" />
-            )}
-          </Button>
-        )}
-        {/* PIN Lock Toggle Button */}
-        {currentNote && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => requestLockToggle(currentNote, hasPrivatePin)}
-            title={
-              currentNote.isLocked
-                ? "Mở khóa ghi chú (Bỏ mã hóa PIN)"
-                : "Khóa ghi chú bằng mã PIN bảo vệ"
-            }
-            className="text-muted-foreground hover:text-foreground size-7 rounded-md"
-          >
-            {currentNote.isLocked ? (
-              <Lock className="text-foreground size-3.5" />
-            ) : (
-              <Unlock className="size-3.5 opacity-60" />
-            )}
-          </Button>
-        )}
-
         {/* More Actions Menu */}
         {currentNote && (
           <DropdownMenu>
@@ -222,10 +179,47 @@ export function TopNav({
             >
               <MoreHorizontal className="size-3.5" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40 text-xs">
+            <DropdownMenuContent align="end" className="w-48 text-xs">
+              <DropdownMenuItem
+                onClick={() => void toggleNotePin(currentNote.id)}
+                className="flex cursor-pointer items-center gap-2"
+              >
+                {currentNote.isPinned ? (
+                  <>
+                    <PinOff className="text-muted-foreground size-3.5" />
+                    <span>Bỏ ghim trang</span>
+                  </>
+                ) : (
+                  <>
+                    <Pin className="text-muted-foreground size-3.5" />
+                    <span>Ghim trang</span>
+                  </>
+                )}
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => requestLockToggle(currentNote, hasPrivatePin)}
+                className="flex cursor-pointer items-center gap-2"
+              >
+                {currentNote.isLocked ? (
+                  <>
+                    <Unlock className="text-muted-foreground size-3.5" />
+                    <span>Bỏ khóa PIN</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="text-muted-foreground size-3.5" />
+                    <span>Khóa bằng mã PIN</span>
+                  </>
+                )}
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
               <DropdownMenuItem
                 variant="destructive"
                 onClick={() => setNoteToDelete(currentNote)}
+                className="flex cursor-pointer items-center gap-2"
               >
                 <Trash2 className="size-3.5" />
                 <span>Xóa trang</span>

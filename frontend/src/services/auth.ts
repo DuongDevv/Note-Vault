@@ -2,6 +2,7 @@ import { z } from "zod";
 import { safeFetchJson } from "./http";
 
 const TOKEN_STORAGE_KEY = "notevault_token";
+const VAULT_TOKEN_STORAGE_KEY = "notevault_vault_token";
 
 export const AuthUserSchema = z.object({
   id: z.string(),
@@ -43,6 +44,18 @@ export function clearAuthToken(): void {
   localStorage.removeItem(TOKEN_STORAGE_KEY);
 }
 
+export function getVaultToken(): string | null {
+  return sessionStorage.getItem(VAULT_TOKEN_STORAGE_KEY);
+}
+
+export function setVaultToken(token: string): void {
+  sessionStorage.setItem(VAULT_TOKEN_STORAGE_KEY, token);
+}
+
+export function clearVaultToken(): void {
+  sessionStorage.removeItem(VAULT_TOKEN_STORAGE_KEY);
+}
+
 export function getAuthHeaders(
   customHeaders?: Record<string, string>,
 ): Record<string, string> {
@@ -54,6 +67,11 @@ export function getAuthHeaders(
   const token = getAuthToken();
   if (token) {
     headers.Authorization = `Bearer ${token}`;
+  }
+
+  const vaultToken = getVaultToken();
+  if (vaultToken) {
+    headers["x-vault-token"] = vaultToken;
   }
 
   return headers;
@@ -142,13 +160,37 @@ export async function updatePrivatePin(
   }
 }
 
-export async function verifyPrivatePin(pin: string): Promise<boolean> {
+const VerifyPinResponseSchema = z.object({
+  verified: z.boolean(),
+  vaultToken: z.string().optional(),
+});
+
+export async function verifyPrivatePin(
+  pin: string,
+): Promise<{ verified: boolean; vaultToken?: string }> {
   const { ok, data } = await safeFetchJson("/api/v1/profile/verify-pin", {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify({ pin }),
   });
 
-  const payload = EmptyEnvelopeSchema.parse(data);
-  return ok && payload.success;
+  const payload = createEnvelopeSchema(VerifyPinResponseSchema).parse(data);
+  if (ok && payload.success && payload.data?.vaultToken) {
+    setVaultToken(payload.data.vaultToken);
+  }
+  return {
+    verified: ok && payload.success,
+    vaultToken: payload.data?.vaultToken,
+  };
+}
+
+export async function lockVaultSession(): Promise<void> {
+  const vaultToken = getVaultToken();
+  if (vaultToken) {
+    await safeFetchJson("/api/v1/profile/lock-vault", {
+      method: "POST",
+      headers: getAuthHeaders({ "x-vault-token": vaultToken }),
+    });
+  }
+  clearVaultToken();
 }

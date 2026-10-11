@@ -1,6 +1,7 @@
-import { ChevronDown, Sun, Moon, LogOut, KeyRound } from "lucide-react";
+import { ChevronDown, Sun, Moon, LogOut, KeyRound, Lock } from "lucide-react";
 import type { AuthUser } from "@/services/auth";
 import { useUIStore } from "@/stores/useUIStore";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { SidebarFooter } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -70,6 +71,13 @@ export function SidebarUserProfile({
           >
             <KeyRound className="text-muted-foreground size-3.5" />
             <span>Đổi mã Master PIN</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => void useWorkspaceStore.getState().lockVault()}
+            className="flex cursor-pointer items-center gap-2.5 px-2 py-1.5 text-xs"
+          >
+            <Lock className="text-muted-foreground size-3.5" />
+            <span>Khóa phiên Vault</span>
           </DropdownMenuItem>
 
           {onToggleTheme && (
