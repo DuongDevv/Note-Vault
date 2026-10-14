@@ -1,28 +1,56 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, FileText, Folder, Lock, X } from "lucide-react";
 import type { Note, Topic } from "@/types/note";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useUIStore } from "@/stores/useUIStore";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { useShallow } from "zustand/react/shallow";
 
-interface SearchModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+export interface SearchModalProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   initialQuery?: string;
-  notes: Note[];
-  topics: Topic[];
-  onSelectNote: (noteId: string) => void;
-  onSelectTopic: (topicId: string) => void;
+  notes?: Note[];
+  topics?: Topic[];
+  onSelectNote?: (noteId: string) => void;
+  onSelectTopic?: (topicId: string) => void;
 }
-
 export function SearchModal({
-  open,
-  onOpenChange,
-  initialQuery = "",
-  notes,
-  topics,
-  onSelectNote,
-  onSelectTopic,
-}: SearchModalProps) {
+  open: propOpen,
+  onOpenChange: propOnOpenChange,
+  initialQuery: propInitialQuery,
+  notes: propNotes,
+  topics: propTopics,
+  onSelectNote: propOnSelectNote,
+  onSelectTopic: propOnSelectTopic,
+}: SearchModalProps = {}) {
+  const navigate = useNavigate();
+
+  const { storeOpen, storeInitialQuery, storeSetOpen } = useUIStore(
+    useShallow((s) => ({
+      storeOpen: s.isSearchOpen,
+      storeInitialQuery: s.searchInitialQuery,
+      storeSetOpen: s.setSearchOpen,
+    })),
+  );
+  const { storeNotes, storeTopics } = useWorkspaceStore(
+    useShallow((s) => ({
+      storeNotes: s.notes,
+      storeTopics: s.topics,
+    })),
+  );
+
+  const open = propOpen ?? storeOpen;
+  const onOpenChange = propOnOpenChange ?? storeSetOpen;
+  const initialQuery = propInitialQuery ?? storeInitialQuery;
+  const notes = propNotes ?? storeNotes;
+  const topics = propTopics ?? storeTopics;
+
+  const onSelectNote = propOnSelectNote ?? ((id: string) => void navigate(`/notes/${id}`));
+  const onSelectTopic =
+    propOnSelectTopic ?? ((id: string) => void navigate(id ? `/topics/${id}` : "/"));
   const [query, setQuery] = useState(initialQuery);
   const [prevInitialQuery, setPrevInitialQuery] = useState(initialQuery);
 

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { Note } from "@/types/note";
 import { useUIStore } from "@/stores/useUIStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import {
   DropdownMenu,
@@ -34,7 +35,9 @@ export interface NoteActionMenuProps {
 /**
  * 3-dots hover action menu button (SidebarMenuAction showOnHover) with DropdownMenu.
  */
-export function NoteActionMenu({ note, hasPrivatePin }: NoteActionMenuProps) {
+export function NoteActionMenu({ note, hasPrivatePin: propHasPrivatePin }: NoteActionMenuProps) {
+  const storeHasPrivatePin = useAuthStore((s) => s.currentUser?.hasPrivatePin);
+  const hasPrivatePin = propHasPrivatePin ?? storeHasPrivatePin;
   const requestLockToggle = useUIStore((s) => s.requestLockToggle);
   const setNoteToDelete = useUIStore((s) => s.setNoteToDelete);
   const topics = useWorkspaceStore((s) => s.topics);

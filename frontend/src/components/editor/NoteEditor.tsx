@@ -57,7 +57,10 @@ export function NoteEditor({ note, onSave, onSavingStatusChange }: NoteEditorPro
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const setSearchOpen = useUIStore((s) => s.setSearchOpen);
   const allNotes = useWorkspaceStore((s) => s.notes);
-
+  const storeUpdateContent = useWorkspaceStore((s) => s.updateNoteContent);
+  const storeSetSavingStatus = useWorkspaceStore((s) => s.setSavingStatus);
+  const handleSave = onSave ?? storeUpdateContent;
+  const handleSavingStatusChange = onSavingStatusChange ?? storeSetSavingStatus;
   // Aggregate all unique tags across workspace for suggestions
   const allWorkspaceTags = useMemo(() => {
     const tagSet = new Set<string>();
@@ -76,39 +79,35 @@ export function NoteEditor({ note, onSave, onSavingStatusChange }: NoteEditorPro
     const clean = normalizeTag(newTag);
     if (!clean || note.tags.includes(clean) || note.tags.length >= 8) return;
     const updatedTags = [...note.tags, clean];
-    if (onSave) {
-      onSave({
-        id: note.id,
-        title: currentTitleRef.current,
-        excerpt: note.excerpt,
-        content: JSON.stringify(editor.getJSON()),
-        tags: updatedTags,
-      });
-    }
+    handleSave({
+      id: note.id,
+      title: currentTitleRef.current,
+      excerpt: note.excerpt,
+      content: JSON.stringify(editor.getJSON()),
+      tags: updatedTags,
+    });
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
     const updatedTags = note.tags.filter((t) => t !== tagToRemove);
-    if (onSave) {
-      onSave({
-        id: note.id,
-        title: currentTitleRef.current,
-        excerpt: note.excerpt,
-        content: JSON.stringify(editor.getJSON()),
-        tags: updatedTags,
-      });
-    }
+    handleSave({
+      id: note.id,
+      title: currentTitleRef.current,
+      excerpt: note.excerpt,
+      content: JSON.stringify(editor.getJSON()),
+      tags: updatedTags,
+    });
   };
   const handleTagClick = (tag: string) => {
     setSearchOpen(true, `#${tag}`);
   };
   const scheduleAutoSave = (targetTitle: string, targetEditor: Editor | null) => {
-    if (!targetEditor || !onSave) return;
-    onSavingStatusChange?.(true);
+    if (!targetEditor) return;
+    handleSavingStatusChange(true);
     clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
-      onSavingStatusChange?.(false);
-      onSave({
+      handleSavingStatusChange(false);
+      handleSave({
         id: note.id,
         title: targetTitle,
         excerpt: targetEditor.getText().slice(0, 160) || note.excerpt,

@@ -3,6 +3,7 @@ import { Lock, KeyRound, Loader2 } from "lucide-react";
 import { PinInputGroup } from "@/components/common/PinInputGroup";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import {
   MODAL_BASE_CLASS,
   CardIconHeader,
@@ -12,10 +13,15 @@ import {
 export interface UnlockCardProps {
   noteId: string;
   onUnlockWithPin?: (noteId: string, pin: string) => Promise<boolean>;
-  onSuccess: (noteId: string) => void;
+  onSuccess?: (noteId: string) => void;
 }
 
 export function UnlockCard({ noteId, onUnlockWithPin, onSuccess }: UnlockCardProps) {
+  const storeUnlock = useWorkspaceStore((s) => s.unlockNoteWithPin);
+  const storeSuccess = useWorkspaceStore((s) => s.setUnlockedNoteId);
+  const handleUnlockWithPin = onUnlockWithPin ?? storeUnlock;
+  const handleSuccess = onSuccess ?? storeSuccess;
+
   const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [pinError, setPinError] = useState<string | null>(null);
   const [isUnlocking, setIsUnlocking] = useState(false);
@@ -26,14 +32,14 @@ export function UnlockCard({ noteId, onUnlockWithPin, onSuccess }: UnlockCardPro
 
   const handleUnlock = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (pin.length !== 6 || !onUnlockWithPin) return;
+    if (pin.length !== 6) return;
     setPinError(null);
     setIsUnlocking(true);
 
     try {
-      const ok = await onUnlockWithPin(noteId, pin);
+      const ok = await handleUnlockWithPin(noteId, pin);
       if (ok) {
-        onSuccess(noteId);
+        handleSuccess(noteId);
       } else {
         setPinError("Mã PIN không chính xác");
         setDigits(["", "", "", "", "", ""]);

@@ -10,7 +10,7 @@ interface NoteSidebarItemProps {
   onSelect: (noteId: string) => void;
 }
 
-export function NoteSidebarItem({ note, isActive, hasPrivatePin, onSelect }: NoteSidebarItemProps) {
+export function NoteSidebarItem({ note, isActive, onSelect }: NoteSidebarItemProps) {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
@@ -29,7 +29,7 @@ export function NoteSidebarItem({ note, isActive, hasPrivatePin, onSelect }: Not
         )}
         <span className="truncate text-[13px]">{note.title || "Trang chưa có tiêu đề"}</span>
       </SidebarMenuButton>
-      <NoteActionMenu note={note} hasPrivatePin={hasPrivatePin} />
+      <NoteActionMenu note={note} />
     </SidebarMenuItem>
   );
 }

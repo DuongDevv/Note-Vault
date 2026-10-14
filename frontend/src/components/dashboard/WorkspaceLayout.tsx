@@ -2,7 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActiveRouteIds } from "@/hooks/useActiveRouteIds";
 import { useShallow } from "zustand/react/shallow";
-import { SidebarProvider, SidebarInset, useSidebar } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/dashboard/Sidebar";
 import { TopNav } from "@/components/dashboard/TopNav";
 import { DocumentCanvas } from "@/components/dashboard/DocumentCanvas";
@@ -13,16 +13,11 @@ import { PinSettingsDialog } from "@/components/dashboard/PinSettingsDialog";
 import { LockPinDialog } from "@/components/dashboard/LockPinDialog";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useUIStore } from "@/stores/useUIStore";
-import { fetchUserProfile, type AuthUser } from "@/services/auth";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { fetchUserProfile } from "@/services/auth";
 import type { Note, Topic } from "@/types/note";
 
-interface WorkspaceLayoutProps {
-  currentUser: AuthUser | null;
-  onLogout: () => void;
-  onUserUpdate: (user: AuthUser) => void;
-}
-
-export function WorkspaceLayout({ currentUser, onLogout, onUserUpdate }: WorkspaceLayoutProps) {
+export function WorkspaceLayout() {
   const navigate = useNavigate();
 
   // Workspace Store
@@ -70,37 +65,29 @@ export function WorkspaceLayout({ currentUser, onLogout, onUserUpdate }: Workspa
 
   return (
     <SidebarProvider defaultOpen={true} className="h-svh max-h-svh overflow-hidden">
-      <WorkspaceLayoutContent
-        currentUser={currentUser}
-        onLogout={onLogout}
-        onUserUpdate={onUserUpdate}
-        currentNote={currentNote}
-        currentTopic={currentTopic}
-      />
+      <WorkspaceLayoutContent currentNote={currentNote} currentTopic={currentTopic} />
     </SidebarProvider>
   );
 }
 
-interface WorkspaceLayoutContentProps extends WorkspaceLayoutProps {
+interface WorkspaceLayoutContentProps {
   currentNote: Note | undefined;
   currentTopic: Topic | undefined;
 }
 
-function WorkspaceLayoutContent({
-  currentUser,
-  onLogout,
-  onUserUpdate,
-  currentNote,
-  currentTopic,
-}: WorkspaceLayoutContentProps) {
+function WorkspaceLayoutContent({ currentNote, currentTopic }: WorkspaceLayoutContentProps) {
   const navigate = useNavigate();
-  const { isMobile, setOpenMobile } = useSidebar();
 
-  // Workspace Store (reactive state & actions via useShallow)
-  const { notes, topics, createTopic, deleteNote, toggleNoteLock } = useWorkspaceStore(
+  // Auth Store
+  const { currentUser, setCurrentUser } = useAuthStore(
     useShallow((s) => ({
-      notes: s.notes,
-      topics: s.topics,
+      currentUser: s.currentUser,
+      setCurrentUser: s.setCurrentUser,
+    })),
+  );
+  // Workspace Store (reactive state & actions via useShallow)
+  const { createTopic, deleteNote, toggleNoteLock } = useWorkspaceStore(
+    useShallow((s) => ({
       createTopic: s.createTopic,
       deleteNote: s.deleteNote,
       toggleNoteLock: s.toggleNoteLock,
@@ -109,57 +96,32 @@ function WorkspaceLayoutContent({
 
   // UI Store (reactive state & actions via useShallow)
   const {
-    isSearchOpen,
-    searchInitialQuery,
     isNewTopicOpen,
     isPinSettingsOpen,
     lockTargetNote,
     noteToDelete,
-    setSearchOpen,
     setNewTopicOpen,
     setPinSettingsOpen,
     closeDeleteDialog,
     closeLockDialog,
   } = useUIStore(
     useShallow((s) => ({
-      isSearchOpen: s.isSearchOpen,
-      searchInitialQuery: s.searchInitialQuery,
       isNewTopicOpen: s.isNewTopicOpen,
       isPinSettingsOpen: s.isPinSettingsOpen,
       lockTargetNote: s.lockTargetNote,
       noteToDelete: s.noteToDelete,
-      setSearchOpen: s.setSearchOpen,
       setNewTopicOpen: s.setNewTopicOpen,
       setPinSettingsOpen: s.setPinSettingsOpen,
       closeDeleteDialog: s.closeDeleteDialog,
       closeLockDialog: s.closeLockDialog,
     })),
   );
-
-  const handleSelectNoteFromSearch = (id: string) => {
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-    void navigate(`/notes/${id}`);
-  };
-
-  const handleSelectTopicFromSearch = (id?: string) => {
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-    void navigate(id ? `/topics/${id}` : "/");
-  };
-
   return (
     <div className="bg-background text-foreground flex h-svh max-h-svh w-full overflow-hidden antialiased">
-      <AppSidebar currentUser={currentUser} onLogout={onLogout} />
+      <AppSidebar />
 
       <SidebarInset className="bg-background flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-        <TopNav
-          currentNote={currentNote}
-          currentTopic={currentTopic}
-          hasPrivatePin={currentUser?.hasPrivatePin}
-        />
+        <TopNav currentNote={currentNote} currentTopic={currentTopic} />
 
         <main className="flex min-h-0 flex-1 overflow-y-auto">
           <DocumentCanvas note={currentNote} />
@@ -167,15 +129,7 @@ function WorkspaceLayoutContent({
       </SidebarInset>
 
       {/* Global Dialogs & Modals */}
-      <SearchModal
-        open={isSearchOpen}
-        onOpenChange={setSearchOpen}
-        initialQuery={searchInitialQuery}
-        notes={notes}
-        topics={topics}
-        onSelectNote={handleSelectNoteFromSearch}
-        onSelectTopic={handleSelectTopicFromSearch}
-      />
+      <SearchModal />
 
       <NewTopicDialog
         open={isNewTopicOpen}
@@ -194,10 +148,10 @@ function WorkspaceLayoutContent({
         onPinUpdated={async () => {
           try {
             const profile = await fetchUserProfile();
-            onUserUpdate(profile);
+            setCurrentUser(profile);
           } catch {
             if (currentUser) {
-              onUserUpdate({ ...currentUser, hasPrivatePin: true });
+              setCurrentUser({ ...currentUser, hasPrivatePin: true });
             }
           }
           // Khóa lại toàn bộ phiên giải mã và làm mới dữ liệu
