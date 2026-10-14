@@ -1,8 +1,10 @@
-# 5. Chiến lược Giới hạn Tần suất Yêu cầu (Rate Limiting) qua Redis và Cơ chế Dự phòng Sẵn sàng (Fail-Open)
+---
+status: "accepted"
+date: "2026-10-11"
+deciders: "ngxccc"
+---
 
-Status: Accepted
-Date: 2026-10-11
-Deciders: ngxc
+# 5. Chiến lược Giới hạn Tần suất Yêu cầu (Rate Limiting) qua Redis và Cơ chế Dự phòng Sẵn sàng (Fail-Open)
 
 ## Context
 

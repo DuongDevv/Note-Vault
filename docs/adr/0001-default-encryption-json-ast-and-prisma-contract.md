@@ -1,8 +1,10 @@
-# 1. Mã hóa mặc định khi lưu trữ (Encryption at Rest), Cấu trúc nội dung JSON-AST và Kiến trúc Prisma Contract
+---
+status: "accepted"
+date: "2026-09-25"
+deciders: "ngxccc"
+---
 
-Status: Accepted
-Date: 2026-09-25
-Deciders: ngxc
+# 1. Mã hóa mặc định khi lưu trữ (Encryption at Rest), Cấu trúc nội dung JSON-AST và Kiến trúc Prisma Contract
 
 ## Context
 

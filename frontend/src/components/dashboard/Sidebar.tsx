@@ -13,7 +13,6 @@ import {
   MoreHorizontal,
   Pin,
 } from "lucide-react";
-import type { AuthUser } from "@/services/auth";
 import type { Topic } from "@/types/note";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useUIStore } from "@/stores/useUIStore";
@@ -40,17 +39,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { RenameTopicDialog } from "./RenameTopicDialog";
 import { SidebarUserProfile } from "./SidebarUserProfile";
-interface SidebarProps {
-  currentUser?: AuthUser | null;
-  onLogout?: () => void;
-}
 function sortByUpdatedAtDesc(a: { updatedAt?: string }, b: { updatedAt?: string }): number {
   const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
   const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
   return dateB - dateA;
 }
 
-export function AppSidebar({ currentUser, onLogout }: SidebarProps) {
+export function AppSidebar() {
   const navigate = useNavigate();
 
   const notes = useWorkspaceStore((s) => s.notes);
@@ -199,7 +194,6 @@ export function AppSidebar({ currentUser, onLogout }: SidebarProps) {
                       key={`pinned-${note.id}`}
                       note={note}
                       isActive={activeNoteId === note.id}
-                      hasPrivatePin={currentUser?.hasPrivatePin}
                       onSelect={handleSelectNote}
                     />
                   ))}
@@ -237,7 +231,6 @@ export function AppSidebar({ currentUser, onLogout }: SidebarProps) {
                       key={`recent-${note.id}`}
                       note={note}
                       isActive={activeNoteId === note.id}
-                      hasPrivatePin={currentUser?.hasPrivatePin}
                       onSelect={handleSelectNote}
                     />
                   ))}
@@ -295,7 +288,6 @@ export function AppSidebar({ currentUser, onLogout }: SidebarProps) {
                       key={`unclassified-${note.id}`}
                       note={note}
                       isActive={activeNoteId === note.id}
-                      hasPrivatePin={currentUser?.hasPrivatePin}
                       onSelect={handleSelectNote}
                     />
                   ))}
@@ -444,7 +436,6 @@ export function AppSidebar({ currentUser, onLogout }: SidebarProps) {
                               key={`ctx-topic-${note.id}`}
                               note={note}
                               isActive={activeNoteId === note.id}
-                              hasPrivatePin={currentUser?.hasPrivatePin}
                               onSelect={handleSelectNote}
                             />
                           ))}
@@ -460,7 +451,7 @@ export function AppSidebar({ currentUser, onLogout }: SidebarProps) {
       </SidebarContent>
 
       {/* Bottom User Profile & Settings Footer */}
-      <SidebarUserProfile currentUser={currentUser} onLogout={onLogout} />
+      <SidebarUserProfile />
 
       {/* Dialog Đổi tên chủ đề */}
       <RenameTopicDialog

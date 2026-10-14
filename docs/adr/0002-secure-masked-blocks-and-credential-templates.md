@@ -1,8 +1,10 @@
-# 2. Khối bảo mật ẩn thông tin, Thành phần thông tin định danh và Cơ chế tự động xóa Clipboard
+---
+status: "accepted"
+date: "2026-09-29"
+deciders: "ngxccc"
+---
 
-Status: Accepted
-Date: 2026-09-29
-Deciders: ngxc
+# 2. Khối bảo mật ẩn thông tin, Thành phần thông tin định danh và Cơ chế tự động xóa Clipboard
 
 ## Context
 

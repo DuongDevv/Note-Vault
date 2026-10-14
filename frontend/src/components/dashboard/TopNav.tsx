@@ -15,6 +15,7 @@ import {
 import type { Note, Topic } from "@/types/note";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
 import { useUIStore } from "@/stores/useUIStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -27,10 +28,10 @@ import {
 interface TopNavProps {
   currentNote?: Note | null;
   currentTopic?: Topic | null;
-  hasPrivatePin?: boolean;
 }
 
-export function TopNav({ currentNote, currentTopic, hasPrivatePin }: TopNavProps) {
+export function TopNav({ currentNote, currentTopic }: TopNavProps) {
+  const hasPrivatePin = useAuthStore((s) => s.currentUser?.hasPrivatePin);
   const isSaving = useWorkspaceStore((s) => s.isSaving);
   const lastSavedAt = useWorkspaceStore((s) => s.lastSavedAt);
   const topics = useWorkspaceStore((s) => s.topics);

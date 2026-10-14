@@ -13,11 +13,7 @@ interface DocumentCanvasProps {
 export function DocumentCanvas({ note }: DocumentCanvasProps) {
   const navigate = useNavigate();
   const isNoteLoading = useWorkspaceStore((s) => s.isNoteLoading);
-  const updateNoteContent = useWorkspaceStore((s) => s.updateNoteContent);
-  const setSavingStatus = useWorkspaceStore((s) => s.setSavingStatus);
-  const unlockNoteWithPin = useWorkspaceStore((s) => s.unlockNoteWithPin);
   const unlockedNoteId = useWorkspaceStore((s) => s.unlockedNoteId);
-  const setUnlockedNoteId = useWorkspaceStore((s) => s.setUnlockedNoteId);
   const createNote = useWorkspaceStore((s) => s.createNote);
 
   const isUnlockedLocally = Boolean(note?.id && unlockedNoteId === note.id);
@@ -69,24 +65,12 @@ export function DocumentCanvas({ note }: DocumentCanvasProps) {
 
   // If note is locked and not yet unlocked
   if (note.isLocked && !isUnlockedLocally) {
-    return (
-      <UnlockCard
-        key={note.id}
-        noteId={note.id}
-        onUnlockWithPin={unlockNoteWithPin}
-        onSuccess={setUnlockedNoteId}
-      />
-    );
+    return <UnlockCard key={note.id} noteId={note.id} />;
   }
 
   return (
     <div className="w-full flex-1">
-      <NoteEditor
-        key={note.id}
-        note={note}
-        onSave={updateNoteContent}
-        onSavingStatusChange={setSavingStatus}
-      />
+      <NoteEditor key={note.id} note={note} />
     </div>
   );
 }

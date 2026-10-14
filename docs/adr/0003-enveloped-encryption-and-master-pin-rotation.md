@@ -1,8 +1,10 @@
-# 3. Kiến trúc mã hóa phong bì (Enveloped Encryption), Xoay vòng khóa Master PIN và Bộ nhớ đệm phiên Vault Redis
+---
+status: "accepted"
+date: "2026-09-30"
+deciders: "ngxccc"
+---
 
-Status: Accepted
-Date: 2026-09-30
-Deciders: ngxc
+# 3. Kiến trúc mã hóa phong bì (Enveloped Encryption), Xoay vòng khóa Master PIN và Bộ nhớ đệm phiên Vault Redis
 
 ## Context
 

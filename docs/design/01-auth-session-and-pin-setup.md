@@ -29,7 +29,7 @@ Tài liệu thiết kế quy trình xác thực người dùng, cấp phát phi�
 
 ```mermaid
 flowchart TD
-    Client[React 19 Client\nZustand + UI] -->|HTTPS REST| API[Express 5 Backend Server]
+    Client[React 19 Client\nZustand: useAuthStore, useUIStore, useWorkspaceStore] -->|HTTPS REST| API[Express 5 Backend Server]
     API -->|Argon2id / AES-256-GCM| Crypto[CryptoService]
     API -->|Redis Protocol| Redis[(Redis 8 In-Memory Cache)]
     API -->|PostgreSQL Protocol| DB[(PostgreSQL 18 DB)]
@@ -44,20 +44,23 @@ sequenceDiagram
     autonumber
     actor User as Người dùng
     participant UI as React Client (LoginPage / PinSettingsDialog)
+    participant Store as useAuthStore (Zustand)
     participant AuthCtrl as Backend (AuthController)
     participant Crypto as CryptoService (Argon2id)
     participant DB as PostgreSQL (users table)
 
     %% Giai đoạn 1: Đăng nhập
-    Note over User,DB: Giai đoạn 1: Đăng nhập & Lấy trạng thái PIN
-    User->>UI: Nhập username + password
+    Note over User,DB: Giai đoạn 1: Đăng nhập & Khởi tạo phiên
+    User->>UI: Mở trang Web / Reload
+    UI->>Store: initSession() (kiểm tra token, fetchProfile nếu có)
+    User->>UI: Nhập username + password (nếu chưa đăng nhập)
     UI->>AuthCtrl: POST /api/v1/auth/login { username, password }
     AuthCtrl->>DB: SELECT id, username, email, password_hash, display_name, (private_pin_hash IS NOT NULL) AS has_private_pin
     DB-->>AuthCtrl: User Record
     AuthCtrl->>Crypto: verifyHash(user.password_hash, password)
     Crypto-->>AuthCtrl: true
     AuthCtrl-->>UI: HTTP 200 { user: { id, username, hasPrivatePin }, accessToken }
-    UI->>UI: Lưu accessToken vào localStorage & cập nhật App State
+    UI->>Store: setCurrentUser(user) & Lưu accessToken vào localStorage
 
     %% Giai đoạn 2: Thiết lập Master PIN
     Note over User,DB: Giai đoạn 2: Thiết lập hoặc Đổi Master PIN
@@ -68,7 +71,7 @@ sequenceDiagram
     AuthCtrl->>DB: UPDATE users SET private_pin_hash = newPinHash WHERE id = userId
     DB-->>AuthCtrl: Success
     AuthCtrl-->>UI: HTTP 200 "Cài đặt mã PIN thành công"
-    UI->>UI: Cập nhật currentUser.hasPrivatePin = true
+    UI->>Store: setCurrentUser({ ...currentUser, hasPrivatePin: true })
 ```
 
 ---
@@ -87,8 +90,10 @@ sequenceDiagram
 
 ## 5. Domain Invariant Taxonomy
 
-| Invariant ID    | Mô tả bất biến                              | Cơ chế bảo đảm                              | Kiểm thử xác minh                       |
-| :-------------- | :------------------------------------------ | :------------------------------------------ | :-------------------------------------- |
-| **INV-AUTH-01** | Mật khẩu và PIN luôn được băm bằng Argon2id | `CryptoService.hashData`                    | `tests/services/crypto.service.test.ts` |
-| **INV-AUTH-02** | Master PIN bắt buộc đúng 6 chữ số           | Zod `setPrivatePinSchema` regex `/^\d{6}$/` | `schemas/auth.schema.ts`                |
-| **INV-AUTH-03** | Đổi PIN yêu cầu xác thực currentPin         | `AuthController.setPrivatePin` FOR UPDATE   | `controllers/auth.controller.ts`        |
+| Invariant ID    | Mô tả bất biến                                                       | Cơ chế bảo đảm                                 | Kiểm thử xác minh                                  |
+| :-------------- | :------------------------------------------------------------------- | :--------------------------------------------- | :------------------------------------------------- |
+| **INV-AUTH-01** | Mật khẩu và PIN luôn được băm bằng Argon2id                          | `CryptoService.hashData`                       | `tests/services/crypto.service.test.ts`            |
+| **INV-AUTH-02** | Master PIN bắt buộc đúng 6 chữ số                                    | Zod `setPrivatePinSchema` regex `/^\d{6}$/`    | `schemas/auth.schema.ts`                           |
+| **INV-AUTH-03** | Đổi PIN yêu cầu xác thực currentPin                                  | `AuthController.setPrivatePin` FOR UPDATE      | `controllers/auth.controller.ts`                   |
+| **INV-AUTH-04** | Trạng thái xác thực tập trung và đồng bộ tức thì không prop-drilling | Zustand `useAuthStore` selector & `useShallow` | `frontend/src/stores/useAuthStore.ts`              |
+| **INV-AUTH-05** | Fallback loading khởi tạo đồng nhất, tránh FOUC và giật route        | `LoadingScreen` component & eager token check  | `frontend/src/components/common/LoadingScreen.tsx` |

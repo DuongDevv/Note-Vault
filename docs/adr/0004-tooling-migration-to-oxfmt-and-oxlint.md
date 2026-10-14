@@ -1,8 +1,10 @@
-# 4. Chuyển đổi toàn diện Tooling sang Oxfmt và Oxlint (Oxc Toolchain)
+---
+status: "accepted"
+date: "2026-10-11"
+deciders: "ngxccc"
+---
 
-Status: Accepted
-Date: 2026-10-11
-Deciders: ngxc
+# 4. Chuyển đổi toàn diện Tooling sang Oxfmt và Oxlint (Oxc Toolchain)
 
 ## Context
 
