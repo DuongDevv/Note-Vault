@@ -1,11 +1,11 @@
+import { useState } from "react";
 import { BubbleMenu } from "@tiptap/react/menus";
 import { useEditorState, type Editor } from "@tiptap/react";
 import { NodeSelection } from "@tiptap/pm/state";
 import { Link as _Link } from "@tiptap/extension-link";
 import { Image as _Image } from "@tiptap/extension-image";
-import { List, ListOrdered, Link2, Image as ImageIcon, Lock } from "lucide-react";
+import { List, ListOrdered, Link2, Image as ImageIcon, Lock, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
 interface EditorBubbleMenuProps {
   editor: Editor | null;
 }
@@ -23,7 +23,19 @@ const handleOpenImageDialog = () => {
   }
 };
 
+function normalizeUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  if (/^(https?:\/\/|mailto:|tel:|#|\/)/i.test(trimmed)) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+
 export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
+  const [isEditingLink, setIsEditingLink] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+
   const editorState = useEditorState({
     editor,
     selector: (ctx) => {
@@ -58,23 +70,32 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
 
   if (!editor || !editorState) return null;
 
-  const setLink = () => {
+  const handleOpenLinkInput = () => {
     const rawAttrs: Record<string, unknown> = editor.getAttributes("link");
-    const previousUrl = typeof rawAttrs.href === "string" ? rawAttrs.href : undefined;
-    const url = window.prompt("Nhập địa chỉ URL:", previousUrl);
-    if (url === null) return;
-    if (url === "") {
+    const previousUrl = typeof rawAttrs.href === "string" ? rawAttrs.href : "";
+    setLinkUrl(previousUrl);
+    setIsEditingLink(true);
+  };
+
+  const handleApplyLink = () => {
+    const trimmed = linkUrl.trim();
+    if (!trimmed) {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      setIsEditingLink(false);
       return;
     }
-
-    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+    const normalized = normalizeUrl(trimmed);
+    editor.chain().focus().extendMarkRange("link").setLink({ href: normalized }).run();
+    setIsEditingLink(false);
   };
 
   return (
     <BubbleMenu
       editor={editor}
       shouldShow={({ editor: currentEditor, state, from, to }) => {
+        if (isEditingLink) {
+          return true;
+        }
         if (state.selection.empty || from === to) {
           return false;
         }
@@ -88,162 +109,211 @@ export function EditorBubbleMenu({ editor }: EditorBubbleMenuProps) {
         if (state.selection instanceof NodeSelection) {
           return false;
         }
+        if (currentEditor.isActive("link")) {
+          return false;
+        }
         return true;
       }}
       className="z-50 select-none"
     >
       <div className="border-border bg-popover text-popover-foreground flex items-center gap-0.5 rounded-xl border p-1 shadow-2xl backdrop-blur-md">
-        {/* Bold */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-          className={`font-bold ${getButtonClass(editorState.isBold)}`}
-          title="Đậm (Ctrl+B)"
-        >
-          B
-        </Button>
+        {isEditingLink ? (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleApplyLink();
+            }}
+            className="flex items-center gap-1.5 p-0.5"
+          >
+            <Link2 className="text-muted-foreground ml-1 size-3.5 shrink-0" />
+            <input
+              type="text"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="Nhập địa chỉ URL (vd: https://...)"
+              className="border-input bg-background text-foreground placeholder:text-muted-foreground focus:ring-ring h-7 w-52 rounded-md border px-2 text-xs focus:ring-1 focus:outline-none sm:w-64"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setIsEditingLink(false);
+                }
+              }}
+            />
+            <Button
+              type="submit"
+              variant="ghost"
+              size="icon-sm"
+              className="text-primary hover:bg-primary/10 cursor-pointer"
+              title="Áp dụng"
+            >
+              <Check className="size-3.5 text-emerald-500" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setIsEditingLink(false)}
+              className="text-muted-foreground hover:bg-muted cursor-pointer"
+              title="Hủy"
+            >
+              <X className="size-3.5" />
+            </Button>
+          </form>
+        ) : (
+          <>
+            {/* Bold */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              className={`font-bold ${getButtonClass(editorState.isBold)}`}
+              title="Đậm (Ctrl+B)"
+            >
+              B
+            </Button>
 
-        {/* Italic */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-          className={`font-serif italic ${getButtonClass(editorState.isItalic)}`}
-          title="Nghiêng (Ctrl+I)"
-        >
-          I
-        </Button>
+            {/* Italic */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              className={`font-serif italic ${getButtonClass(editorState.isItalic)}`}
+              title="Nghiêng (Ctrl+I)"
+            >
+              I
+            </Button>
 
-        {/* Underline */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-          className={`font-medium underline ${getButtonClass(editorState.isUnderline)}`}
-          title="Gạch chân (Ctrl+U)"
-        >
-          U
-        </Button>
+            {/* Underline */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => editor.chain().focus().toggleUnderline().run()}
+              className={`font-medium underline ${getButtonClass(editorState.isUnderline)}`}
+              title="Gạch chân (Ctrl+U)"
+            >
+              U
+            </Button>
 
-        <div className="bg-border mx-1 h-3.5 w-px" />
+            <div className="bg-border mx-1 h-3.5 w-px" />
 
-        {/* Bullet List */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          className={getButtonClass(editorState.isBulletList)}
-          title="Danh sách không thứ tự"
-        >
-          <List className="size-3.5" />
-        </Button>
+            {/* Bullet List */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+              className={getButtonClass(editorState.isBulletList)}
+              title="Danh sách không thứ tự"
+            >
+              <List className="size-3.5" />
+            </Button>
 
-        {/* Ordered List */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-          className={getButtonClass(editorState.isOrderedList)}
-          title="Danh sách đánh số"
-        >
-          <ListOrdered className="size-3.5" />
-        </Button>
+            {/* Ordered List */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+              className={getButtonClass(editorState.isOrderedList)}
+              title="Danh sách đánh số"
+            >
+              <ListOrdered className="size-3.5" />
+            </Button>
 
-        <div className="bg-border mx-1 h-3.5 w-px" />
+            <div className="bg-border mx-1 h-3.5 w-px" />
 
-        {/* Link */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={setLink}
-          className={getButtonClass(editorState.isLink)}
-          title="Chèn liên kết"
-        >
-          <Link2 className="size-3.5" />
-        </Button>
+            {/* Link */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleOpenLinkInput}
+              className={getButtonClass(editorState.isLink)}
+              title="Chèn liên kết"
+            >
+              <Link2 className="size-3.5" />
+            </Button>
 
-        {/* Image */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={handleOpenImageDialog}
-          className="text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
-          title="Chèn hình ảnh"
-        >
-          <ImageIcon className="size-3.5" />
-        </Button>
+            {/* Image */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleOpenImageDialog}
+              className="text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
+              title="Chèn hình ảnh"
+            >
+              <ImageIcon className="size-3.5" />
+            </Button>
 
-        {/* Code Block */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          className={`font-mono text-[11px] ${getButtonClass(editorState.isCodeBlock)}`}
-          title="Khối mã nguồn"
-        >
-          &lt;/&gt;
-        </Button>
+            {/* Code Block */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+              className={`font-mono text-[11px] ${getButtonClass(editorState.isCodeBlock)}`}
+              title="Khối mã nguồn"
+            >
+              &lt;/&gt;
+            </Button>
 
-        <div className="bg-border mx-1 h-3.5 w-px" />
+            <div className="bg-border mx-1 h-3.5 w-px" />
 
-        {/* Heading 1 */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          className={`text-[11px] font-semibold tracking-wider ${getButtonClass(editorState.isH1)}`}
-          title="Tiêu đề 1"
-        >
-          H1
-        </Button>
+            {/* Heading 1 */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+              className={`text-[11px] font-semibold tracking-wider ${getButtonClass(editorState.isH1)}`}
+              title="Tiêu đề 1"
+            >
+              H1
+            </Button>
 
-        {/* Heading 2 */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          className={`text-[11px] font-semibold tracking-wider ${getButtonClass(editorState.isH2)}`}
-          title="Tiêu đề 2"
-        >
-          H2
-        </Button>
+            {/* Heading 2 */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+              className={`text-[11px] font-semibold tracking-wider ${getButtonClass(editorState.isH2)}`}
+              title="Tiêu đề 2"
+            >
+              H2
+            </Button>
 
-        {/* Heading 3 */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          className={`text-[11px] font-semibold tracking-wider ${getButtonClass(editorState.isH3)}`}
-          title="Tiêu đề 3"
-        >
-          H3
-        </Button>
+            {/* Heading 3 */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+              className={`text-[11px] font-semibold tracking-wider ${getButtonClass(editorState.isH3)}`}
+              title="Tiêu đề 3"
+            >
+              H3
+            </Button>
 
-        <div className="bg-border/60 mx-0.5 h-4 w-px" />
+            <div className="bg-border/60 mx-0.5 h-4 w-px" />
 
-        {/* Insert Secret Block */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => editor.chain().focus().insertSecretBlock().run()}
-          className="text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
-          title="Chèn khối bí mật (API Key, Mật khẩu, Token...)"
-        >
-          <Lock className="size-3.5" />
-        </Button>
+            {/* Insert Secret Block */}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => editor.chain().focus().insertSecretBlock().run()}
+              className="text-muted-foreground hover:bg-muted hover:text-foreground cursor-pointer"
+              title="Chèn khối bí mật (API Key, Mật khẩu, Token...)"
+            >
+              <Lock className="size-3.5" />
+            </Button>
+          </>
+        )}
       </div>
     </BubbleMenu>
   );

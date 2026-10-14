@@ -11,6 +11,7 @@ import {
   Lock,
   Image as ImageIcon,
   Quote,
+  Link2,
 } from "lucide-react";
 export interface CommandItem {
   title: string;
@@ -123,6 +124,34 @@ export const SLASH_COMMAND_ITEMS: CommandItem[] = [
     keywords: ["quote", "blockquote", "trich dan"],
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleBlockquote().run();
+    },
+  },
+  {
+    title: "Chèn liên kết",
+    description: "Chèn đường dẫn liên kết web",
+    icon: Link2,
+    keywords: ["link", "lien ket", "url", "web", "href"],
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).run();
+      const url = window.prompt("Nhập địa chỉ URL:");
+      if (url) {
+        const trimmed = url.trim();
+        const normalized = /^(https?:\/\/|mailto:|tel:|#|\/)/i.test(trimmed)
+          ? trimmed
+          : `https://${trimmed}`;
+        editor
+          .chain()
+          .focus()
+          .insertContent([
+            {
+              type: "text",
+              text: normalized,
+              marks: [{ type: "link", attrs: { href: normalized } }],
+            },
+            { type: "text", text: " " },
+          ])
+          .run();
+      }
     },
   },
 ];

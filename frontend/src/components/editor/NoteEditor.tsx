@@ -20,6 +20,7 @@ import { useUIStore } from "@/stores/useUIStore";
 import { normalizeTag } from "@/utils/tag";
 import { TagInputPopover } from "./TagInputPopover";
 import { EditorBubbleMenu } from "./EditorBubbleMenu";
+import { EditorLinkBubbleMenu } from "./EditorLinkBubbleMenu";
 import { EditorDragHandle } from "./EditorDragHandle";
 import { CodeBlockNodeView } from "./CodeBlockNodeView";
 import { ApiKeyBlock } from "./extensions/ApiKeyBlock";
@@ -127,6 +128,11 @@ export function NoteEditor({ note, onSave, onSavingStatusChange }: NoteEditorPro
       Link.configure({
         openOnClick: false,
         autolink: true,
+        defaultProtocol: "https",
+        HTMLAttributes: {
+          target: "_blank",
+          rel: "noopener noreferrer nofollow",
+        },
       }),
       CustomImage.configure({
         allowBase64: true,
@@ -216,6 +222,23 @@ export function NoteEditor({ note, onSave, onSavingStatusChange }: NoteEditorPro
             return true;
           }
         }
+        return false;
+      },
+      handleClick: (_view, _pos, event) => {
+        const target = event.target instanceof HTMLElement ? event.target : null;
+        const anchor = target?.closest("a");
+        if (!anchor) return false;
+
+        const href = anchor.getAttribute("href");
+        if (!href) return false;
+
+        // Open in new tab immediately if holding Ctrl or Cmd key
+        if (event.ctrlKey || event.metaKey) {
+          event.preventDefault();
+          window.open(href, "_blank", "noopener,noreferrer");
+          return true;
+        }
+
         return false;
       },
     },
@@ -312,6 +335,7 @@ export function NoteEditor({ note, onSave, onSavingStatusChange }: NoteEditorPro
       <div ref={editorContainerRef} className="relative">
         <EditorDragHandle editor={editor} containerRef={editorContainerRef} />
         <EditorBubbleMenu editor={editor} />
+        <EditorLinkBubbleMenu editor={editor} />
         <EditorContent editor={editor} />
       </div>
 
