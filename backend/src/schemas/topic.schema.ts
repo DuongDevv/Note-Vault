@@ -1,13 +1,14 @@
 import { z } from "zod";
-import type { Models } from "../prisma/contract.d.ts";
 
-export type TopicResponse = Omit<
-  Models.public_Topic,
-  "createdAt" | "updatedAt" | "notes" | "user"
-> & {
-  createdAt: string;
-  updatedAt?: string;
-};
+export const topicResponseSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  name: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string().optional(),
+});
+
+export type TopicResponse = z.infer<typeof topicResponseSchema>;
 
 export const createTopicSchema = z.object({
   name: z.string().trim().min(1, "Tên chủ đề không được để rỗng"),

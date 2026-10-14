@@ -11,6 +11,7 @@
     "check-types": "tsc --noEmit",
     "lint": "oxlint --type-aware --fix",
     "format": "oxfmt --write",
+    "openapi:generate": "bun run src/openapi/generate.ts",
     "contract:emit": "prisma contract emit",
     "db:init": "prisma db init",
     "db:update": "prisma db update",

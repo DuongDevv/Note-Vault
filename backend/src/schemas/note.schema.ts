@@ -1,13 +1,20 @@
 import { z } from "zod";
-import type { Models } from "../prisma/contract.d.ts";
 
-export type NoteResponse = Omit<
-  Models.public_Note,
-  "createdAt" | "updatedAt" | "topic" | "user"
-> & {
-  createdAt: string;
-  updatedAt: string;
-};
+export const noteResponseSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  topicId: z.string().nullable(),
+  title: z.string(),
+  content: z.string().nullable(),
+  tags: z.array(z.string()),
+  isLocked: z.boolean(),
+  isPinned: z.boolean(),
+  encryptedKey: z.string().nullable().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type NoteResponse = z.infer<typeof noteResponseSchema>;
 
 export const getNotesQuerySchema = z.object({
   topicId: z.string().optional(),
