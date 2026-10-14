@@ -2,50 +2,38 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { LoginPage } from "@/components/auth/LoginPage";
 import { RegisterPage } from "@/components/auth/RegisterPage";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { LoadingScreen } from "@/components/common/LoadingScreen";
 import { WorkspaceLayout } from "@/components/dashboard/WorkspaceLayout";
-import type { AuthUser } from "@/services/auth";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useShallow } from "zustand/react/shallow";
 
-interface AppRoutesProps {
-  currentUser: AuthUser | null;
-  isAuthLoading: boolean;
-  onAuthSuccess: (user: AuthUser) => void;
-  onLogout: () => void;
-  onUserUpdate: (user: AuthUser) => void;
-}
+export function AppRoutes() {
+  const { currentUser, isAuthLoading } = useAuthStore(
+    useShallow((s) => ({
+      currentUser: s.currentUser,
+      isAuthLoading: s.isAuthLoading,
+    })),
+  );
 
-export function AppRoutes({
-  currentUser,
-  isAuthLoading,
-  onAuthSuccess,
-  onLogout,
-  onUserUpdate,
-}: AppRoutesProps) {
+  if (isAuthLoading) {
+    return <LoadingScreen />;
+  }
+
   return (
     <Routes>
       {/* Public Auth Routes */}
-      <Route
-        path="/login"
-        element={
-          currentUser ? <Navigate to="/" replace /> : <LoginPage onAuthSuccess={onAuthSuccess} />
-        }
-      />
+      <Route path="/login" element={currentUser ? <Navigate to="/" replace /> : <LoginPage />} />
       <Route
         path="/register"
-        element={
-          currentUser ? <Navigate to="/" replace /> : <RegisterPage onAuthSuccess={onAuthSuccess} />
-        }
+        element={currentUser ? <Navigate to="/" replace /> : <RegisterPage />}
       />
 
       {/* Protected Document Canvas Routes */}
       <Route
         path="/*"
         element={
-          <ProtectedRoute user={currentUser} isLoading={isAuthLoading}>
-            <WorkspaceLayout
-              currentUser={currentUser}
-              onLogout={onLogout}
-              onUserUpdate={onUserUpdate}
-            />
+          <ProtectedRoute>
+            <WorkspaceLayout />
           </ProtectedRoute>
         }
       />

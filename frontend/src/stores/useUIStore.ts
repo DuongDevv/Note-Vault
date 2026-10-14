@@ -33,9 +33,13 @@ interface UIState {
 function getInitialTheme(): boolean {
   if (typeof window === "undefined") return false;
   const saved = localStorage.getItem("notevault-theme");
-  if (saved) return saved === "dark";
-  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const isDark = saved
+    ? saved === "dark"
+    : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.classList.toggle("dark", isDark);
+  return isDark;
 }
+
 export const useUIStore = create<UIState>((set) => ({
   isDark: getInitialTheme(),
   isSearchOpen: false,

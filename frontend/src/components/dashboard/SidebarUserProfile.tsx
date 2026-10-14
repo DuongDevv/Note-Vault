@@ -1,7 +1,9 @@
+import { useNavigate } from "react-router-dom";
 import { ChevronDown, Sun, Moon, LogOut, KeyRound, Lock } from "lucide-react";
-import type { AuthUser } from "@/services/auth";
 import { useUIStore } from "@/stores/useUIStore";
 import { useWorkspaceStore } from "@/stores/useWorkspaceStore";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useShallow } from "zustand/react/shallow";
 import { SidebarFooter } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -11,12 +13,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export interface SidebarUserProfileProps {
-  currentUser?: AuthUser | null;
-  onLogout?: () => void;
-}
-
-export function SidebarUserProfile({ currentUser, onLogout }: SidebarUserProfileProps) {
+export function SidebarUserProfile() {
+  const navigate = useNavigate();
+  const { currentUser, logout } = useAuthStore(
+    useShallow((s) => ({
+      currentUser: s.currentUser,
+      logout: s.logout,
+    })),
+  );
   const setPinSettingsOpen = useUIStore((s) => s.setPinSettingsOpen);
   const isDark = useUIStore((s) => s.isDark);
   const toggleTheme = useUIStore((s) => s.toggleTheme);
@@ -93,7 +97,10 @@ export function SidebarUserProfile({ currentUser, onLogout }: SidebarUserProfile
 
           {/* Logout Action */}
           <DropdownMenuItem
-            onClick={onLogout}
+            onClick={() => {
+              logout();
+              void navigate("/login");
+            }}
             className="text-destructive focus:text-destructive flex cursor-pointer items-center gap-2.5 px-2 py-1.5 text-xs"
           >
             <LogOut className="size-3.5" />

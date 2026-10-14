@@ -1,24 +1,26 @@
 import { Navigate, useLocation } from "react-router-dom";
-import type { AuthUser } from "@/services/auth";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useShallow } from "zustand/react/shallow";
+import { LoadingScreen } from "@/components/common/LoadingScreen";
 
 interface ProtectedRouteProps {
-  user: AuthUser | null;
-  isLoading: boolean;
   children: React.ReactNode;
 }
-
-export function ProtectedRoute({ user, isLoading, children }: ProtectedRouteProps) {
+export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation();
 
-  if (isLoading) {
-    return (
-      <div className="bg-background flex min-h-screen w-full items-center justify-center">
-        <div className="border-primary size-8 animate-spin rounded-full border-2 border-t-transparent" />
-      </div>
-    );
+  const { currentUser, isAuthLoading } = useAuthStore(
+    useShallow((s) => ({
+      currentUser: s.currentUser,
+      isAuthLoading: s.isAuthLoading,
+    })),
+  );
+
+  if (isAuthLoading) {
+    return <LoadingScreen />;
   }
 
-  if (!user) {
+  if (!currentUser) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

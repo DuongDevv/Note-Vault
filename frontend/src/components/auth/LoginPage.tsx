@@ -7,15 +7,13 @@ import { ModalAlertBanner } from "@/components/common/ModalLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { loginUser, type AuthUser } from "@/services/auth";
+import { loginUser } from "@/services/auth";
+import { useAuthStore } from "@/stores/useAuthStore";
 
-interface LoginPageProps {
-  onAuthSuccess: (user: AuthUser) => void;
-}
-
-export function LoginPage({ onAuthSuccess }: LoginPageProps) {
+export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const setCurrentUser = useAuthStore((s) => s.setCurrentUser);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -33,7 +31,7 @@ export function LoginPage({ onAuthSuccess }: LoginPageProps) {
       }
 
       const data = await loginUser(username.trim(), password);
-      onAuthSuccess(data.user);
+      setCurrentUser(data.user);
 
       let destination = "/";
       const StateSchema = z.object({

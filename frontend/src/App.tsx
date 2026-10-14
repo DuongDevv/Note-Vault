@@ -1,54 +1,13 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { AppRoutes } from "@/routes/AppRoutes";
-import { fetchUserProfile, clearAuthToken, type AuthUser } from "@/services/auth";
-import { useUIStore } from "@/stores/useUIStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 
 export default function App() {
-  const navigate = useNavigate();
-
-  const isDark = useUIStore((s) => s.isDark);
+  const initSession = useAuthStore((s) => s.initSession);
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", isDark);
-  }, [isDark]);
+    void initSession();
+  }, [initSession]);
 
-  // Auth session state
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-
-  // Check user session on initial load
-  useEffect(() => {
-    let ignore = false;
-    async function checkAuth() {
-      try {
-        const user = await fetchUserProfile();
-        if (!ignore) setCurrentUser(user);
-      } catch {
-        if (!ignore) setCurrentUser(null);
-      } finally {
-        if (!ignore) setIsAuthLoading(false);
-      }
-    }
-    void checkAuth();
-    return () => {
-      ignore = true;
-    };
-  }, []);
-
-  const handleLogout = () => {
-    clearAuthToken();
-    setCurrentUser(null);
-    void navigate("/login");
-  };
-
-  return (
-    <AppRoutes
-      currentUser={currentUser}
-      isAuthLoading={isAuthLoading}
-      onAuthSuccess={(user) => setCurrentUser(user)}
-      onLogout={handleLogout}
-      onUserUpdate={(user) => setCurrentUser(user)}
-    />
-  );
+  return <AppRoutes />;
 }

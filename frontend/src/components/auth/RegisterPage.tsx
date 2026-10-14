@@ -6,14 +6,12 @@ import { ModalAlertBanner } from "@/components/common/ModalLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { registerUser, type AuthUser } from "@/services/auth";
+import { registerUser } from "@/services/auth";
+import { useAuthStore } from "@/stores/useAuthStore";
 
-interface RegisterPageProps {
-  onAuthSuccess: (user: AuthUser) => void;
-}
-
-export function RegisterPage({ onAuthSuccess }: RegisterPageProps) {
+export function RegisterPage() {
   const navigate = useNavigate();
+  const setCurrentUser = useAuthStore((s) => s.setCurrentUser);
 
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
@@ -36,7 +34,7 @@ export function RegisterPage({ onAuthSuccess }: RegisterPageProps) {
       }
 
       const data = await registerUser(username.trim(), email.trim(), password, displayName.trim());
-      onAuthSuccess(data.user);
+      setCurrentUser(data.user);
       void navigate("/", { replace: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Đăng ký thất bại";
