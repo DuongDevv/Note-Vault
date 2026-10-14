@@ -59,3 +59,33 @@ All API endpoints MUST adhere to the standardized `ApiResponse` envelope:
 
 - State-mutating commands MUST be idempotent where applicable (e.g. repeated delete returns success or 404 cleanly).
 - Vault unlock requests MUST use short-lived session tokens (e.g. 15-minute Redis TTL) rather than perpetual credentials.
+
+---
+
+## 5. OpenAPI 3.1 Contract & End-to-End Type Safety
+
+To prevent runtime data drift between backend and frontend, all endpoints MUST adhere to the OpenAPI 3.1 contract pipeline:
+
+### 5.1 Schema Single Source of Truth
+
+- Route validation schemas MUST be defined with **Zod** in `backend/src/schemas/`.
+- Success responses MUST be wrapped using `createSuccessEnvelopeSchema(dataSchema)` from `backend/src/schemas/response.schema.ts`.
+- Error responses MUST adhere to `errorEnvelopeSchema` with `status: false`, `statusCode`, `errorCode`, and `message`.
+
+### 5.2 Contract Generation & Distribution
+
+- The complete specification is built via `backend/src/openapi/spec.ts` and emitted statically to `docs/openapi.json` via:
+  ```bash
+  bun run openapi:generate
+  ```
+- The API server MUST expose the live specification at runtime via `GET /api/v1/openapi.json`.
+
+### 5.3 Frontend Consumption & Client Invariants
+
+- Frontend type definitions are auto-generated from `docs/openapi.json` into `frontend/src/types/api.generated.d.ts` via:
+  ```bash
+  bun run gen:api
+  ```
+- All HTTP interactions in the frontend MUST consume the typed client `api` (`openapi-fetch`) configured in `frontend/src/services/apiClient.ts`.
+- Manual `fetch` calls, handwritten duplicated request/response interfaces, and unsafe type assertions (`as unknown as ...`) are strictly prohibited.
+- Token storage helpers MUST reside in `frontend/src/services/tokens.ts` to prevent circular imports with the client middleware.

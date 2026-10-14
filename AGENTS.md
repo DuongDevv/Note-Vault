@@ -30,11 +30,13 @@ MUST read the corresponding standard file under `docs/standards/` before modifyi
 - **Architecture:** Monorepo (`backend/` & `frontend/`)
 - **Runtime:** Bun v1.4+
 - **Backend Service:** Node.js + Express 5 + Prisma 8 + PostgreSQL + Redis (`backend/`)
-- **Frontend App:** Vite 8 + React 19 + Tailwind CSS v4 + shadcn UI + MSW + Zod (`frontend/`)
+- **Frontend App:** Vite 8 + React 19 + Tailwind CSS v4 + shadcn UI + MSW + Zod + openapi-fetch (`frontend/`)
 - **Development Commands:**
   - Fullstack: `bun run dev` (from root)
   - Backend: `bun run dev:backend`
   - Frontend: `bun run dev:frontend`
+  - Type & Contract Sync: `bun run sync:types` (Prisma contract emit + OpenAPI spec & frontend typegen)
+  - OpenAPI Typegen: `bun run gen:api`
 - **Quality & Verification:**
   - Type Check: `bun run --cwd backend check-types && bun run --cwd frontend check-types`
   - Linting: `bun run --cwd backend lint && bun run --cwd frontend lint` (powered by Oxlint)
@@ -47,7 +49,7 @@ MUST read the corresponding standard file under `docs/standards/` before modifyi
 - `backend/` — Express 5 REST API Server (`src/routes/`, `src/controllers/`, `src/middlewares/`, `src/services/`, `src/prisma/`)
 - `frontend/` — React 19 Single Page Dashboard (`src/components/`, `src/services/`, `src/types/`, `src/mocks/`)
 - `docs/standards/` — 11 Engineering Standard documents
-- `docs/adr/` — Architectural Decision Records
+- `docs/adr/` — 6 Architectural Decision Records
 - `docs/design/` — 8 End-to-End System Design & Workflow documents
 - `docker-compose.yml` — Local PostgreSQL & Redis infrastructure
 
