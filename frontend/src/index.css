@@ -157,9 +157,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground antialiased;
   }
+
   html {
     @apply font-sans;
   }
@@ -188,22 +190,27 @@
   background-color: rgba(59, 130, 246, 0.35);
   color: inherit;
 }
+
 .dark ::selection {
   background-color: rgba(59, 130, 246, 0.45);
   color: #ffffff;
 }
+
 /* Smooth transparent custom scrollbar for any remaining elements */
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: transparent;
   border-radius: 9999px;
 }
+
 *:hover::-webkit-scrollbar-thumb {
   background: var(--color-border);
 }
@@ -287,11 +294,33 @@
   color: var(--color-muted-foreground);
 }
 
-.tiptap a {
-  color: var(--color-primary);
+.tiptap a,
+.prose a {
+  color: #2563eb;
   text-decoration: underline;
+  text-decoration-color: rgba(37, 99, 235, 0.4);
   text-underline-offset: 3px;
   cursor: pointer;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+  font-weight: 500;
+}
+
+.tiptap a:hover,
+.prose a:hover {
+  color: #1d4ed8;
+  text-decoration-color: #1d4ed8;
+}
+
+.dark .tiptap a,
+.dark .prose a {
+  color: #60a5fa;
+  text-decoration-color: rgba(96, 165, 250, 0.4);
+}
+
+.dark .tiptap a:hover,
+.dark .prose a:hover {
+  color: #93c5fd;
+  text-decoration-color: #93c5fd;
 }
 
 /* Embedded Images */
@@ -310,6 +339,7 @@
   outline: 2px solid var(--color-primary);
   outline-offset: 3px;
 }
+
 /* Syntax highlighting tokens for Lowlight / Highlight.js */
 .hljs-keyword,
 .hljs-selector-tag,
@@ -317,6 +347,7 @@
   color: #f43f5e;
   font-weight: 600;
 }
+
 .dark .hljs-keyword,
 .dark .hljs-selector-tag,
 .dark .hljs-subst {
@@ -333,6 +364,7 @@
 .hljs-type {
   color: #10b981;
 }
+
 .dark .hljs-string,
 .dark .hljs-title,
 .dark .hljs-section,
@@ -357,6 +389,7 @@
 .hljs-link {
   color: #f59e0b;
 }
+
 .dark .hljs-number,
 .dark .hljs-regexp,
 .dark .hljs-link {
