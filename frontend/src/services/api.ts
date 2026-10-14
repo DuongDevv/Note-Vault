@@ -1,220 +1,190 @@
-import { z } from "zod";
-import { NoteSchema, TopicSchema, type Note, type Topic } from "@/types/note";
-import { getAuthHeaders } from "./auth";
-import { safeFetchJson } from "./http";
+import type { Note, Topic } from "@/types/note";
+import { api, type NoteResponseDto, type TopicResponseDto } from "./apiClient";
 
-function unwrapResponse(json: unknown): unknown {
-  if (json && typeof json === "object" && "data" in json) {
-    const record = json as Record<string, unknown>;
-    return record.data;
-  }
-  return json;
-}
-
-async function fetchAndParse<T>(
-  url: string,
-  schema: z.ZodType<T>,
-  options: RequestInit = {},
-  errorMessage = "Yêu cầu thất bại",
-): Promise<T> {
-  let customHeaders: Record<string, string> | undefined;
-  if (
-    options.headers &&
-    typeof options.headers === "object" &&
-    !(options.headers instanceof Headers)
-  ) {
-    customHeaders = Object.fromEntries(
-      Object.entries(options.headers).map(([k, v]) => [k, String(v)]),
-    );
-  }
-
-  const { ok, data } = await safeFetchJson(url, {
-    ...options,
-    headers: getAuthHeaders(customHeaders),
-  });
-  if (!ok) {
-    const serverMessage =
-      data && typeof data === "object" && "message" in data && typeof data.message === "string"
-        ? data.message
-        : errorMessage;
-    throw new Error(serverMessage);
-  }
-  const unwrapped = unwrapResponse(data);
-  return schema.parse(unwrapped);
-}
-
-function normalizeNote(raw: Note): Note {
-  const primaryTag = raw.tags.length > 0 ? (raw.tags[0] ?? "") : raw.tag;
+function normalizeNote(raw: NoteResponseDto): Note {
+  const primaryTag = raw.tags.length > 0 ? (raw.tags[0] ?? "") : "";
   const formattedTag = primaryTag
     ? primaryTag.startsWith("#")
       ? primaryTag
       : `#${primaryTag}`
     : "";
-  let excerpt = raw.excerpt;
-  if (!excerpt && typeof raw.content === "string") {
+  let excerpt = "";
+  if (typeof raw.content === "string") {
     excerpt = raw.content.replace(/<[^>]*>?/gm, "").slice(0, 120);
   }
 
   return {
-    ...raw,
+    id: raw.id,
+    userId: raw.userId,
+    topicId: raw.topicId,
+    title: raw.title,
+    content: raw.content ?? "",
+    tags: raw.tags,
     tag: formattedTag,
+    isLocked: raw.isLocked,
+    isPinned: raw.isPinned,
+    encryptedKey: raw.encryptedKey ?? null,
     excerpt: excerpt || "Nội dung ghi chú trong NoteVault...",
-    date: raw.createdAt
-      ? new Date(raw.createdAt).toLocaleDateString("vi-VN", {
-          day: "2-digit",
-          month: "2-digit",
-        })
-      : raw.date,
-    meta: raw.meta ? raw.meta : raw.isLocked ? "Đã khóa PIN" : "Bản thảo",
-    metaType: raw.metaType,
+    date: new Date(raw.createdAt).toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "short",
+    }),
+    meta: "",
+    metaType: "size",
+    createdAt: raw.createdAt,
+    updatedAt: raw.updatedAt,
+  };
+}
+
+function normalizeTopic(raw: TopicResponseDto): Topic {
+  return {
+    id: raw.id,
+    userId: raw.userId,
+    name: raw.name,
+    count: 0,
+    createdAt: raw.createdAt,
+    updatedAt: raw.updatedAt,
   };
 }
 
 export async function fetchTopics(): Promise<Topic[]> {
-  return await fetchAndParse(
-    "/api/v1/topics",
-    z.array(TopicSchema),
-    {},
-    "Không thể tải danh sách chủ đề",
-  );
+  const { data, error } = await api.GET("/topics");
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data.data.map((t) => normalizeTopic(t));
 }
 
-export async function createTopic(
-  name: string,
-  icon = "folder",
-  color = "#000000",
-): Promise<Topic> {
-  return await fetchAndParse(
-    "/api/v1/topics",
-    TopicSchema,
-    {
-      method: "POST",
-      body: JSON.stringify({ name, icon, color }),
-    },
-    "Không thể tạo chủ đề mới",
-  );
+export async function createTopic(name: string, _icon?: string): Promise<Topic> {
+  const { data, error } = await api.POST("/topics", {
+    body: { name },
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+  return normalizeTopic(data.data);
 }
 
-export async function updateTopic(
-  id: string,
-  data: { name?: string; color?: string; icon?: string },
-): Promise<Topic> {
-  return await fetchAndParse(
-    `/api/v1/topics/${id}`,
-    TopicSchema,
-    {
-      method: "PATCH",
-      body: JSON.stringify(data),
-    },
-    "Không thể cập nhật chủ đề",
-  );
+export async function updateTopic(id: string, updateData: { name?: string }): Promise<Topic> {
+  const { data, error } = await api.PATCH("/topics/{id}", {
+    params: { path: { id } },
+    body: { name: updateData.name },
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+  return normalizeTopic(data.data);
+}
+
+export async function deleteTopic(id: string): Promise<{ id?: string }> {
+  const { data, error } = await api.DELETE("/topics/{id}", {
+    params: { path: { id } },
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data.data;
 }
 
 export async function fetchNotes(topicId?: string, query?: string): Promise<Note[]> {
-  const params = new URLSearchParams();
-  if (topicId && topicId !== "locked") params.set("topicId", topicId);
-  if (query) params.set("search", query);
+  const { data, error } = await api.GET("/notes", {
+    params: {
+      query: {
+        topicId: topicId && topicId !== "locked" ? topicId : undefined,
+        search: query ?? undefined,
+      },
+    },
+  });
 
-  const queryString = params.toString();
-  const url = queryString ? `/api/v1/notes?${queryString}` : "/api/v1/notes";
-  const parsed = await fetchAndParse(
-    url,
-    z.array(NoteSchema),
-    {},
-    "Không thể tải danh sách ghi chú",
-  );
-  return parsed.map((n) => normalizeNote(n));
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data.data.map((n) => normalizeNote(n));
 }
 
 export async function fetchNoteById(id: string, pin?: string, vaultToken?: string): Promise<Note> {
   const headers: Record<string, string> = {};
-  if (pin) {
-    headers["x-private-pin"] = pin;
-  }
-  if (vaultToken) {
-    headers["x-vault-token"] = vaultToken;
+  if (pin) headers["x-private-pin"] = pin;
+  if (vaultToken) headers["x-vault-token"] = vaultToken;
+
+  const { data, error } = await api.GET("/notes/{id}", {
+    params: { path: { id } },
+    headers: Object.keys(headers).length > 0 ? headers : undefined,
+  });
+
+  if (error) {
+    throw new Error(error.message);
   }
 
-  const parsed = await fetchAndParse(
-    `/api/v1/notes/${id}`,
-    NoteSchema,
-    {
-      headers: Object.keys(headers).length > 0 ? headers : undefined,
-    },
-    "Không thể tải chi tiết ghi chú",
-  );
-  return normalizeNote(parsed);
+  return normalizeNote(data.data);
 }
 
 export async function createNote(note: Partial<Note>): Promise<Note> {
-  const payload = {
-    title: note.title,
-    content: note.content ?? "",
-    topicId: note.topicId ?? null,
-    tags: note.tags && note.tags.length > 0 ? note.tags : [],
-    isLocked: Boolean(note.isLocked),
-  };
-
-  const parsed = await fetchAndParse(
-    "/api/v1/notes",
-    NoteSchema,
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
+  const { data, error } = await api.POST("/notes", {
+    body: {
+      title: note.title ?? "Ghi chú không tên",
+      content: typeof note.content === "string" ? note.content : "",
+      topicId: note.topicId ?? null,
+      tags: note.tags && note.tags.length > 0 ? note.tags : [],
+      isLocked: Boolean(note.isLocked),
+      isPinned: Boolean(note.isPinned),
+      pin: note.pin,
     },
-    "Không thể tạo ghi chú",
-  );
-  return normalizeNote(parsed);
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return normalizeNote(data.data);
 }
 
 export async function updateNote(id: string, note: Partial<Note>): Promise<Note> {
-  const parsed = await fetchAndParse(
-    `/api/v1/notes/${id}`,
-    NoteSchema,
-    {
-      method: "PUT",
-      body: JSON.stringify(note),
+  const { data, error } = await api.PUT("/notes/{id}", {
+    params: { path: { id } },
+    body: {
+      title: note.title,
+      content: typeof note.content === "string" ? note.content : undefined,
+      topicId: note.topicId,
+      tags: note.tags,
+      isLocked: note.isLocked,
+      isPinned: note.isPinned,
+      pin: note.pin,
     },
-    "Không thể cập nhật ghi chú",
-  );
-  return normalizeNote(parsed);
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return normalizeNote(data.data);
 }
 
 export function toggleNoteLock(id: string, isLocked: boolean, pin?: string): Promise<Note> {
   return updateNote(id, { isLocked: !isLocked, pin });
 }
 
-const DeleteResponseSchema = z.object({
-  id: z.string().optional(),
-  success: z.boolean().optional(),
-});
+export async function deleteNote(id: string): Promise<{ id?: string }> {
+  const { data, error } = await api.DELETE("/notes/{id}", {
+    params: { path: { id } },
+  });
 
-export type DeleteResponse = z.infer<typeof DeleteResponseSchema>;
+  if (error) {
+    throw new Error(error.message);
+  }
 
-export async function deleteNote(id: string): Promise<DeleteResponse> {
-  return await fetchAndParse(
-    `/api/v1/notes/${id}`,
-    DeleteResponseSchema,
-    { method: "DELETE" },
-    "Không thể xóa ghi chú",
-  );
-}
-
-export async function deleteTopic(id: string): Promise<DeleteResponse> {
-  return await fetchAndParse(
-    `/api/v1/topics/${id}`,
-    DeleteResponseSchema,
-    { method: "DELETE" },
-    "Không thể xóa chủ đề",
-  );
+  return data.data;
 }
 
 export async function toggleNotePin(id: string): Promise<Note> {
-  const parsed = await fetchAndParse(
-    `/api/v1/notes/${id}/toggle-pin`,
-    NoteSchema,
-    { method: "POST" },
-    "Không thể thay đổi trạng thái ghim",
-  );
-  return normalizeNote(parsed);
+  const { data, error } = await api.POST("/notes/{id}/toggle-pin", {
+    params: { path: { id } },
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return normalizeNote(data.data);
 }

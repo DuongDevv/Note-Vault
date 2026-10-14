@@ -32,12 +32,34 @@ export const verifyPinSchema = z.object({
 
 export type VerifyPinInput = z.infer<typeof verifyPinSchema>;
 
-export interface UserProfileResponse {
-  id: string;
-  username: string;
-  email: string;
-  displayName: string;
-  hasPrivatePin: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
+export const userProfileResponseSchema = z.object({
+  id: z.string(),
+  username: z.string(),
+  email: z.string(),
+  displayName: z.string(),
+  hasPrivatePin: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type UserProfileResponse = z.infer<typeof userProfileResponseSchema>;
+
+export const authResponseDataSchema = z.object({
+  user: userProfileResponseSchema,
+  accessToken: z.string(),
+});
+
+export type AuthResponseData = z.infer<typeof authResponseDataSchema>;
+
+export const verifyPinResponseDataSchema = z.object({
+  verified: z.boolean(),
+  vaultToken: z.string(),
+});
+
+export type VerifyPinResponseData = z.infer<typeof verifyPinResponseDataSchema>;
+
+export const lockVaultResponseDataSchema = z.object({
+  locked: z.boolean(),
+});
+
+export type LockVaultResponseData = z.infer<typeof lockVaultResponseDataSchema>;
