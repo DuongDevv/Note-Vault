@@ -1,107 +1,29 @@
-import { z } from "zod";
-import { safeFetchJson } from "./http";
+import { api, type UserProfileDto, type AuthResponseDataDto } from "./apiClient";
+import { clearAuthToken } from "./tokens";
 
-const TOKEN_STORAGE_KEY = "notevault_token";
-const VAULT_TOKEN_STORAGE_KEY = "notevault_vault_token";
+export {
+  getAuthToken,
+  setAuthToken,
+  clearAuthToken,
+  getVaultToken,
+  setVaultToken,
+  clearVaultToken,
+  getAuthHeaders,
+} from "./tokens";
 
-export const AuthUserSchema = z.object({
-  id: z.string(),
-  username: z.string(),
-  email: z.string(),
-  displayName: z.string(),
-  hasPrivatePin: z.boolean().optional(),
-});
-export type AuthUser = z.infer<typeof AuthUserSchema>;
-
-export const AuthResponseDataSchema = z.object({
-  user: AuthUserSchema,
-  accessToken: z.string(),
-});
-export type AuthResponseData = z.infer<typeof AuthResponseDataSchema>;
-
-function createEnvelopeSchema<T>(dataSchema: z.ZodType<T>) {
-  return z.object({
-    success: z.boolean(),
-    message: z.string().optional(),
-    data: dataSchema.optional(),
-  });
-}
-
-const EmptyEnvelopeSchema = z.object({
-  success: z.boolean(),
-  message: z.string().optional(),
-});
-
-export function getAuthToken(): string | null {
-  return localStorage.getItem(TOKEN_STORAGE_KEY);
-}
-
-export function setAuthToken(token: string): void {
-  localStorage.setItem(TOKEN_STORAGE_KEY, token);
-}
-
-export function clearAuthToken(): void {
-  localStorage.removeItem(TOKEN_STORAGE_KEY);
-}
-
-export function getVaultToken(): string | null {
-  return sessionStorage.getItem(VAULT_TOKEN_STORAGE_KEY);
-}
-
-export function setVaultToken(token: string): void {
-  sessionStorage.setItem(VAULT_TOKEN_STORAGE_KEY, token);
-}
-
-export function clearVaultToken(): void {
-  sessionStorage.removeItem(VAULT_TOKEN_STORAGE_KEY);
-}
-
-export function getAuthHeaders(customHeaders?: Record<string, string>): Record<string, string> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...customHeaders,
-  };
-
-  const token = getAuthToken();
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const vaultToken = getVaultToken();
-  if (vaultToken) {
-    headers["x-vault-token"] = vaultToken;
-  }
-
-  return headers;
-}
-
-async function authRequest(
-  endpoint: string,
-  body: Record<string, unknown>,
-  fallbackMessage: string,
-): Promise<AuthResponseData> {
-  const { ok, data } = await safeFetchJson(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  const envelope = createEnvelopeSchema(AuthResponseDataSchema).parse(data);
-
-  if (!ok || !envelope.success || !envelope.data) {
-    throw new Error(envelope.message ?? fallbackMessage);
-  }
-
-  setAuthToken(envelope.data.accessToken);
-  return envelope.data;
-}
+export type AuthUser = UserProfileDto;
+export type AuthResponseData = AuthResponseDataDto;
 
 export async function loginUser(username: string, password: string): Promise<AuthResponseData> {
-  return await authRequest(
-    "/api/v1/auth/login",
-    { username, password },
-    "Tài khoản hoặc mật khẩu không chính xác",
-  );
+  const { data, error } = await api.POST("/auth/login", {
+    body: { username, password },
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data.data;
 }
 
 export async function registerUser(
@@ -110,79 +32,55 @@ export async function registerUser(
   password: string,
   displayName: string,
 ): Promise<AuthResponseData> {
-  return await authRequest(
-    "/api/v1/auth/register",
-    { username, email, password, displayName },
-    "Đăng ký tài khoản thất bại",
-  );
+  const { data, error } = await api.POST("/auth/register", {
+    body: { username, email, password, displayName },
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data.data;
 }
 
 export async function fetchUserProfile(): Promise<AuthUser> {
-  const { ok, data } = await safeFetchJson("/api/v1/profile", {
-    headers: getAuthHeaders(),
-  });
+  const { data, error } = await api.GET("/profile");
 
-  if (!ok) {
+  if (error) {
     clearAuthToken();
-    throw new Error("Phiên đăng nhập đã hết hạn");
+    throw new Error(error.message);
   }
 
-  const payload = createEnvelopeSchema(AuthUserSchema).parse(data);
-
-  if (!payload.success || !payload.data) {
-    throw new Error("Không thể tải thông tin tài khoản");
-  }
-
-  return payload.data;
+  return data.data;
 }
 
 export async function updatePrivatePin(newPin: string, currentPin?: string): Promise<void> {
-  const { ok, data } = await safeFetchJson("/api/v1/profile/private-pin", {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({
+  const { error } = await api.POST("/profile/private-pin", {
+    body: {
       newPin,
       currentPin: currentPin ?? undefined,
-    }),
+    },
   });
 
-  const payload = EmptyEnvelopeSchema.parse(data);
-  if (!ok || !payload.success) {
-    throw new Error(payload.message ?? "Không thể cập nhật mã PIN");
+  if (error) {
+    throw new Error(error.message);
   }
 }
-
-const VerifyPinResponseSchema = z.object({
-  verified: z.boolean(),
-  vaultToken: z.string().optional(),
-});
 
 export async function verifyPrivatePin(
   pin: string,
 ): Promise<{ verified: boolean; vaultToken?: string }> {
-  const { ok, data } = await safeFetchJson("/api/v1/profile/verify-pin", {
-    method: "POST",
-    headers: getAuthHeaders(),
-    body: JSON.stringify({ pin }),
+  const { data, error } = await api.POST("/profile/verify-pin", {
+    body: { pin },
   });
 
-  const payload = createEnvelopeSchema(VerifyPinResponseSchema).parse(data);
-  if (ok && payload.success && payload.data?.vaultToken) {
-    setVaultToken(payload.data.vaultToken);
+  if (error) {
+    throw new Error(error.message);
   }
-  return {
-    verified: ok && payload.success,
-    vaultToken: payload.data?.vaultToken,
-  };
+
+  return data.data;
 }
 
 export async function lockVaultSession(): Promise<void> {
-  const vaultToken = getVaultToken();
-  if (vaultToken) {
-    await safeFetchJson("/api/v1/profile/lock-vault", {
-      method: "POST",
-      headers: getAuthHeaders({ "x-vault-token": vaultToken }),
-    });
-  }
-  clearVaultToken();
+  await api.POST("/profile/lock-vault");
 }
