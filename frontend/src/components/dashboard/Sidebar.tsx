@@ -39,6 +39,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { RenameTopicDialog } from "./RenameTopicDialog";
 import { SidebarUserProfile } from "./SidebarUserProfile";
+
 function sortByUpdatedAtDesc(a: { updatedAt?: string }, b: { updatedAt?: string }): number {
   const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
   const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
