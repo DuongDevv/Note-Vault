@@ -1,5 +1,11 @@
 import { api, type UserProfileDto, type AuthResponseDataDto } from "./apiClient";
-import { clearAuthToken } from "./tokens";
+import {
+  clearAuthToken,
+  setAuthToken,
+  setVaultToken,
+  clearVaultToken,
+  getVaultToken,
+} from "./tokens";
 
 export {
   getAuthToken,
@@ -23,6 +29,7 @@ export async function loginUser(username: string, password: string): Promise<Aut
     throw new Error(error.message);
   }
 
+  setAuthToken(data.data.accessToken);
   return data.data;
 }
 
@@ -40,6 +47,7 @@ export async function registerUser(
     throw new Error(error.message);
   }
 
+  setAuthToken(data.data.accessToken);
   return data.data;
 }
 
@@ -78,9 +86,17 @@ export async function verifyPrivatePin(
     throw new Error(error.message);
   }
 
+  if (data.data.vaultToken) {
+    setVaultToken(data.data.vaultToken);
+  }
+
   return data.data;
 }
 
 export async function lockVaultSession(): Promise<void> {
-  await api.POST("/profile/lock-vault");
+  const vaultToken = getVaultToken();
+  if (vaultToken) {
+    await api.POST("/profile/lock-vault");
+  }
+  clearVaultToken();
 }

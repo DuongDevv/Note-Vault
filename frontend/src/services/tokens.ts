@@ -3,7 +3,11 @@ const VAULT_TOKEN_STORAGE_KEY = "notevault_vault_token";
 
 export function getAuthToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem(TOKEN_STORAGE_KEY);
+  const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+  if (!token || token === "undefined" || token === "null" || token.trim().length === 0) {
+    return null;
+  }
+  return token;
 }
 
 export function setAuthToken(token: string): void {
@@ -18,7 +22,11 @@ export function clearAuthToken(): void {
 
 export function getVaultToken(): string | null {
   if (typeof window === "undefined") return null;
-  return sessionStorage.getItem(VAULT_TOKEN_STORAGE_KEY);
+  const token = sessionStorage.getItem(VAULT_TOKEN_STORAGE_KEY);
+  if (!token || token === "undefined" || token === "null" || token.trim().length === 0) {
+    return null;
+  }
+  return token;
 }
 
 export function setVaultToken(token: string): void {

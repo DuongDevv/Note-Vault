@@ -1,6 +1,6 @@
 import createClient from "openapi-fetch";
 import type { paths, components } from "@/types/api.generated";
-import { getAuthHeaders } from "./tokens";
+import { getAuthToken, getVaultToken, clearAuthToken } from "./tokens";
 
 export type ApiSchemas = components["schemas"];
 export type UserProfileDto = ApiSchemas["UserProfile"];
@@ -19,10 +19,21 @@ export const api = createClient<paths>({
 // Middleware to inject Authorization and x-vault-token headers automatically
 api.use({
   onRequest({ request }) {
-    const headers = getAuthHeaders();
-    for (const [key, value] of Object.entries(headers)) {
-      request.headers.set(key, value);
+    const token = getAuthToken();
+    if (token && !request.headers.has("Authorization")) {
+      request.headers.set("Authorization", `Bearer ${token}`);
     }
+
+    const vaultToken = getVaultToken();
+    if (vaultToken && !request.headers.has("x-vault-token")) {
+      request.headers.set("x-vault-token", vaultToken);
+    }
+
     return request;
+  },
+  onResponse({ response }) {
+    if (response.status === 401) {
+      clearAuthToken();
+    }
   },
 });
